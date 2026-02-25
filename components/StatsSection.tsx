@@ -101,13 +101,7 @@ export default function StatsSection() {
 
                 {/* Stats Grid */}
                 <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: 16,
-                        maxWidth: 800,
-                        margin: "0 auto",
-                    }}
+                    className="grid grid-cols-2 lg:grid-cols-3 gap-2"
                 >
                     {stats.map((stat, i) => (
                         <div

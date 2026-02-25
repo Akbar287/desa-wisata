@@ -156,7 +156,7 @@ export default function Navbar() {
 
                     {/* WhatsApp CTA */}
                     <a
-                        href="https://wa.me/6281234567890"
+                        href="https://wa.me/62181234567890?text=Halo%20Discover%20Desa%20Wisata%2C%20saya%20tertarik%20dengan%20paket%20wisatanya"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="wa-btn"

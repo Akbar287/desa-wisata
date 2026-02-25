@@ -5,19 +5,19 @@ import Image from "next/image";
 const testimonials = [
     {
         text: "Pengalaman luar biasa di Desa Penglipuran! Kami disambut dengan upacara tradisional, belajar membuat canang sari, dan tinggal di rumah adat Bali. Pemandu kami, Pak Wayan, sangat berpengetahuan tentang sejarah dan budaya desa. Makanan lokal yang disajikan sangat autentik dan lezat. Highly recommended!",
-        name: "Sarah Wijaya",
+        name: "Ayrein Nisya",
         location: "Jakarta, Indonesia",
         avatar: "/assets/default-avatar-2020-13.jpg",
     },
     {
         text: "Tur ke Wae Rebo adalah highlight dari liburan kami. Trekking melalui hutan tropis yang menakjubkan, dan saat tiba di desa di atas awan, rasanya seperti masuk ke dunia lain. Rumah adat Mbaru Niang sangat unik. Tim Discover Desa Wisata mengatur segalanya dengan sangat profesional.",
-        name: "Budi Santoso",
+        name: "Irma Nur",
         location: "Surabaya, Indonesia",
         avatar: "/assets/default-avatar-2020-25.jpg",
     },
     {
         text: "Kami mengambil tur keluarga 5 hari ke desa-desa di Yogyakarta. Anak-anak sangat senang belajar membatik dan menanam padi. Yang paling berkesan adalah keramahan penduduk desa. Mereka benar-benar menyambut kami sebagai bagian dari keluarga mereka. Terima kasih Discover Desa Wisata!",
-        name: "Rina Kusuma",
+        name: "Akbar M et al.",
         location: "Bandung, Indonesia",
         avatar: "/assets/default-avatar-2020-3.jpg",
     },

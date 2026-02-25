@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏡 Discover Desa Wisata
 
-## Getting Started
+> **Jelajahi Pesona Desa Wisata Indonesia** — Platform digital untuk menemukan keindahan, budaya, dan pengalaman autentik di desa‑desa wisata Indonesia.
 
-First, run the development server:
+🌐 **Live Demo:** [desa-wisata.vercel.app](https://desa-wisata.vercel.app)
+
+---
+
+## ✨ Fitur Utama
+
+| Fitur | Deskripsi |
+|---|---|
+| 🎠 **Hero Section** | Landing page visual dengan parallax dan call‑to‑action |
+| 🗺️ **Paket Wisata** | Katalog paket perjalanan terlaris dengan harga & detail |
+| 🧭 **Tipe Perjalanan** | Pilihan wisata: budaya, alam, kuliner, petualangan |
+| 📊 **Statistik** | Angka pencapaian (wisatawan, destinasi, ulasan) |
+| 💬 **Testimoni** | Ulasan dari wisatawan dengan rating bintang |
+| 📖 **Travel Guide** | Panduan perjalanan dan tips bermanfaat |
+| 🤝 **Mengapa Bersama Kami** | Keunggulan dan nilai yang ditawarkan |
+| 📱 **Responsive Design** | Tampilan optimal di semua perangkat |
+| 🟢 **WhatsApp CTA** | Tombol kontak langsung via WhatsApp |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router + Turbopack)
+- **UI Library:** [React 19](https://react.dev/)
+- **Language:** TypeScript
+- **Styling:** Vanilla CSS + CSS Custom Properties
+- **State Management:** [Recoil](https://recoiljs.org/)
+- **Validation:** [Yup](https://github.com/jquense/yup)
+- **Deployment:** [Vercel](https://vercel.com)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js ≥ 18
+- Yarn
+
+### Installation
 
 ```bash
-npm run dev
-# or
+# Clone repository
+git clone https://github.com/akbar287/discover-desa-wisata.git
+cd discover-desa-wisata
+
+# Install dependencies
+yarn install
+
+# Start development server
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000) di browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+yarn build
+yarn start
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📂 Struktur Proyek
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+discover-desa-wisata/
+├── app/
+│   ├── layout.tsx          # Root layout + SEO metadata
+│   ├── page.tsx            # Halaman utama
+│   └── globals.css         # Design system & global styles
+├── components/
+│   ├── Navbar.tsx           # Navigasi responsif
+│   ├── HeroSection.tsx      # Hero banner
+│   ├── TopToursSection.tsx   # Paket wisata terlaris
+│   ├── TripTypesSection.tsx  # Tipe perjalanan
+│   ├── StatsSection.tsx      # Statistik pencapaian
+│   ├── TestimonialsSection.tsx # Ulasan wisatawan
+│   ├── TravelGuideSection.tsx  # Panduan wisata
+│   ├── WhyWithUsSection.tsx    # Keunggulan kami
+│   └── Footer.tsx            # Footer + newsletter
+└── public/
+    ├── assets/              # Gambar & media
+    └── favicon_io/          # Favicon set
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🎨 Design System
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Proyek ini menggunakan **CSS Custom Properties** untuk konsistensi visual:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```css
+--color-primary: #1a5c38       /* Hijau utama */
+--color-accent: #e8a838        /* Aksen emas */
+--font-heading: 'Playfair Display'
+--font-body: 'Inter'
+```
+
+---
+
+## 📄 Lisensi
+
+Hak cipta © 2026 **Discover Desa Wisata**. Seluruh hak dilindungi.
+
+---
+
+<p align="center">
+  Dibuat dengan ❤️ untuk memajukan pariwisata desa Indonesia
+</p>

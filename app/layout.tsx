@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const siteUrl = "https://desa-wisata.vercel.app";
+const siteUrl = "https://desa-wisata-ui.vercel.app";
 const siteName = "Discover Desa Wisata";
 const siteDescription =
   "Temukan keindahan desa wisata Indonesia bersama para ahli lokal. Nikmati paket wisata privat & grup, pengalaman budaya autentik, kuliner tradisional, dan itinerari yang disesuaikan untuk petualangan tak terlupakan di pedesaan Indonesia.";

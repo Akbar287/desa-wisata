@@ -2,7 +2,7 @@
 
 > **Jelajahi Pesona Desa Wisata Indonesia** — Platform digital untuk menemukan keindahan, budaya, dan pengalaman autentik di desa‑desa wisata Indonesia.
 
-🌐 **Live Demo:** [desa-wisata.vercel.app](https://desa-wisata.vercel.app)
+🌐 **Live Demo:** [desa-wisata.vercel.app](https://desa-wisata-ui.vercel.app)
 
 ---
 

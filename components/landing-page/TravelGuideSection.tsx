@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const tabs = [
     { id: "tips", label: "Tips Perjalanan", icon: "ℹ" },
@@ -160,12 +161,12 @@ export default function TravelGuideSection() {
                             Artikel & Tips: Jelajahi tips terbaik tentang desa wisata Indonesia
                         </p>
                     </div>
-                    <a href="#" className="btn-outline">
+                    <Link href="/blog" className="btn-outline">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <polyline points="9 18 15 12 9 6" />
                         </svg>
                         Lihat semua artikel
-                    </a>
+                    </Link>
                 </div>
 
                 {/* Tabs */}

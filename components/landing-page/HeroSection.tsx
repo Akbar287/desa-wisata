@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function HeroSection() {
     return (
         <section
@@ -142,8 +144,8 @@ export default function HeroSection() {
                 </div>
 
                 {/* CTA Button */}
-                <a
-                    href="#tours"
+                <Link
+                    href="/tours"
                     className="btn-primary animate-fade-in-up"
                     style={{
                         animationDelay: "0.4s",
@@ -162,7 +164,7 @@ export default function HeroSection() {
                         <polyline points="9 18 15 12 9 6" />
                     </svg>
                     Mulai Petualangan
-                </a>
+                </Link>
             </div>
         </section>
     );

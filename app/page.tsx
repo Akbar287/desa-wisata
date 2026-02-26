@@ -1,27 +1,21 @@
-import Navbar from "@/components/layouts/Navbar";
-import HeroSection from "@/components/HeroSection";
-import StatsSection from "@/components/StatsSection";
-import TripTypesSection from "@/components/TripTypesSection";
-import TopToursSection from "@/components/TopToursSection";
-import TravelGuideSection from "@/components/TravelGuideSection";
-import WhyWithUsSection from "@/components/WhyWithUsSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
-import Footer from "@/components/layouts/Footer";
+import HeroSection from "@/components/landing-page/HeroSection";
+import StatsSection from "@/components/landing-page/StatsSection";
+import TopToursSection from "@/components/landing-page/TopToursSection";
+import TripTypesSection from "@/components/landing-page/TripTypesSection";
+import WhyWithUsSection from "@/components/landing-page/WhyWithUsSection";
+import TravelGuideSection from "@/components/landing-page/TravelGuideSection";
+import TestimonialsSection from "@/components/landing-page/TestimonialsSection";
 
 export default function Home() {
   return (
     <>
-      <Navbar />
-      <main>
-        <HeroSection />
-        <StatsSection />
-        <TripTypesSection />
-        <TopToursSection />
-        <TravelGuideSection />
-        <WhyWithUsSection />
-        <TestimonialsSection />
-      </main>
-      <Footer />
+      <HeroSection />
+      <StatsSection />
+      <TripTypesSection />
+      <TopToursSection />
+      <TravelGuideSection />
+      <WhyWithUsSection />
+      <TestimonialsSection />
     </>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 const tripTypes = [
     {
+        href: "/private-tours",
         title: "Wisata Privat",
         badge: "Privat",
         image: "/assets/2aa2ebcd-473f-4f20-ac68-2572e4f22352-journey01.png",
@@ -17,6 +19,7 @@ const tripTypes = [
         ],
     },
     {
+        href: "/group-tours",
         title: "Bergabung Grup",
         badge: "Grup",
         image: "/assets/41effc39-a450-4090-976e-d306cb31c1e4-journey02.png",
@@ -74,8 +77,9 @@ export default function TripTypesSection() {
                     }}
                 >
                     {tripTypes.map((trip, i) => (
-                        <div
+                        <Link
                             key={i}
+                            href={trip.href}
                             className="tour-card"
                             style={{
                                 borderRadius: "var(--radius-lg)",
@@ -172,7 +176,7 @@ export default function TripTypesSection() {
                                     ))}
                                 </ul>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
 

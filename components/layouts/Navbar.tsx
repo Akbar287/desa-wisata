@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
@@ -17,12 +18,12 @@ export default function Navbar() {
     }, []);
 
     const navLinks = [
-        { label: "Paket Wisata", href: "#tours" },
-        { label: "Tentang Desa", href: "#about" },
-        { label: "Blog", href: "#blog" },
-        { label: "Kalender Trip", href: "#calendar" },
-        { label: "Tentang Kami", href: "#about-us" },
-        { label: "Kontak", href: "#contact" },
+        { label: "Paket Wisata", href: "/tours" },
+        { label: "Tentang Desa", href: "/profile" },
+        { label: "Blog", href: "/blog" },
+        { label: "Kalender Trip", href: "/trip-calendar" },
+        { label: "Tentang Kami", href: "/our-team" },
+        { label: "Kontak", href: "/contact" },
     ];
 
     const menuOverlay = mobileOpen ? (
@@ -58,7 +59,7 @@ export default function Navbar() {
                 ✕
             </button>
             {navLinks.map((link) => (
-                <a
+                <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
@@ -74,7 +75,7 @@ export default function Navbar() {
                     }}
                 >
                     {link.label}
-                </a>
+                </Link>
             ))}
         </div>
     ) : null;
@@ -133,8 +134,8 @@ export default function Navbar() {
                     </button>
 
                     {/* Logo */}
-                    <a
-                        href="#"
+                    <Link
+                        href="/"
                         style={{
                             position: "absolute",
                             left: "50%",
@@ -152,7 +153,7 @@ export default function Navbar() {
                                 transition: "height 0.3s",
                             }}
                         />
-                    </a>
+                    </Link>
 
                     {/* WhatsApp CTA */}
                     <a

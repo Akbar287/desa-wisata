@@ -1,31 +1,32 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 const footerLinks = {
     "Paket Wisata": [
-        { label: "Paket Terlaris", href: "#" },
-        { label: "Kalender Trip", href: "#" },
-        { label: "Wisata Grup", href: "#" },
-        { label: "Wisata Privat", href: "#" },
+        { label: "Paket Terlaris", href: "/top-packages" },
+        { label: "Kalender Trip", href: "/trip-calendar" },
+        { label: "Wisata Grup", href: "/group-tours" },
+        { label: "Wisata Privat", href: "/private-tours" },
     ],
     "Tentang Indonesia": [
-        { label: "Informasi Praktis", href: "#" },
-        { label: "Destinasi", href: "#" },
-        { label: "Aktivitas", href: "#" },
-        { label: "Budaya & Sejarah", href: "#" },
+        { label: "Informasi Praktis", href: "/practical-info" },
+        { label: "Destinasi", href: "/destinations" },
+        { label: "Aktivitas", href: "/activities" },
+        { label: "Budaya & Sejarah", href: "/culture-history" },
     ],
     Blog: [
-        { label: "Tips Perjalanan", href: "#" },
-        { label: "Berita", href: "#" },
-        { label: "Tempat Wisata", href: "#" },
-        { label: "Info Penting", href: "#" },
+        { label: "Tips Perjalanan", href: "/blog?category=travel-tips" },
+        { label: "Berita", href: "/blog?category=news" },
+        { label: "Tempat Wisata", href: "/blog?category=destinations" },
+        { label: "Info Penting", href: "/blog?category=important-info" },
     ],
     "Tentang Kami": [
-        { label: "Profil Perusahaan", href: "#" },
-        { label: "Tim Kami", href: "#" },
-        { label: "Lowongan Kerja", href: "#" },
-        { label: "Yayasan Kami", href: "#" },
+        { label: "Profil Perusahaan", href: "/profile" },
+        { label: "Tim Kami", href: "/our-team" },
+        { label: "Lowongan Kerja", href: "/careers" },
+        { label: "Yayasan Kami", href: "/foundation" },
     ],
 };
 
@@ -173,7 +174,7 @@ export default function Footer() {
                             >
                                 {links.map((link) => (
                                     <li key={link.label}>
-                                        <a
+                                        <Link
                                             href={link.href}
                                             style={{
                                                 color: "rgba(255,255,255,0.65)",
@@ -193,7 +194,7 @@ export default function Footer() {
                                             }}
                                         >
                                             {link.label}
-                                        </a>
+                                        </Link>
                                     </li>
                                 ))}
                             </ul>

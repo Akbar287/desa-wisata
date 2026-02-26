@@ -1,7 +1,226 @@
-import React from 'react'
 
-export default function page() {
+import { Tour } from "@/types/TourType";
+import ToursComponent from "@/components/ToursComponent";
+
+const ALL_TOURS: Tour[] = [
+    {
+        id: 1,
+        title: "Pesona Desa Wisata Penglipuran",
+        type: "Grup",
+        themes: ["Budaya", "Terlaris"],
+        durationDays: 3,
+        price: 2500000,
+        destinations: ["Bali"],
+        highlights: [
+            "Arsitektur rumah adat Bali yang menakjubkan",
+            "Interaksi langsung dengan masyarakat lokal",
+            "Keindahan alam pegunungan Bali",
+        ],
+        image: "/assets/e50bd774-982a-4206-b5b9-3ace3c9c8f27-gobi_gallery1.jpg",
+        rating: 4.9,
+        reviews: 128,
+    },
+    {
+        id: 2,
+        title: "Jelajah Desa Wae Rebo",
+        type: "Grup",
+        themes: ["Trekking", "Budaya", "Terlaris"],
+        durationDays: 4,
+        price: 3800000,
+        destinations: ["Flores", "NTT"],
+        highlights: [
+            "Rumah adat Mbaru Niang yang ikonik",
+            "Trekking melewati hutan tropis lebat",
+            "Budaya dan tradisi suku Manggarai",
+        ],
+        image: "/assets/e4d847b7-3667-467f-992c-05ff8a23fde6-c6a9139fa9f5509fd47ec9df5236f669.jpg",
+        rating: 4.8,
+        reviews: 95,
+    },
+    {
+        id: 3,
+        title: "Desa Wisata Nglanggeran",
+        type: "Privat",
+        themes: ["Alam", "Agrowisata"],
+        durationDays: 2,
+        price: 1200000,
+        destinations: ["Yogyakarta", "Jawa Tengah"],
+        highlights: [
+            "Gunung Api Purba Nglanggeran",
+            "Agrowisata buah dan kebun lokal",
+            "Kesenian tradisional Jawa",
+        ],
+        image: "/assets/38826e03-83a4-482e-a720-492ac8bfaef5-cover_culture.jpg",
+        rating: 4.7,
+        reviews: 72,
+    },
+    {
+        id: 4,
+        title: "Desa Wisata Trunyan & Kintamani",
+        type: "Grup",
+        themes: ["Budaya", "Alam"],
+        durationDays: 5,
+        price: 4200000,
+        destinations: ["Bali"],
+        highlights: [
+            "Pemakaman kuno unik di Trunyan",
+            "Panorama Danau Batur yang memukau",
+            "Kehidupan masyarakat Bali Aga",
+        ],
+        image: "/assets/7a750ea3-4682-4260-acf4-eb18b2ccc0a0-fa723100cbf6b45c3c8aa40ca4adf9b82222.jpg",
+        rating: 4.6,
+        reviews: 54,
+    },
+    {
+        id: 5,
+        title: "Desa Sade Lombok",
+        type: "Privat",
+        themes: ["Budaya", "Pantai"],
+        durationDays: 3,
+        price: 2800000,
+        destinations: ["Lombok", "NTB"],
+        highlights: [
+            "Rumah adat suku Sasak yang autentik",
+            "Tenun tradisional khas Lombok",
+            "Pantai selatan yang eksotis",
+        ],
+        image: "/assets/9b4e5aa3-5ec7-4c73-b146-e0f45b9eff94-mistakes_Gallery_road.jpg",
+        rating: 4.8,
+        reviews: 88,
+    },
+    {
+        id: 6,
+        title: "Desa Wisata Osing Banyuwangi",
+        type: "Grup",
+        themes: ["Budaya", "Festival"],
+        durationDays: 4,
+        price: 3500000,
+        destinations: ["Jawa Timur"],
+        highlights: [
+            "Budaya suku Osing yang unik",
+            "Festival Gandrung Sewu spektakuler",
+            "Kawah Ijen & pantai timur Jawa",
+        ],
+        image: "/assets/22f1c083-1bb1-4fb6-a963-93b1e67341ef-36eb93d315a100c3d3098747caaa90d33.jpg",
+        rating: 4.7,
+        reviews: 61,
+    },
+    {
+        id: 7,
+        title: "Desa Adat Baduy Dalam",
+        type: "Privat",
+        themes: ["Budaya", "Trekking"],
+        durationDays: 2,
+        price: 1500000,
+        destinations: ["Banten", "Jawa Barat"],
+        highlights: [
+            "Merasakan hidup tanpa teknologi",
+            "Trekking menuju permukiman terpencil",
+            "Kearifan lokal Suku Baduy",
+        ],
+        image: "/assets/e50bd774-982a-4206-b5b9-3ace3c9c8f27-gobi_gallery1.jpg",
+        rating: 4.9,
+        reviews: 43,
+    },
+    {
+        id: 8,
+        title: "Danau Toba & Desa Tomok Samosir",
+        type: "Grup",
+        themes: ["Alam", "Budaya", "Terlaris"],
+        durationDays: 6,
+        price: 5500000,
+        destinations: ["Sumatera Utara"],
+        highlights: [
+            "Danau vulkanik terbesar di dunia",
+            "Desa tradisional Batak Toba",
+            "Wisata budaya dan seni ukir Batak",
+        ],
+        image: "/assets/e4d847b7-3667-467f-992c-05ff8a23fde6-c6a9139fa9f5509fd47ec9df5236f669.jpg",
+        rating: 4.8,
+        reviews: 117,
+    },
+    {
+        id: 9,
+        title: "Kampung Adat Praijing Sumba",
+        type: "Privat",
+        themes: ["Budaya", "Fotografi"],
+        durationDays: 5,
+        price: 6200000,
+        destinations: ["Sumba", "NTT"],
+        highlights: [
+            "Rumah adat beratap jerami tinggi",
+            "Tradisi perang adat Pasola",
+            "Savana dan pantai eksotis Sumba Barat",
+        ],
+        image: "/assets/38826e03-83a4-482e-a720-492ac8bfaef5-cover_culture.jpg",
+        rating: 5.0,
+        reviews: 31,
+    },
+    {
+        id: 10,
+        title: "Desa Wisata Candirejo Borobudur",
+        type: "Grup",
+        themes: ["Budaya", "Agrowisata"],
+        durationDays: 1,
+        price: 450000,
+        destinations: ["Jawa Tengah"],
+        highlights: [
+            "Bersepeda mengelilingi desa",
+            "Sunrise di Bukit Punthuk Setumbu",
+            "Kerajinan perak dan batik lokal",
+        ],
+        image: "/assets/7a750ea3-4682-4260-acf4-eb18b2ccc0a0-fa723100cbf6b45c3c8aa40ca4adf9b82222.jpg",
+        rating: 4.6,
+        reviews: 204,
+    },
+    {
+        id: 11,
+        title: "Desa Nelayan Bajo Komodo",
+        type: "Grup",
+        themes: ["Alam", "Pantai", "Terlaris"],
+        durationDays: 4,
+        price: 4800000,
+        destinations: ["Flores", "NTT"],
+        highlights: [
+            "Snorkeling di Taman Nasional Komodo",
+            "Bertemu komodo di habitatnya",
+            "Kehidupan nelayan Bajo di atas air",
+        ],
+        image: "/assets/9b4e5aa3-5ec7-4c73-b146-e0f45b9eff94-mistakes_Gallery_road.jpg",
+        rating: 4.9,
+        reviews: 156,
+    },
+    {
+        id: 12,
+        title: "Kampung Raja Ampat",
+        type: "Privat",
+        themes: ["Alam", "Pantai", "Fotografi"],
+        durationDays: 7,
+        price: 9500000,
+        destinations: ["Papua Barat"],
+        highlights: [
+            "Surga bawah laut dengan ribuan spesies",
+            "Desa nelayan tradisional di atas laut",
+            "Sunset di Piaynemo yang legendaris",
+        ],
+        image: "/assets/22f1c083-1bb1-4fb6-a963-93b1e67341ef-36eb93d315a100c3d3098747caaa90d33.jpg",
+        rating: 5.0,
+        reviews: 78,
+    },
+];
+
+const THEMES = ["Budaya", "Alam", "Trekking", "Pantai", "Agrowisata", "Festival", "Fotografi", "Terlaris"];
+const DURATIONS = [
+    { label: "1 hari", min: 1, max: 1 },
+    { label: "2–3 hari", min: 2, max: 3 },
+    { label: "4–7 hari", min: 4, max: 7 },
+    { label: "8+ hari", min: 8, max: 999 },
+];
+const DESTINATIONS = ["Bali", "Jawa Tengah", "Jawa Timur", "Jawa Barat", "Yogyakarta", "Lombok", "Flores", "Sumba", "Sumatera Utara", "Papua Barat", "Banten", "NTT", "NTB"];
+const TOURS_PER_PAGE = 6;
+
+export default function ToursPage() {
     return (
-        <div>page</div>
+        <ToursComponent allTours={ALL_TOURS} themes={THEMES} durations={DURATIONS} destinations={DESTINATIONS} toursPerPage={TOURS_PER_PAGE} />
     )
 }

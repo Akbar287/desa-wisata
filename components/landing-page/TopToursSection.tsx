@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 const tours = [
     {
@@ -266,7 +267,7 @@ export default function TopToursSection() {
 
                 {/* View All */}
                 <div style={{ textAlign: "center", marginTop: 48 }}>
-                    <a href="#" className="btn-outline">
+                    <Link href="/tours" className="btn-outline">
                         <svg
                             width="16"
                             height="16"
@@ -278,7 +279,7 @@ export default function TopToursSection() {
                             <polyline points="9 18 15 12 9 6" />
                         </svg>
                         Lihat Semua Paket Wisata
-                    </a>
+                    </Link>
                 </div>
             </div>
         </section>

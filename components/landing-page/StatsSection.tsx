@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import React from "react";
 
 const stats = [
     {
@@ -36,6 +37,7 @@ const stats = [
 ];
 
 export default function StatsSection() {
+    const [expandInfo, setExpandInfo] = React.useState<boolean>(false);
     return (
         <section
             id="about"
@@ -71,10 +73,9 @@ export default function StatsSection() {
                         lineHeight: 1.8,
                     }}
                 >
-                    Ingin pengalaman wisata yang otentik dan berbeda? Desa wisata
-                    Indonesia menawarkan perpaduan unik antara budaya, alam, dan
-                    sejarah. Jelajahi sawah terasering, perbukitan hijau, pantai
-                    tersembunyi, dan kenali kehidupan masyarakat lokal yang hangat…
+                    {
+                        expandInfo ? "Ingin pengalaman wisata yang otentik dan berbeda? Desa wisata Indonesia menawarkan perpaduan unik antara budaya, alam, dan sejarah. Jelajahi sawah terasering, perbukitan hijau, pantai tersembunyi, dan kenali kehidupan masyarakat lokal yang hangat." : "Ingin pengalaman wisata yang otentik dan berbeda? Desa wisata Indonesia menawarkan perpaduan unik antara budaya, alam, dan sejarah..."
+                    }
                 </p>
 
                 {/* Expand button */}
@@ -94,8 +95,9 @@ export default function StatsSection() {
                             justifyContent: "center",
                             transition: "all 0.3s",
                         }}
+                        onClick={() => setExpandInfo(!expandInfo)}
                     >
-                        +
+                        {expandInfo ? "-" : "+"}
                     </button>
                 </div>
 

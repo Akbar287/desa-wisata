@@ -3,6 +3,12 @@ import "./globals.css";
 import Navbar from "@/components/layouts/Navbar";
 import Footer from "@/components/layouts/Footer";
 import { ThemeProvider } from "@/components/theme-provider"
+import { Playfair } from "next/font/google"
+
+const playfair = Playfair({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+})
 
 const siteUrl = "https://desa-wisata-ui.vercel.app";
 const siteName = "Discover Desa Wisata";
@@ -112,7 +118,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="id" className={`${playfair.variable} ${playfair.className} antialiased`} suppressHydrationWarning>
       <body>
         <ThemeProvider
           attribute="class"

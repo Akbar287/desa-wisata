@@ -1,4 +1,4 @@
-import BookingIdComponents from "@/components/BookingIdComponents";
+import BlogIdComponents from "@/components/BlogIdComponents";
 import { BlogDetailPost } from "@/types/BlogType";
 
 const BLOG_DB: Record<number, BlogDetailPost> = {
@@ -40,5 +40,5 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ id:
     const postId = Number(id);
     const post = BLOG_DB[postId] ?? DEFAULT_POST;
 
-    return <BookingIdComponents post={post} />;
+    return <BlogIdComponents post={post} />;
 }

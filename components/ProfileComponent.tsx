@@ -197,7 +197,7 @@ export default function ProfileComponent({
                             <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent flex items-end p-8">
                                 <div>
                                     <h3 className="font-serif text-2xl font-bold text-white dark:text-gray-300 mb-2">Panorama Perbukitan</h3>
-                                    <p className="font-sans text-sm text-white/80 max-w-[300px]">
+                                    <p className="font-sans text-sm text-white/80 dark:text-gray-300 max-w-[300px]">
                                         Pemandangan spektakuler dari ketinggian 700–900 mdpl dengan udara segar pegunungan
                                     </p>
                                 </div>

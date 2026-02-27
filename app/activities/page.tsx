@@ -1,7 +1,7 @@
-import React from 'react'
+import ActivityComponents from '@/components/ActivityComponents'
 
 export default function page() {
     return (
-        <div>page</div>
+        <ActivityComponents />
     )
 }

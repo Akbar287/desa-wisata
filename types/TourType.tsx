@@ -41,3 +41,46 @@ export type TourDetail = {
     highlights: string[];
     goodToKnow: { title: string; text: string }[];
 };
+
+export interface SpecialPackage {
+    id: number;
+    title: string;
+    subtitle: string;
+    image: string;
+    price: number;
+    originalPrice: number;
+    discount: number;
+    badge: string;
+    badgeEmoji: string;
+    gradient: string;
+    durationDays: number;
+    groupSize: string;
+    rating: number;
+    reviews: number;
+    highlights: string[];
+    season: string;
+    dateRange: string;
+    limitedSlots: number;
+}
+
+export interface PrivatePackage {
+    id: number;
+    title: string;
+    tagline: string;
+    image: string;
+    duration: string;
+    maxGuests: number;
+    price: string;
+    priceNote: string;
+    highlights: string[];
+    includes: string[];
+    tier: 'gold' | 'platinum' | 'diamond';
+}
+
+export interface Testimonial {
+    name: string;
+    avatar: string;
+    role: string;
+    text: string;
+    rating: number;
+}

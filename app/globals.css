@@ -460,6 +460,24 @@ h6 {
   color: #0B1A12;
 }
 
+/* Tour detail responsive */
+.mobile-bottom-bar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .gallery-grid {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 200px 160px 160px !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .mobile-bottom-bar {
+    display: flex !important;
+  }
+}
+
 /* Tours responsive */
 @media (max-width: 768px) {
   .tours-sidebar {

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 const tours = [
     {
@@ -78,87 +79,74 @@ const tours = [
     },
 ];
 
+const cardVariants = {
+    hidden: { opacity: 0, x: 40 },
+    visible: (i: number) => ({
+        opacity: 1,
+        x: 0,
+        transition: { duration: 0.5, delay: i * 0.08, ease: "easeOut" as const },
+    }),
+};
+
 export default function TopToursSection() {
     return (
         <section
             id="tours"
-            style={{
-                padding: "100px 0 100px 0",
-                background: "var(--color-white)",
-            }}
+            className="py-24"
+            style={{ background: "var(--color-bg)" }}
         >
-            <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0 24px" }}>
+            <div className="max-w-[1320px] mx-auto px-6">
                 {/* Heading */}
-                <h2
+                <motion.h2
+                    className="font-serif font-bold text-center mb-12"
                     style={{
-                        fontFamily: "var(--font-heading)",
                         fontSize: "clamp(26px, 3.5vw, 42px)",
-                        fontWeight: 700,
-                        textAlign: "center",
                         color: "var(--color-text)",
-                        marginBottom: 48,
                     }}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
                 >
                     Paket Wisata Unggulan
-                </h2>
+                </motion.h2>
 
                 {/* Scrollable Cards */}
-                <div
-                    className="hide-scrollbar"
-                    style={{
-                        display: "flex",
-                        gap: 24,
-                        overflowX: "auto",
-                        paddingBottom: 20,
-                        scrollSnapType: "x mandatory",
-                    }}
+                <motion.div
+                    className="hide-scrollbar flex gap-6 overflow-x-auto pb-5"
+                    style={{ scrollSnapType: "x mandatory" }}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.1 }}
                 >
                     {tours.map((tour, i) => (
-                        <div
+                        <motion.div
                             key={i}
-                            className="tour-card"
+                            custom={i}
+                            variants={cardVariants}
+                            className="tour-card min-w-[340px] max-w-[340px] rounded-2xl overflow-hidden shrink-0"
                             style={{
-                                minWidth: 340,
-                                maxWidth: 340,
-                                borderRadius: "var(--radius-lg)",
-                                overflow: "hidden",
                                 background: "var(--color-white)",
                                 boxShadow: "var(--shadow-sm)",
-                                border: "1px solid rgba(0,0,0,0.06)",
+                                border: "1px solid var(--color-border-subtle)",
                                 scrollSnapAlign: "start",
-                                flexShrink: 0,
                             }}
                         >
                             {/* Image */}
-                            <div
-                                style={{
-                                    position: "relative",
-                                    height: 200,
-                                    overflow: "hidden",
-                                }}
-                            >
+                            <div className="relative h-[200px] overflow-hidden">
                                 <Image
                                     src={tour.image}
                                     alt={tour.title}
                                     fill
-                                    className="tour-card-image"
-                                    style={{ objectFit: "cover" }}
+                                    className="tour-card-image object-cover"
                                 />
                                 <span
+                                    className="absolute top-3 left-3 text-white px-3.5 py-1 rounded-full text-xs font-semibold font-sans"
                                     style={{
-                                        position: "absolute",
-                                        top: 12,
-                                        left: 12,
                                         background:
                                             tour.badge === "Privat"
                                                 ? "var(--color-primary)"
                                                 : "var(--color-accent)",
-                                        color: "white",
-                                        padding: "4px 14px",
-                                        borderRadius: "var(--radius-full)",
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        fontFamily: "var(--font-body)",
                                     }}
                                 >
                                     {tour.badge}
@@ -166,43 +154,21 @@ export default function TopToursSection() {
                             </div>
 
                             {/* Content */}
-                            <div style={{ padding: "20px 22px 24px" }}>
+                            <div className="px-5.5 py-5 pb-6">
                                 <h3
-                                    style={{
-                                        fontFamily: "var(--font-heading)",
-                                        fontSize: 18,
-                                        fontWeight: 700,
-                                        color: "var(--color-text)",
-                                        marginBottom: 14,
-                                        lineHeight: 1.3,
-                                    }}
+                                    className="font-serif text-lg font-bold mb-3.5 leading-snug"
+                                    style={{ color: "var(--color-text)" }}
                                 >
                                     {tour.title}
                                 </h3>
-                                <ul
-                                    style={{
-                                        listStyle: "none",
-                                        padding: 0,
-                                        margin: "0 0 18px",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 8,
-                                    }}
-                                >
+                                <ul className="flex flex-col gap-2 list-none p-0 mb-4.5">
                                     {tour.highlights.map((h, j) => (
                                         <li
                                             key={j}
-                                            style={{
-                                                fontSize: 13,
-                                                color: "var(--color-text-muted)",
-                                                fontFamily: "var(--font-body)",
-                                                display: "flex",
-                                                alignItems: "flex-start",
-                                                gap: 8,
-                                                lineHeight: 1.4,
-                                            }}
+                                            className="text-[13px] font-sans flex items-start gap-2 leading-snug"
+                                            style={{ color: "var(--color-text-muted)" }}
                                         >
-                                            <span style={{ color: "var(--color-primary)", flexShrink: 0 }}>•</span>
+                                            <span className="shrink-0" style={{ color: "var(--color-primary)" }}>•</span>
                                             {h}
                                         </li>
                                     ))}
@@ -210,42 +176,19 @@ export default function TopToursSection() {
 
                                 {/* Footer */}
                                 <div
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "space-between",
-                                        borderTop: "1px solid rgba(0,0,0,0.06)",
-                                        paddingTop: 14,
-                                    }}
+                                    className="flex items-center justify-between pt-3.5"
+                                    style={{ borderTop: "1px solid var(--color-border-subtle)" }}
                                 >
                                     <span
-                                        style={{
-                                            fontSize: 13,
-                                            color: "var(--color-text-muted)",
-                                            fontFamily: "var(--font-body)",
-                                        }}
+                                        className="text-[13px] font-sans"
+                                        style={{ color: "var(--color-text-muted)" }}
                                     >
                                         {tour.duration} &nbsp;•&nbsp; mulai {tour.price}
                                     </span>
-                                    <a
+                                    <Link
                                         href="#"
-                                        style={{
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            gap: 6,
-                                            color: "var(--color-accent)",
-                                            fontWeight: 600,
-                                            fontSize: 14,
-                                            fontFamily: "var(--font-body)",
-                                            textDecoration: "none",
-                                            transition: "gap 0.3s",
-                                        }}
-                                        onMouseEnter={(e) =>
-                                            (e.currentTarget.style.gap = "10px")
-                                        }
-                                        onMouseLeave={(e) =>
-                                            (e.currentTarget.style.gap = "6px")
-                                        }
+                                        className="inline-flex items-center gap-1.5 font-semibold text-sm font-sans no-underline transition-all duration-300 hover:gap-2.5"
+                                        style={{ color: "var(--color-accent)" }}
                                     >
                                         Selengkapnya
                                         <svg
@@ -258,15 +201,15 @@ export default function TopToursSection() {
                                         >
                                             <polyline points="9 18 15 12 9 6" />
                                         </svg>
-                                    </a>
+                                    </Link>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
 
                 {/* View All */}
-                <div style={{ textAlign: "center", marginTop: 48 }}>
+                <div className="text-center mt-12">
                     <Link href="/tours" className="btn-outline">
                         <svg
                             width="16"

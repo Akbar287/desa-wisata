@@ -23,7 +23,7 @@ const footerLinks = {
         { label: "Info Penting", href: "/blog?category=important-info" },
     ],
     "Tentang Kami": [
-        { label: "Profil Perusahaan", href: "/profile" },
+        { label: "Profil Desa", href: "/profile" },
         { label: "Tim Kami", href: "/our-team" },
         { label: "Lowongan Kerja", href: "/careers" },
         { label: "Yayasan Kami", href: "/foundation" },

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 const tabs = [
     { id: "tips", label: "Tips Perjalanan", icon: "ℹ" },
@@ -122,41 +123,29 @@ export default function TravelGuideSection() {
     return (
         <section
             id="blog"
-            style={{
-                padding: "100px 24px",
-                background: "var(--color-cream)",
-            }}
+            className="py-24 px-6"
+            style={{ background: "var(--color-cream)" }}
         >
-            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+            <div className="max-w-[1200px] mx-auto">
                 {/* Header */}
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                        flexWrap: "wrap",
-                        gap: 20,
-                        marginBottom: 40,
-                    }}
-                >
+                <div className="flex items-start justify-between flex-wrap gap-5 mb-10">
                     <div>
-                        <h2
+                        <motion.h2
+                            className="font-serif font-bold mb-2"
                             style={{
-                                fontFamily: "var(--font-heading)",
                                 fontSize: "clamp(26px, 3.5vw, 42px)",
-                                fontWeight: 700,
                                 color: "var(--color-text)",
-                                marginBottom: 8,
                             }}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.6 }}
                         >
                             Panduan Wisata Desa
-                        </h2>
+                        </motion.h2>
                         <p
-                            style={{
-                                fontFamily: "var(--font-body)",
-                                fontSize: 16,
-                                color: "var(--color-text-muted)",
-                            }}
+                            className="font-sans text-base"
+                            style={{ color: "var(--color-text-muted)" }}
                         >
                             Artikel & Tips: Jelajahi tips terbaik tentang desa wisata Indonesia
                         </p>
@@ -171,43 +160,17 @@ export default function TravelGuideSection() {
 
                 {/* Tabs */}
                 <div
-                    style={{
-                        display: "flex",
-                        gap: 0,
-                        background: "rgba(255,255,255,0.7)",
-                        borderRadius: "var(--radius-full)",
-                        padding: 4,
-                        marginBottom: 40,
-                        overflowX: "auto",
-                    }}
-                    className="hide-scrollbar"
+                    className="hide-scrollbar flex gap-0 rounded-full p-1 mb-10 overflow-x-auto"
+                    style={{ background: "var(--color-border-subtle)" }}
                 >
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={activeTab === tab.id ? "tab-active" : ""}
+                            className={`flex-1 min-w-[140px] py-3 px-5 rounded-full border-none font-sans text-sm font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === tab.id ? "tab-active" : ""}`}
                             style={{
-                                flex: 1,
-                                minWidth: 140,
-                                padding: "12px 20px",
-                                borderRadius: "var(--radius-full)",
-                                border: "none",
-                                background: "transparent",
-                                color:
-                                    activeTab === tab.id
-                                        ? "white"
-                                        : "var(--color-text-muted)",
-                                fontFamily: "var(--font-body)",
-                                fontSize: 14,
-                                fontWeight: 600,
-                                cursor: "pointer",
-                                transition: "all 0.3s",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 8,
-                                whiteSpace: "nowrap",
+                                background: activeTab === tab.id ? undefined : "transparent",
+                                color: activeTab === tab.id ? "white" : "var(--color-text-muted)",
                             }}
                         >
                             <span>{tab.icon}</span>
@@ -217,80 +180,60 @@ export default function TravelGuideSection() {
                 </div>
 
                 {/* Blog Cards */}
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
-                        gap: 24,
-                    }}
-                >
-                    {posts.map((post, i) => (
-                        <div
-                            key={`${activeTab}-${i}`}
-                            className="tour-card"
-                            style={{
-                                borderRadius: "var(--radius-lg)",
-                                overflow: "hidden",
-                                background: "var(--color-white)",
-                                boxShadow: "var(--shadow-sm)",
-                                cursor: "pointer",
-                                animation: "fadeInUp 0.5s ease forwards",
-                                animationDelay: `${i * 0.1}s`,
-                                opacity: 0,
-                            }}
-                        >
-                            <div
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        className="grid gap-6"
+                        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))" }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        {posts.map((post, i) => (
+                            <motion.div
+                                key={`${activeTab}-${i}`}
+                                className="tour-card rounded-2xl overflow-hidden cursor-pointer"
                                 style={{
-                                    position: "relative",
-                                    height: 200,
-                                    overflow: "hidden",
+                                    background: "var(--color-white)",
+                                    boxShadow: "var(--shadow-sm)",
                                 }}
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: i * 0.1 }}
                             >
-                                <Image
-                                    src={post.image}
-                                    alt={post.title}
-                                    fill
-                                    className="tour-card-image"
-                                    style={{ objectFit: "cover" }}
-                                />
-                            </div>
-                            <div style={{ padding: "20px 22px 24px" }}>
-                                <span
-                                    style={{
-                                        fontSize: 12,
-                                        color: "var(--color-text-muted)",
-                                        fontFamily: "var(--font-body)",
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    {post.date}
-                                </span>
-                                <h3
-                                    style={{
-                                        fontFamily: "var(--font-heading)",
-                                        fontSize: 18,
-                                        fontWeight: 700,
-                                        color: "var(--color-text)",
-                                        margin: "8px 0 10px",
-                                        lineHeight: 1.35,
-                                    }}
-                                >
-                                    {post.title}
-                                </h3>
-                                <p
-                                    style={{
-                                        fontSize: 14,
-                                        color: "var(--color-text-muted)",
-                                        fontFamily: "var(--font-body)",
-                                        lineHeight: 1.6,
-                                    }}
-                                >
-                                    {post.excerpt}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                                <div className="relative h-[200px] overflow-hidden">
+                                    <Image
+                                        src={post.image}
+                                        alt={post.title}
+                                        fill
+                                        className="tour-card-image object-cover"
+                                    />
+                                </div>
+                                <div className="px-5.5 py-5 pb-6">
+                                    <span
+                                        className="text-xs font-sans font-medium"
+                                        style={{ color: "var(--color-text-muted)" }}
+                                    >
+                                        {post.date}
+                                    </span>
+                                    <h3
+                                        className="font-serif text-lg font-bold mt-2 mb-2.5 leading-snug"
+                                        style={{ color: "var(--color-text)" }}
+                                    >
+                                        {post.title}
+                                    </h3>
+                                    <p
+                                        className="text-sm font-sans leading-relaxed"
+                                        style={{ color: "var(--color-text-muted)" }}
+                                    >
+                                        {post.excerpt}
+                                    </p>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </AnimatePresence>
             </div>
         </section>
     );

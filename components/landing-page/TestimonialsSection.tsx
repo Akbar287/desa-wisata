@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 const testimonials = [
     {
@@ -42,151 +43,117 @@ const testimonials = [
     },
 ];
 
+const containerVariants = {
+    hidden: {},
+    visible: {
+        transition: { staggerChildren: 0.1 },
+    },
+};
+
+const cardVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
+};
+
 export default function TestimonialsSection() {
     return (
         <section
-            style={{
-                padding: "100px 24px",
-                background: "var(--color-cream)",
-            }}
+            className="py-24 px-6"
+            style={{ background: "var(--color-cream)" }}
         >
-            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-                <h2
+            <div className="max-w-[1200px] mx-auto">
+                <motion.h2
+                    className="font-serif font-bold text-center mb-3"
                     style={{
-                        fontFamily: "var(--font-heading)",
                         fontSize: "clamp(26px, 3.5vw, 42px)",
-                        fontWeight: 700,
                         color: "var(--color-text)",
-                        textAlign: "center",
-                        marginBottom: 12,
                     }}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
                 >
                     Cerita dari Wisatawan Kami
-                </h2>
-                <p
-                    style={{
-                        fontFamily: "var(--font-body)",
-                        fontSize: 17,
-                        color: "var(--color-text-muted)",
-                        textAlign: "center",
-                        marginBottom: 60,
-                    }}
+                </motion.h2>
+                <motion.p
+                    className="font-sans text-[17px] text-center mb-15"
+                    style={{ color: "var(--color-text-muted)" }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
                 >
                     Pengalaman asli dari para wisatawan yang telah menjelajahi desa wisata bersama kami
-                </p>
+                </motion.p>
 
                 {/* Masonry Grid */}
-                <div
+                <motion.div
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.1 }}
                 >
                     {testimonials.map((t, i) => (
-                        <div
+                        <motion.div
                             key={i}
+                            variants={cardVariants}
+                            className="rounded-2xl p-8 pb-7 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-(--shadow-lg)"
                             style={{
-                                breakInside: "avoid",
-                                marginBottom: 24,
                                 background: "var(--color-white)",
-                                borderRadius: "var(--radius-lg)",
-                                padding: "32px 28px",
                                 boxShadow: "var(--shadow-sm)",
-                                border: "1px solid rgba(0,0,0,0.04)",
-                                transition: "transform 0.3s, box-shadow 0.3s",
-                                cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = "translateY(-4px)";
-                                e.currentTarget.style.boxShadow = "var(--shadow-lg)";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = "translateY(0)";
-                                e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+                                border: "1px solid var(--color-border-subtle)",
                             }}
                         >
                             {/* Quote icon */}
                             <div
-                                style={{
-                                    fontSize: 36,
-                                    color: "var(--color-accent)",
-                                    fontFamily: "Georgia, serif",
-                                    lineHeight: 1,
-                                    marginBottom: 16,
-                                    fontWeight: 700,
-                                }}
+                                className="text-4xl font-serif leading-none mb-4 font-bold"
+                                style={{ color: "var(--color-accent)" }}
                             >
                                 ❝
                             </div>
 
                             {/* Text */}
                             <p
-                                style={{
-                                    fontFamily: "var(--font-body)",
-                                    fontSize: 14,
-                                    lineHeight: 1.8,
-                                    color: "var(--color-text-light)",
-                                    marginBottom: 24,
-                                }}
+                                className="font-sans text-sm leading-relaxed mb-6"
+                                style={{ color: "var(--color-text-light)" }}
                             >
                                 {t.text}
                             </p>
 
                             {/* Author */}
-                            <div
-                                style={{
-                                    textAlign: "center",
-                                }}
-                            >
+                            <div className="text-center">
                                 <p
-                                    style={{
-                                        fontFamily: "var(--font-body)",
-                                        fontSize: 15,
-                                        fontWeight: 700,
-                                        color: "var(--color-accent)",
-                                        marginBottom: 4,
-                                    }}
+                                    className="font-sans text-[15px] font-bold mb-1"
+                                    style={{ color: "var(--color-accent)" }}
                                 >
                                     {t.name}
                                 </p>
                                 <p
-                                    style={{
-                                        fontFamily: "var(--font-body)",
-                                        fontSize: 13,
-                                        color: "var(--color-text-muted)",
-                                        marginBottom: 12,
-                                    }}
+                                    className="font-sans text-[13px] mb-3"
+                                    style={{ color: "var(--color-text-muted)" }}
                                 >
                                     {t.location}
                                 </p>
                                 <div
-                                    style={{
-                                        width: 56,
-                                        height: 56,
-                                        borderRadius: "50%",
-                                        overflow: "hidden",
-                                        margin: "0 auto",
-                                        border: "3px dashed var(--color-accent-light)",
-                                        padding: 3,
-                                    }}
+                                    className="w-14 h-14 rounded-full overflow-hidden mx-auto p-[3px]"
+                                    style={{ border: "3px dashed var(--color-accent-light)" }}
                                 >
                                     <Image
                                         src={t.avatar}
                                         alt={t.name}
                                         width={50}
                                         height={50}
-                                        style={{
-                                            borderRadius: "50%",
-                                            objectFit: "cover",
-                                            width: "100%",
-                                            height: "100%",
-                                        }}
+                                        className="rounded-full object-cover w-full h-full"
                                     />
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
 
                 {/* CTA */}
-                <div style={{ textAlign: "center", marginTop: 48 }}>
+                <div className="text-center mt-12">
                     <Link href="/testimonials" className="btn-outline">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <polyline points="9 18 15 12 9 6" />
@@ -195,20 +162,6 @@ export default function TestimonialsSection() {
                     </Link>
                 </div>
             </div>
-
-            {/* Responsive masonry override */}
-            <style jsx>{`
-        @media (max-width: 900px) {
-          div[style*="columnCount: 3"] {
-            column-count: 2 !important;
-          }
-        }
-        @media (max-width: 600px) {
-          div[style*="columnCount: 3"] {
-            column-count: 1 !important;
-          }
-        }
-      `}</style>
         </section>
     );
 }

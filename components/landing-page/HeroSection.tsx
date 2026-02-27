@@ -1,18 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function HeroSection() {
     return (
         <section
             id="hero"
-            style={{
-                position: "relative",
-                width: "100%",
-                height: "100vh",
-                minHeight: 700,
-                overflow: "hidden",
-            }}
+            className="relative w-full min-h-[700px] h-screen overflow-hidden"
         >
             {/* Video Background */}
             <video
@@ -20,55 +15,29 @@ export default function HeroSection() {
                 muted
                 loop
                 playsInline
-                style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                }}
+                className="absolute top-0 left-0 w-full h-full object-cover"
             >
                 <source src="/assets/hero-1.mp4" type="video/mp4" />
             </video>
 
             {/* Dark Overlay */}
-            <div
-                style={{
-                    position: "absolute",
-                    inset: 0,
-                    background:
-                        "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.65) 100%)",
-                }}
-            />
+            <div className="absolute inset-0 bg-linear-to-b from-black/35 via-black/50 to-black/65" />
 
             {/* Content */}
-            <div
-                style={{
-                    position: "relative",
-                    zIndex: 2,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    textAlign: "center",
-                    padding: "0 24px",
-                }}
-            >
-                {/* Icon */}
-                <div
-                    className="animate-float"
-                    style={{
-                        marginBottom: 24,
-                    }}
+            <div className="relative z-2 h-full flex flex-col items-center justify-center text-center px-6">
+                {/* Floating Icon */}
+                <motion.div
+                    className="animate-float mb-6"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
                 >
                     <svg
                         width="80"
                         height="80"
                         viewBox="0 0 80 80"
                         fill="none"
-                        style={{ opacity: 0.9 }}
+                        className="opacity-90"
                     >
                         <circle
                             cx="40"
@@ -86,85 +55,65 @@ export default function HeroSection() {
                         />
                         <circle cx="40" cy="35" r="5" fill="white" opacity="0.7" />
                     </svg>
-                </div>
+                </motion.div>
 
                 {/* Heading */}
-                <h1
-                    className="animate-fade-in-up"
+                <motion.h1
+                    className="text-white font-serif font-bold mb-5 max-w-[800px] tracking-tight dark:text-gray-200"
                     style={{
-                        color: "white",
                         fontSize: "clamp(36px, 5vw, 72px)",
-                        fontFamily: "var(--font-heading)",
-                        fontWeight: 700,
-                        marginBottom: 20,
-                        maxWidth: 800,
-                        letterSpacing: "-0.02em",
                         textShadow: "0 4px 30px rgba(0,0,0,0.3)",
                     }}
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
                 >
                     Jelajahi Pesona Desa Wisata
-                </h1>
+                </motion.h1>
 
                 {/* Subtitle */}
-                <p
-                    className="animate-fade-in-up"
+                <motion.p
+                    className="text-white/90 max-w-[650px] leading-relaxed mb-10 dark:text-gray-200"
                     style={{
-                        color: "rgba(255,255,255,0.9)",
                         fontSize: "clamp(16px, 2vw, 22px)",
-                        maxWidth: 650,
-                        lineHeight: 1.6,
-                        marginBottom: 40,
-                        animationDelay: "0.2s",
                         textShadow: "0 2px 10px rgba(0,0,0,0.2)",
                     }}
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
                 >
                     Rasakan keindahan alam, kearifan budaya, dan keramahan masyarakat
                     desa wisata Indonesia bersama para ahli lokal.
-                </p>
-
-                {/* Scroll indicator */}
-                <div
-                    style={{
-                        position: "absolute",
-                        bottom: 60,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: 12,
-                    }}
-                >
-                    <div
-                        className="animate-scroll-line"
-                        style={{
-                            width: 2,
-                            background: "rgba(255,255,255,0.6)",
-                            borderRadius: 1,
-                        }}
-                    />
-                </div>
+                </motion.p>
 
                 {/* CTA Button */}
-                <Link
-                    href="/tours"
-                    className="btn-primary animate-fade-in-up"
-                    style={{
-                        animationDelay: "0.4s",
-                        fontSize: 16,
-                        padding: "16px 36px",
-                    }}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.6 }}
                 >
-                    <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                    <Link
+                        href="/tours"
+                        className="btn-primary text-base py-4 px-9"
                     >
-                        <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                    Mulai Petualangan
-                </Link>
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                        >
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                        Mulai Petualangan
+                    </Link>
+                </motion.div>
+
+                {/* Scroll indicator */}
+                <div className="absolute bottom-15 flex flex-col items-center gap-3">
+                    <div className="animate-scroll-line w-0.5 bg-white/60 rounded-sm" />
+                </div>
             </div>
         </section>
     );

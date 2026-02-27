@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layouts/Navbar";
 import Footer from "@/components/layouts/Footer";
+import { ThemeProvider } from "@/components/theme-provider"
 
 const siteUrl = "https://desa-wisata-ui.vercel.app";
 const siteName = "Discover Desa Wisata";
@@ -9,7 +10,6 @@ const siteDescription =
   "Temukan keindahan desa wisata Indonesia bersama para ahli lokal. Nikmati paket wisata privat & grup, pengalaman budaya autentik, kuliner tradisional, dan itinerari yang disesuaikan untuk petualangan tak terlupakan di pedesaan Indonesia.";
 
 export const metadata: Metadata = {
-  // ─── Core ───────────────────────────────────────────
   title: {
     default: "Discover Desa Wisata — Jelajahi Pesona Desa Wisata Indonesia",
     template: "%s | Discover Desa Wisata",
@@ -112,11 +112,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
       <body>
-        <Navbar />
-        {children}
-        <Footer />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Navbar />
+          {children}
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

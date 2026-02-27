@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 const reasons = [
     {
@@ -45,135 +46,87 @@ const reasons = [
     },
 ];
 
+const containerVariants = {
+    hidden: {},
+    visible: {
+        transition: { staggerChildren: 0.08 },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" as const } },
+};
+
 export default function WhyWithUsSection() {
     return (
         <section
             id="about-us"
+            className="py-24 relative overflow-hidden"
             style={{
-                padding: "100px 0",
                 background:
                     "linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 50%, var(--color-primary-light) 100%)",
-                position: "relative",
-                overflow: "hidden",
             }}
         >
             {/* Background pattern */}
             <div
-                style={{
-                    position: "absolute",
-                    inset: 0,
-                    backgroundImage: `url('/assets/statbg.png')`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    opacity: 0.08,
-                }}
+                className="absolute inset-0 bg-cover bg-center opacity-[0.08]"
+                style={{ backgroundImage: "url('/assets/statbg.png')" }}
             />
 
-            <div
-                style={{
-                    position: "relative",
-                    zIndex: 2,
-                    maxWidth: 1200,
-                    margin: "0 auto",
-                    padding: "0 24px",
-                }}
-            >
-                <h2
-                    style={{
-                        fontFamily: "var(--font-heading)",
-                        fontSize: "clamp(26px, 3.5vw, 42px)",
-                        fontWeight: 700,
-                        color: "white",
-                        textAlign: "center",
-                        marginBottom: 12,
-                    }}
+            <div className="relative z-2 max-w-[1200px] mx-auto px-6">
+                <motion.h2
+                    className="font-serif font-bold text-white text-center mb-3"
+                    style={{ fontSize: "clamp(26px, 3.5vw, 42px)" }}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
                 >
                     Mengapa Bersama Kami
-                </h2>
-                <p
-                    style={{
-                        fontFamily: "var(--font-body)",
-                        fontSize: 17,
-                        color: "rgba(255,255,255,0.8)",
-                        textAlign: "center",
-                        marginBottom: 60,
-                    }}
+                </motion.h2>
+                <motion.p
+                    className="font-sans text-[17px] text-white/80 text-center mb-15"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
                 >
                     Alasan mengapa Anda harus merencanakan wisata bersama Discover Desa Wisata
-                </p>
+                </motion.p>
 
                 {/* Cards Grid */}
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
-                        gap: 20,
-                    }}
+                <motion.div
+                    className="grid gap-5"
+                    style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))" }}
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.15 }}
                 >
                     {reasons.map((reason, i) => (
-                        <div
+                        <motion.div
                             key={i}
-                            style={{
-                                position: "relative",
-                                borderRadius: "var(--radius-lg)",
-                                overflow: "hidden",
-                                aspectRatio: "1",
-                                cursor: "pointer",
-                                transition: "transform 0.4s, box-shadow 0.4s",
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = "translateY(-6px)";
-                                e.currentTarget.style.boxShadow =
-                                    "0 20px 40px rgba(0,0,0,0.3)";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = "translateY(0)";
-                                e.currentTarget.style.boxShadow = "none";
-                            }}
+                            variants={itemVariants}
+                            className="relative rounded-2xl overflow-hidden aspect-square cursor-pointer transition-all duration-400 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)]"
                         >
                             <Image
                                 src={reason.image}
                                 alt={reason.title}
                                 fill
-                                style={{ objectFit: "cover" }}
+                                className="object-cover"
                             />
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    inset: 0,
-                                    background:
-                                        "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    justifyContent: "flex-end",
-                                    padding: 24,
-                                }}
-                            >
-                                <h3
-                                    style={{
-                                        fontFamily: "var(--font-heading)",
-                                        fontSize: 20,
-                                        fontWeight: 700,
-                                        color: "white",
-                                        marginBottom: 6,
-                                    }}
-                                >
+                            <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent flex flex-col justify-end p-6">
+                                <h3 className="font-serif text-xl font-bold text-white mb-1.5 dark:text-gray-300">
                                     {reason.title}
                                 </h3>
-                                <p
-                                    style={{
-                                        fontFamily: "var(--font-body)",
-                                        fontSize: 13,
-                                        color: "rgba(255,255,255,0.8)",
-                                        lineHeight: 1.5,
-                                    }}
-                                >
+                                <p className="font-sans text-[13px] text-white/80 leading-normal dark:text-gray-300">
                                     {reason.description}
                                 </p>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
             </div>
         </section>
     );

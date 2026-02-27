@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import React from "react";
+import { motion } from "framer-motion";
 
 const stats = [
     {
@@ -36,64 +37,66 @@ const stats = [
     },
 ];
 
+const containerVariants = {
+    hidden: {},
+    visible: {
+        transition: { staggerChildren: 0.1 },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
+};
+
 export default function StatsSection() {
     const [expandInfo, setExpandInfo] = React.useState<boolean>(false);
     return (
         <section
             id="about"
-            style={{
-                padding: "100px 24px",
-                background: "var(--color-white)",
-            }}
+            className="py-24 px-6"
+            style={{ background: "var(--color-bg)" }}
         >
-            <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+            <div className="max-w-[1100px] mx-auto">
                 {/* Heading */}
-                <h2
+                <motion.h2
+                    className="font-serif font-bold text-center mb-5"
                     style={{
-                        fontFamily: "var(--font-heading)",
                         fontSize: "clamp(28px, 3.5vw, 44px)",
-                        fontWeight: 700,
                         color: "var(--color-text)",
-                        textAlign: "center",
-                        marginBottom: 20,
                     }}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
                 >
                     Indonesia Penuh Pesona di 2026
-                </h2>
+                </motion.h2>
 
                 {/* Description */}
-                <p
+                <motion.p
+                    className="font-sans text-center max-w-[750px] mx-auto mb-6 leading-relaxed"
                     style={{
-                        fontFamily: "var(--font-body)",
                         fontSize: "clamp(15px, 1.3vw, 18px)",
                         color: "var(--color-text-light)",
-                        textAlign: "center",
-                        maxWidth: 750,
-                        margin: "0 auto 24px",
-                        lineHeight: 1.8,
                     }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.15 }}
                 >
                     {
                         expandInfo ? "Ingin pengalaman wisata yang otentik dan berbeda? Desa wisata Indonesia menawarkan perpaduan unik antara budaya, alam, dan sejarah. Jelajahi sawah terasering, perbukitan hijau, pantai tersembunyi, dan kenali kehidupan masyarakat lokal yang hangat." : "Ingin pengalaman wisata yang otentik dan berbeda? Desa wisata Indonesia menawarkan perpaduan unik antara budaya, alam, dan sejarah..."
                     }
-                </p>
+                </motion.p>
 
                 {/* Expand button */}
-                <div style={{ textAlign: "center", marginBottom: 60 }}>
+                <div className="text-center mb-15">
                     <button
+                        className="w-11 h-11 rounded-full border-2 bg-transparent cursor-pointer text-xl inline-flex items-center justify-center transition-all duration-300 hover:scale-110"
                         style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: "50%",
-                            border: "2px solid var(--color-accent)",
-                            background: "transparent",
+                            borderColor: "var(--color-accent)",
                             color: "var(--color-accent)",
-                            cursor: "pointer",
-                            fontSize: 20,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            transition: "all 0.3s",
                         }}
                         onClick={() => setExpandInfo(!expandInfo)}
                     >
@@ -102,73 +105,39 @@ export default function StatsSection() {
                 </div>
 
                 {/* Stats Grid */}
-                <div
+                <motion.div
                     className="grid grid-cols-2 lg:grid-cols-3 gap-2"
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.2 }}
                 >
                     {stats.map((stat, i) => (
-                        <div
+                        <motion.div
                             key={i}
-                            style={{
-                                position: "relative",
-                                borderRadius: "var(--radius-md)",
-                                overflow: "hidden",
-                                aspectRatio: "1",
-                                cursor: "pointer",
-                                transition: "transform 0.4s",
-                            }}
-                            onMouseEnter={(e) =>
-                                (e.currentTarget.style.transform = "scale(1.03)")
-                            }
-                            onMouseLeave={(e) =>
-                                (e.currentTarget.style.transform = "scale(1)")
-                            }
+                            variants={itemVariants}
+                            className="relative rounded-xl overflow-hidden aspect-square cursor-pointer transition-transform duration-400 hover:scale-[1.03]"
                         >
                             <Image
                                 src={stat.image}
                                 alt={stat.label}
                                 fill
-                                style={{
-                                    objectFit: "cover",
-                                }}
+                                className="object-cover"
                             />
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    inset: 0,
-                                    background:
-                                        "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    justifyContent: "flex-end",
-                                    padding: 20,
-                                }}
-                            >
+                            <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/15 to-transparent flex flex-col justify-end p-5">
                                 <span
-                                    style={{
-                                        fontFamily: "var(--font-heading)",
-                                        fontSize: "clamp(24px, 3vw, 36px)",
-                                        fontWeight: 700,
-                                        color: "white",
-                                        lineHeight: 1.1,
-                                    }}
+                                    className="font-serif font-bold text-white leading-tight dark:text-gray-300"
+                                    style={{ fontSize: "clamp(24px, 3vw, 36px)" }}
                                 >
                                     {stat.number}
                                 </span>
-                                <span
-                                    style={{
-                                        fontFamily: "var(--font-body)",
-                                        fontSize: 14,
-                                        color: "rgba(255,255,255,0.85)",
-                                        fontWeight: 500,
-                                        marginTop: 4,
-                                    }}
-                                >
+                                <span className="font-sans text-sm text-white/85 font-medium mt-1 dark:text-gray-300">
                                     {stat.label}
                                 </span>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
             </div>
         </section>
     );

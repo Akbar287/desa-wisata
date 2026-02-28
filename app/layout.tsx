@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import 'nprogress/nprogress.css'
 import Navbar from "@/components/layouts/Navbar";
 import Footer from "@/components/layouts/Footer";
-import { ThemeProvider } from "@/components/theme-provider"
 import { Playfair } from "next/font/google"
+import { ThemeProvider } from "@/provider/theme-provider";
+import Providers from "@/provider/auth-providers";
+import { getSession } from "@/provider/api";
+import { Toaster } from '@/components/ui/sonner'
+import { RouteProgress } from '@/lib/router-progress'
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layouts/app-sidebar";
+import { SiteHeader } from "@/components/layouts/site-header";
+import { SectionCards } from "@/components/layouts/section-cards";
+import { ChartAreaInteractive } from "@/components/layouts/chart-area-interactive";
+import { DataTable } from "@/components/layouts/data-table";
 
 const playfair = Playfair({
   subsets: ["latin"],
@@ -50,7 +61,6 @@ export const metadata: Metadata = {
     languages: { "id-ID": "/", "en-US": "/en" },
   },
 
-  // ─── Favicon / Icons ───────────────────────────────
   icons: {
     icon: [
       { url: "/favicon_io/favicon.ico", sizes: "any" },
@@ -63,7 +73,6 @@ export const metadata: Metadata = {
   },
   manifest: "/favicon_io/site.webmanifest",
 
-  // ─── Open Graph ─────────────────────────────────────
   openGraph: {
     type: "website",
     locale: "id_ID",
@@ -81,7 +90,6 @@ export const metadata: Metadata = {
     ],
   },
 
-  // ─── Twitter ────────────────────────────────────────
   twitter: {
     card: "summary_large_image",
     title: "Discover Desa Wisata — Jelajahi Pesona Desa Wisata Indonesia",
@@ -90,20 +98,19 @@ export const metadata: Metadata = {
     creator: "@discoverdesa",
   },
 
-  // ─── Robots ─────────────────────────────────────────
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
+    nocache: false,
+    noarchive: false,
+    noimageindex: false,
+    notranslate: false,
+    nosnippet: false,
+    'max-image-preview': 'large',
+    'max-video-preview': -1,
+    'max-snippet': -1,
   },
 
-  // ─── Misc ───────────────────────────────────────────
   category: "travel",
   other: {
     "geo.region": "ID",
@@ -112,24 +119,63 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession()
+  console.log(session)
   return (
     <html lang="id" className={`${playfair.variable} ${playfair.className} antialiased`} suppressHydrationWarning>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Navbar />
-          {children}
-          <Footer />
-        </ThemeProvider>
+        <RouteProgress />
+        <Providers session={session}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {session ?
+              <SidebarProvider
+                style={
+                  {
+                    "--sidebar-width": "calc(var(--spacing) * 72)",
+                    "--header-height": "calc(var(--spacing) * 12)",
+                  } as React.CSSProperties
+                }
+              >
+                <AppSidebar variant="inset" />
+                <SidebarInset>
+                  <SiteHeader />
+                  <div className="flex flex-1 flex-col">
+                    <div className="@container/main flex flex-1 flex-col gap-2">
+                      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                        <SectionCards />
+                        <div className="px-4 lg:px-6">
+                          <ChartAreaInteractive />
+                        </div>
+                        {/* <DataTable data={data} /> */}
+                      </div>
+                    </div>
+                  </div>
+                </SidebarInset>
+              </SidebarProvider> :
+              <>
+                <Navbar />
+                {children}
+                <Footer />
+              </>
+            }
+            <Toaster
+              position="bottom-center"
+              toastOptions={{
+                duration: 3000,
+              }}
+            />
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

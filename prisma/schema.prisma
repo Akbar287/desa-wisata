@@ -12,3 +12,614 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum TourType {
+  GRUP
+  PRIVAT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum MealType {
+  B // Breakfast
+  L // Lunch
+  D // Dinner
+}
+
+enum TourDateStatus {
+  AVAILABLE
+  ALMOST_FULL
+  FULL
+  CLOSED
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  ANSWERED
+  CLOSED
+}
+
+enum TripStatus {
+  OPEN
+  ALMOST_FULL
+  FULL
+  CANCELLED
+}
+
+enum PrivatePackageTier {
+  GOLD
+  PLATINUM
+  DIAMOND
+}
+
+model Destination {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tours TourDestination[]
+
+  @@map("destinations")
+}
+
+model Theme {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tours TourTheme[]
+
+  @@map("themes")
+}
+
+model Tour {
+  id           Int      @id @default(autoincrement())
+  title        String
+  type         TourType
+  durationDays Int
+  price        Int
+  image        String
+  rating       Float    @default(0)
+  reviewCount  Int      @default(0)
+  overview     String?  @db.Text
+  heroImage    String?
+  groupSize    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  themes       TourTheme[]
+  destinations TourDestination[]
+  highlights   TourHighlight[]
+  gallery      TourGallery[]
+  itinerary    DayItinerary[]
+  included     TourInclusion[]
+  excluded     TourExclusion[]
+  dates        TourDate[]
+  reviews      TourReview[]
+  goodToKnow   TourGoodToKnow[]
+  relatedFrom  TourRelated[]     @relation("RelatedFrom")
+  relatedTo    TourRelated[]     @relation("RelatedTo")
+  bookings     Booking[]
+  tripEntries  TripEntry[]
+  specialPkg   SpecialPackage?
+  privatePkg   PrivatePackage?
+
+  @@map("tours")
+}
+
+model TourTheme {
+  tourId  Int
+  themeId Int
+  tour    Tour  @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  theme   Theme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@id([tourId, themeId])
+  @@map("tour_themes")
+}
+
+model TourDestination {
+  tourId        Int
+  destinationId Int
+  tour          Tour        @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@id([tourId, destinationId])
+  @@map("tour_destinations")
+}
+
+model TourHighlight {
+  id     Int    @id @default(autoincrement())
+  tourId Int
+  text   String
+  order  Int    @default(0)
+  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_highlights")
+}
+
+model TourGallery {
+  id     Int    @id @default(autoincrement())
+  tourId Int
+  image  String
+  order  Int    @default(0)
+  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_gallery")
+}
+
+model TourInclusion {
+  id     Int    @id @default(autoincrement())
+  tourId Int
+  text   String
+  order  Int    @default(0)
+  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_inclusions")
+}
+
+model TourExclusion {
+  id     Int    @id @default(autoincrement())
+  tourId Int
+  text   String
+  order  Int    @default(0)
+  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_exclusions")
+}
+
+model TourGoodToKnow {
+  id     Int    @id @default(autoincrement())
+  tourId Int
+  title  String
+  text   String @db.Text
+  order  Int    @default(0)
+  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_good_to_know")
+}
+
+model TourRelated {
+  fromTourId Int
+  toTourId   Int
+  fromTour   Tour @relation("RelatedFrom", fields: [fromTourId], references: [id], onDelete: Cascade)
+  toTour     Tour @relation("RelatedTo", fields: [toTourId], references: [id], onDelete: Cascade)
+
+  @@id([fromTourId, toTourId])
+  @@map("tour_related")
+}
+
+// ─── ITINERARY ──────────────────────────────────────────────────────────────────
+
+model DayItinerary {
+  id          Int     @id @default(autoincrement())
+  tourId      Int
+  day         Int
+  title       String
+  description String  @db.Text
+  distance    String?
+  tour        Tour    @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  meals DayItineraryMeal[]
+
+  @@unique([tourId, day])
+  @@map("day_itineraries")
+}
+
+model DayItineraryMeal {
+  id             Int          @id @default(autoincrement())
+  dayItineraryId Int
+  meal           MealType
+  dayItinerary   DayItinerary @relation(fields: [dayItineraryId], references: [id], onDelete: Cascade)
+
+  @@map("day_itinerary_meals")
+}
+
+// ─── TOUR DATES ─────────────────────────────────────────────────────────────────
+
+model TourDate {
+  id        Int            @id @default(autoincrement())
+  tourId    Int
+  startDate DateTime
+  endDate   DateTime
+  status    TourDateStatus @default(AVAILABLE)
+  price     Int
+  tour      Tour           @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_dates")
+}
+
+// ─── TOUR REVIEWS ───────────────────────────────────────────────────────────────
+
+model TourReview {
+  id        Int      @id @default(autoincrement())
+  tourId    Int
+  name      String
+  avatar    String?
+  rating    Float
+  date      DateTime
+  text      String   @db.Text
+  location  String?
+  createdAt DateTime @default(now())
+  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_reviews")
+}
+
+model SpecialPackage {
+  id            Int    @id @default(autoincrement())
+  tourId        Int    @unique
+  subtitle      String
+  originalPrice Int
+  discount      Int
+  badge         String
+  badgeEmoji    String
+  gradient      String
+  groupSize     String
+  season        String
+  dateRange     String
+  limitedSlots  Int
+  tour          Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("special_packages")
+}
+
+model PrivatePackage {
+  id        Int                @id @default(autoincrement())
+  tourId    Int                @unique
+  tagline   String
+  maxGuests Int
+  priceNote String
+  tier      PrivatePackageTier
+  tour      Tour               @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  includes PrivatePackageInclusion[]
+
+  @@map("private_packages")
+}
+
+model PrivatePackageInclusion {
+  id               Int            @id @default(autoincrement())
+  privatePackageId Int
+  text             String
+  order            Int            @default(0)
+  privatePackage   PrivatePackage @relation(fields: [privatePackageId], references: [id], onDelete: Cascade)
+
+  @@map("private_package_inclusions")
+}
+
+model Testimonial {
+  id        Int      @id @default(autoincrement())
+  name      String
+  avatar    String?
+  role      String
+  text      String   @db.Text
+  rating    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("testimonials")
+}
+
+model BlogPost {
+  id        Int      @id @default(autoincrement())
+  title     String
+  excerpt   String   @db.Text
+  image     String
+  date      DateTime
+  category  String
+  readTime  String
+  authorId  Int?
+  content   String[] @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author      BlogAuthor?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  tags        BlogTag[]
+  relatedFrom BlogRelated[] @relation("BlogRelatedFrom")
+  relatedTo   BlogRelated[] @relation("BlogRelatedTo")
+
+  @@map("blog_posts")
+}
+
+model BlogAuthor {
+  id     Int     @id @default(autoincrement())
+  name   String
+  avatar String?
+  role   String
+
+  posts BlogPost[]
+
+  @@map("blog_authors")
+}
+
+model BlogTag {
+  id     Int      @id @default(autoincrement())
+  postId Int
+  tag    String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("blog_tags")
+}
+
+model BlogRelated {
+  fromPostId Int
+  toPostId   Int
+  fromPost   BlogPost @relation("BlogRelatedFrom", fields: [fromPostId], references: [id], onDelete: Cascade)
+  toPost     BlogPost @relation("BlogRelatedTo", fields: [toPostId], references: [id], onDelete: Cascade)
+
+  @@id([fromPostId, toPostId])
+  @@map("blog_related")
+}
+
+model TripMonth {
+  id    Int    @id @default(autoincrement())
+  slug  String @unique
+  label String
+  year  Int
+
+  trips TripEntry[]
+
+  @@map("trip_months")
+}
+
+model TripEntry {
+  id          Int        @id @default(autoincrement())
+  tripMonthId Int
+  tourId      Int?
+  dateStart   DateTime
+  dateEnd     DateTime
+  duration    String
+  status      TripStatus @default(OPEN)
+  info        String?
+
+  tripMonth TripMonth @relation(fields: [tripMonthId], references: [id], onDelete: Cascade)
+  tour      Tour?     @relation(fields: [tourId], references: [id], onDelete: SetNull)
+
+  @@map("trip_entries")
+}
+
+model TeamCategory {
+  id          Int      @id @default(autoincrement())
+  title       String
+  emoji       String
+  description String
+  gradient    String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members TeamMember[]
+
+  @@map("team_categories")
+}
+
+model TeamMember {
+  id             Int      @id @default(autoincrement())
+  teamCategoryId Int
+  name           String
+  role           String
+  avatar         String?
+  experience     String
+  specialty      String
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  teamCategory TeamCategory @relation(fields: [teamCategoryId], references: [id], onDelete: Cascade)
+
+  @@map("team_members")
+}
+
+model JobListing {
+  id              Int      @id @default(autoincrement())
+  title           String
+  department      String
+  departmentEmoji String
+  gradient        String
+  type            JobType
+  location        String
+  salary          String
+  deadline        DateTime
+  postedDate      DateTime
+  slots           Int
+  summary         String   @db.Text
+  workSchedule    String
+  contact         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  responsibilities JobResponsibility[]
+  requirements     JobRequirement[]
+  benefits         JobBenefit[]
+  qualifications   JobQualification[]
+
+  @@map("job_listings")
+}
+
+model JobResponsibility {
+  id           Int        @id @default(autoincrement())
+  jobListingId Int
+  text         String
+  order        Int        @default(0)
+  jobListing   JobListing @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+
+  @@map("job_responsibilities")
+}
+
+model JobRequirement {
+  id           Int        @id @default(autoincrement())
+  jobListingId Int
+  label        String
+  order        Int        @default(0)
+  jobListing   JobListing @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+
+  @@map("job_requirements")
+}
+
+model JobBenefit {
+  id           Int        @id @default(autoincrement())
+  jobListingId Int
+  emoji        String
+  label        String
+  order        Int        @default(0)
+  jobListing   JobListing @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+
+  @@map("job_benefits")
+}
+
+model JobQualification {
+  id           Int        @id @default(autoincrement())
+  jobListingId Int
+  text         String
+  order        Int        @default(0)
+  jobListing   JobListing @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+
+  @@map("job_qualifications")
+}
+
+model Booking {
+  id          Int           @id @default(autoincrement())
+  tourId      Int
+  firstName   String        @db.VarChar(50)
+  lastName    String        @db.VarChar(50)
+  gender      Gender
+  birthDate   DateTime
+  nationality String
+  email       String
+  phoneCode   String
+  phoneNumber String
+  adults      Int
+  children    Int           @default(0)
+  startDate   DateTime
+  endDate     DateTime
+  findUs      String
+  comments    String?       @db.Text
+  acceptTerms Boolean       @default(true)
+  status      BookingStatus @default(PENDING)
+  totalPrice  Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+model Inquiry {
+  id          Int           @id @default(autoincrement())
+  firstName   String        @db.VarChar(50)
+  lastName    String        @db.VarChar(50)
+  email       String
+  phoneCode   String?
+  phoneNumber String?
+  subject     String?
+  travelPlans String        @db.Text
+  tourSlug    String?
+  status      InquiryStatus @default(NEW)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("inquiries")
+}
+
+model VipPerk {
+  id        Int      @id @default(autoincrement())
+  emoji     String
+  title     String
+  desc      String   @db.Text
+  category  String   @default("private") // "private" | "group"
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("vip_perks")
+}
+
+model User {
+  id          Int         @id @default(autoincrement())
+  name        String
+  email       String      @unique
+  age         Int
+  gender      Gender
+  nationality String
+  phoneCode   String
+  phoneNumber String
+  address     String
+  avatar      String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  UserRole    UserRole[]
+  UserLogin   UserLogin[]
+
+  @@map("users")
+}
+
+model UserRole {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  roleId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@map("user_roles")
+}
+
+model Role {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  UserRole    UserRole[]
+
+  @@map("roles")
+}
+
+model UserLogin {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  Username  String
+  Password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_logins")
+}
+
+model File {
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String
+  size      Int
+  file      Bytes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("files")
+}

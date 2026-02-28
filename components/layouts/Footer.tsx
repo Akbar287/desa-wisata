@@ -10,7 +10,7 @@ const footerLinks = {
         { label: "Wisata Grup", href: "/group-tours" },
         { label: "Wisata Privat", href: "/private-tours" },
     ],
-    "Tentang Indonesia": [
+    "Tentang Desa Wisata": [
         { label: "Informasi Praktis", href: "/practical-info" },
         { label: "Destinasi", href: "/destinations" },
         { label: "Aktivitas", href: "/activities" },

@@ -1,7 +1,7 @@
-import React from 'react'
+import FoundationComponents from '@/components/FoundationComponents'
 
 export default function page() {
     return (
-        <div>page</div>
+        <FoundationComponents />
     )
 }

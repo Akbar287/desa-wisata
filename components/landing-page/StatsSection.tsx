@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React from "react";
 import { motion } from "framer-motion";
+import { WaveDividerTop, VineDecoration } from "./NatureOverlay";
 
 const stats = [
     {
@@ -54,10 +55,12 @@ export default function StatsSection() {
     return (
         <section
             id="about"
-            className="py-24 px-6"
-            style={{ background: "var(--color-bg)" }}
+            className="section-earthy-green py-24 px-6 overflow-hidden"
         >
-            <div className="max-w-[1100px] mx-auto">
+            <WaveDividerTop fill="#E8F5E9" />
+            <VineDecoration position="left" />
+            <VineDecoration position="right" />
+            <div className="max-w-[1100px] mx-auto relative z-[3]">
                 {/* Heading */}
                 <motion.h2
                     className="font-serif font-bold text-center mb-5"

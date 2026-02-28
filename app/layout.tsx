@@ -3,6 +3,7 @@ import "./globals.css";
 import 'nprogress/nprogress.css'
 import Navbar from "@/components/layouts/Navbar";
 import Footer from "@/components/layouts/Footer";
+import LeafChatbot from "@/components/LeafChatbot";
 import { Playfair } from "next/font/google"
 import { ThemeProvider } from "@/provider/theme-provider";
 import Providers from "@/provider/auth-providers";
@@ -11,10 +12,6 @@ import { Toaster } from '@/components/ui/sonner'
 import { RouteProgress } from '@/lib/router-progress'
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layouts/app-sidebar";
-import { SiteHeader } from "@/components/layouts/site-header";
-import { SectionCards } from "@/components/layouts/section-cards";
-import { ChartAreaInteractive } from "@/components/layouts/chart-area-interactive";
-import { DataTable } from "@/components/layouts/data-table";
 
 const playfair = Playfair({
   subsets: ["latin"],
@@ -155,6 +152,7 @@ export default async function RootLayout({
                 <Navbar />
                 {children}
                 <Footer />
+                <LeafChatbot />
               </>
             }
             <Toaster

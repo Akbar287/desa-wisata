@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { WaveDividerTop, FireflyParticles } from "./NatureOverlay";
 
 const reasons = [
     {
@@ -68,11 +69,14 @@ export default function WhyWithUsSection() {
                     "linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 50%, var(--color-primary-light) 100%)",
             }}
         >
+            <WaveDividerTop fill="#1B4332" />
             {/* Background pattern */}
             <div
                 className="absolute inset-0 bg-cover bg-center opacity-[0.08]"
                 style={{ backgroundImage: "url('/assets/statbg.png')" }}
             />
+            {/* Firefly particles */}
+            <FireflyParticles count={10} />
 
             <div className="relative z-2 max-w-[1200px] mx-auto px-6">
                 <motion.h2

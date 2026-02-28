@@ -118,9 +118,23 @@ export default function Navbar() {
                     right: 0,
                     zIndex: 1000,
                     padding: scrolled ? "12px 0" : "20px 0",
-                    background: scrolled ? "var(--color-bg)" : "transparent",
-                    backdropFilter: scrolled ? "blur(12px)" : "none",
-                    boxShadow: scrolled ? "0 2px 20px rgba(0,0,0,0.08)" : "none",
+                    background: scrolled
+                        ? (mounted && resolvedTheme === "dark"
+                            ? "rgba(11, 26, 18, 0.6)"
+                            : "rgba(255, 255, 255, 0.55)")
+                        : "transparent",
+                    backdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
+                    WebkitBackdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
+                    boxShadow: scrolled
+                        ? (mounted && resolvedTheme === "dark"
+                            ? "0 1px 24px rgba(0,0,0,0.2)"
+                            : "0 1px 24px rgba(0,0,0,0.06)")
+                        : "none",
+                    borderBottom: scrolled
+                        ? (mounted && resolvedTheme === "dark"
+                            ? "1px solid rgba(255,255,255,0.08)"
+                            : "1px solid rgba(255,255,255,0.35)")
+                        : "none",
                     transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
             >

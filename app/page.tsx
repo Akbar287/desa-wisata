@@ -5,6 +5,7 @@ import TripTypesSection from "@/components/landing-page/TripTypesSection";
 import WhyWithUsSection from "@/components/landing-page/WhyWithUsSection";
 import TravelGuideSection from "@/components/landing-page/TravelGuideSection";
 import TestimonialsSection from "@/components/landing-page/TestimonialsSection";
+import NatureOverlay from "@/components/landing-page/NatureOverlay";
 import { getSession } from "@/provider/api";
 import { SiteHeader } from "@/components/layouts/site-header";
 import { SectionCards } from "@/components/layouts/section-cards";
@@ -22,19 +23,21 @@ export default async function Home() {
             <div className="px-4 lg:px-6">
               <ChartAreaInteractive />
             </div>
-            {/* <DataTable data={data} /> */}
           </div>
         </div>
       </div></>
   ) : (
     <>
       <HeroSection />
-      <StatsSection />
-      <TripTypesSection />
-      <TopToursSection />
-      <TravelGuideSection />
-      <WhyWithUsSection />
-      <TestimonialsSection />
+      <NatureOverlay>
+        <StatsSection />
+        <TripTypesSection />
+        <TopToursSection />
+        <TravelGuideSection />
+        <WhyWithUsSection />
+        <TestimonialsSection />
+      </NatureOverlay>
     </>
   );
 }
+

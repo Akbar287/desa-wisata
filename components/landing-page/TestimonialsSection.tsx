@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { WaveDividerTop, VineDecoration } from "./NatureOverlay";
 
 const testimonials = [
     {
@@ -58,10 +59,11 @@ const cardVariants = {
 export default function TestimonialsSection() {
     return (
         <section
-            className="py-24 px-6"
-            style={{ background: "var(--color-cream)" }}
+            className="section-earthy-cream py-24 px-6 overflow-hidden"
         >
-            <div className="max-w-[1200px] mx-auto">
+            <WaveDividerTop fill="#F5EDE3" />
+            <VineDecoration position="right" />
+            <div className="max-w-[1200px] mx-auto relative z-3">
                 <motion.h2
                     className="font-serif font-bold text-center mb-3"
                     style={{

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { WaveDividerTop } from "./NatureOverlay";
 
 const tours = [
     {
@@ -92,10 +93,10 @@ export default function TopToursSection() {
     return (
         <section
             id="tours"
-            className="py-24"
-            style={{ background: "var(--color-bg)" }}
+            className="section-earthy-warm py-24 overflow-hidden"
         >
-            <div className="max-w-[1320px] mx-auto px-6">
+            <WaveDividerTop fill="#FFF3E0" />
+            <div className="max-w-[1320px] mx-auto px-6 relative z-[3]">
                 {/* Heading */}
                 <motion.h2
                     className="font-serif font-bold text-center mb-12"

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { WaveDividerTop, VineDecoration } from "./NatureOverlay";
 
 const tabs = [
     { id: "tips", label: "Tips Perjalanan", icon: "ℹ" },
@@ -123,10 +124,11 @@ export default function TravelGuideSection() {
     return (
         <section
             id="blog"
-            className="py-24 px-6"
-            style={{ background: "var(--color-cream)" }}
+            className="section-earthy-green py-24 px-6 overflow-hidden"
         >
-            <div className="max-w-[1200px] mx-auto">
+            <WaveDividerTop fill="#E8F5E9" />
+            <VineDecoration position="left" />
+            <div className="max-w-[1200px] mx-auto relative z-3">
                 {/* Header */}
                 <div className="flex items-start justify-between flex-wrap gap-5 mb-10">
                     <div>

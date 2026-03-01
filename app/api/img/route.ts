@@ -83,8 +83,12 @@ app.post('/', async (c) => {
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
     ]
-    const allowedExtensions = ['pdf', 'doc', 'docx']
+    const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp', 'gif']
 
     const fileExt = mime.getExtension(file.type) || ''
     if (

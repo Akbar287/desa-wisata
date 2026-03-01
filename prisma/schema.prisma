@@ -209,8 +209,6 @@ model TourRelated {
   @@map("tour_related")
 }
 
-// ─── ITINERARY ──────────────────────────────────────────────────────────────────
-
 model DayItinerary {
   id          Int     @id @default(autoincrement())
   tourId      Int
@@ -235,8 +233,6 @@ model DayItineraryMeal {
   @@map("day_itinerary_meals")
 }
 
-// ─── TOUR DATES ─────────────────────────────────────────────────────────────────
-
 model TourDate {
   id        Int            @id @default(autoincrement())
   tourId    Int
@@ -248,8 +244,6 @@ model TourDate {
 
   @@map("tour_dates")
 }
-
-// ─── TOUR REVIEWS ───────────────────────────────────────────────────────────────
 
 model TourReview {
   id        Int      @id @default(autoincrement())

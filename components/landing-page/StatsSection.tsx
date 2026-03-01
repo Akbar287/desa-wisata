@@ -71,7 +71,7 @@ export default function StatsSection({ stats }: { stats: StatsData }) {
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
                 >
-                    Indonesia Penuh Pesona di 2026
+                    Desa Manuk Jaya Penuh Pesona di 2026
                 </motion.h2>
 
                 {/* Description */}
@@ -87,7 +87,7 @@ export default function StatsSection({ stats }: { stats: StatsData }) {
                     transition={{ duration: 0.6, delay: 0.15 }}
                 >
                     {
-                        expandInfo ? "Ingin pengalaman wisata yang otentik dan berbeda? Desa wisata Indonesia menawarkan perpaduan unik antara budaya, alam, dan sejarah. Jelajahi sawah terasering, perbukitan hijau, pantai tersembunyi, dan kenali kehidupan masyarakat lokal yang hangat." : "Ingin pengalaman wisata yang otentik dan berbeda? Desa wisata Indonesia menawarkan perpaduan unik antara budaya, alam, dan sejarah..."
+                        expandInfo ? "Desa Manuk Jaya menawarkan pengalaman wisata yang otentik dan berbeda. Perpaduan unik antara budaya, alam, dan sejarah. Jelajahi sawah terasering, perbukitan hijau, pantai tersembunyi, dan kenali kehidupan masyarakat lokal yang hangat." : "Ingin pengalaman wisata yang otentik dan berbeda? Desa Manuk Jaya menawarkan perpaduan unik antara budaya, alam, dan sejarah..."
                     }
                 </motion.p>
 

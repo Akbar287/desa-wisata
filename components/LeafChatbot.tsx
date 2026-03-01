@@ -95,7 +95,7 @@ export default function LeafChatbot() {
                 className="leaf-chat-btn"
                 style={{
                     position: 'fixed',
-                    bottom: 24,
+                    bottom: 92,
                     right: 24,
                     zIndex: 9998,
                     width: 64,
@@ -123,7 +123,7 @@ export default function LeafChatbot() {
                 <span
                     style={{
                         position: 'fixed',
-                        bottom: 20,
+                        bottom: 92,
                         right: 20,
                         width: 72,
                         height: 72,
@@ -146,7 +146,7 @@ export default function LeafChatbot() {
                         transition={{ duration: 0.3, ease: 'easeOut' }}
                         style={{
                             position: 'fixed',
-                            bottom: 100,
+                            bottom: 160,
                             right: 24,
                             zIndex: 9999,
                             width: 380,

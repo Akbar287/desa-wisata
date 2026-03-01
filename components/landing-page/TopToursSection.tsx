@@ -5,80 +5,19 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { WaveDividerTop } from "./NatureOverlay";
 
-const tours = [
-    {
-        title: "Pesona Desa Wisata Penglipuran",
-        badge: "Grup",
-        highlights: [
-            "Arsitektur rumah adat Bali yang menakjubkan",
-            "Interaksi dengan masyarakat lokal",
-            "Keindahan alam pegunungan Bali",
-        ],
-        duration: "3 hari",
-        price: "Rp 2.500.000",
-        image: "/assets/e50bd774-982a-4206-b5b9-3ace3c9c8f27-gobi_gallery1.jpg",
-    },
-    {
-        title: "Jelajah Desa Wae Rebo",
-        badge: "Grup",
-        highlights: [
-            "Rumah adat Mbaru Niang kerucut",
-            "Perjalanan trekking melalui hutan tropis",
-            "Budaya dan tradisi Manggarai",
-        ],
-        duration: "4 hari",
-        price: "Rp 3.800.000",
-        image: "/assets/e4d847b7-3667-467f-992c-05ff8a23fde6-c6a9139fa9f5509fd47ec9df5236f669.jpg",
-    },
-    {
-        title: "Desa Wisata Nglanggeran",
-        badge: "Privat",
-        highlights: [
-            "Gunung Api Purba Nglanggeran",
-            "Wisata alam dan agrowisata buah",
-            "Kesenian tradisional Jawa",
-        ],
-        duration: "2 hari",
-        price: "Rp 1.200.000",
-        image: "/assets/38826e03-83a4-482e-a720-492ac8bfaef5-cover_culture.jpg",
-    },
-    {
-        title: "Desa Wisata Trunyan & Kintamani",
-        badge: "Grup",
-        highlights: [
-            "Pemakaman kuno unik di Trunyan",
-            "Pemandangan Danau Batur yang memukau",
-            "Kehidupan masyarakat Bali Aga",
-        ],
-        duration: "5 hari",
-        price: "Rp 4.200.000",
-        image: "/assets/7a750ea3-4682-4260-acf4-eb18b2ccc0a0-fa723100cbf6b45c3c8aa40ca4adf9b82222.jpg",
-    },
-    {
-        title: "Desa Sade Lombok",
-        badge: "Privat",
-        highlights: [
-            "Rumah adat suku Sasak",
-            "Tenun tradisional khas Lombok",
-            "Pantai selatan yang eksotis",
-        ],
-        duration: "3 hari",
-        price: "Rp 2.800.000",
-        image: "/assets/9b4e5aa3-5ec7-4c73-b146-e0f45b9eff94-mistakes_Gallery_road.jpg",
-    },
-    {
-        title: "Desa Wisata Osing Banyuwangi",
-        badge: "Grup",
-        highlights: [
-            "Budaya suku Osing yang unik",
-            "Festival Gandrung Sewu",
-            "Kawah Ijen & pantai timur",
-        ],
-        duration: "4 hari",
-        price: "Rp 3.500.000",
-        image: "/assets/22f1c083-1bb1-4fb6-a963-93b1e67341ef-36eb93d315a100c3d3098747caaa90d33.jpg",
-    },
-];
+type TourItem = {
+    id: number;
+    title: string;
+    type: string;
+    durationDays: number;
+    price: number;
+    image: string;
+    rating: number;
+    reviewCount: number;
+    highlights: { text: string }[];
+};
+
+const fmt = (n: number) => 'Rp ' + n.toLocaleString('id-ID');
 
 const cardVariants = {
     hidden: { opacity: 0, x: 40 },
@@ -89,7 +28,9 @@ const cardVariants = {
     }),
 };
 
-export default function TopToursSection() {
+export default function TopToursSection({ tours }: { tours: TourItem[] }) {
+    if (!tours || tours.length === 0) return null;
+
     return (
         <section
             id="tours"
@@ -122,7 +63,7 @@ export default function TopToursSection() {
                 >
                     {tours.map((tour, i) => (
                         <motion.div
-                            key={i}
+                            key={tour.id}
                             custom={i}
                             variants={cardVariants}
                             className="tour-card min-w-[340px] max-w-[340px] rounded-2xl overflow-hidden shrink-0"
@@ -145,13 +86,20 @@ export default function TopToursSection() {
                                     className="absolute top-3 left-3 text-white px-3.5 py-1 rounded-full text-xs font-semibold font-sans"
                                     style={{
                                         background:
-                                            tour.badge === "Privat"
+                                            tour.type === "PRIVATE"
                                                 ? "var(--color-primary)"
                                                 : "var(--color-accent)",
                                     }}
                                 >
-                                    {tour.badge}
+                                    {tour.type === "PRIVATE" ? "Privat" : "Grup"}
                                 </span>
+
+                                {/* Rating */}
+                                {tour.rating > 0 && (
+                                    <span className="absolute top-3 right-3 text-white px-2.5 py-1 rounded-full text-xs font-semibold font-sans bg-black/40 backdrop-blur-sm flex items-center gap-1">
+                                        ⭐ {tour.rating.toFixed(1)}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Content */}
@@ -170,7 +118,7 @@ export default function TopToursSection() {
                                             style={{ color: "var(--color-text-muted)" }}
                                         >
                                             <span className="shrink-0" style={{ color: "var(--color-primary)" }}>•</span>
-                                            {h}
+                                            {h.text}
                                         </li>
                                     ))}
                                 </ul>
@@ -184,10 +132,10 @@ export default function TopToursSection() {
                                         className="text-[13px] font-sans"
                                         style={{ color: "var(--color-text-muted)" }}
                                     >
-                                        {tour.duration} &nbsp;•&nbsp; mulai {tour.price}
+                                        {tour.durationDays} hari &nbsp;•&nbsp; mulai {fmt(tour.price)}
                                     </span>
                                     <Link
-                                        href="#"
+                                        href={`/tours/${tour.id}`}
                                         className="inline-flex items-center gap-1.5 font-semibold text-sm font-sans no-underline transition-all duration-300 hover:gap-2.5"
                                         style={{ color: "var(--color-accent)" }}
                                     >

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MonthData } from '@/types/TripCalendarType';
 
 export default function TripCalendarComponent({ months }: { months: MonthData[] }) {
-    const [activeMonth, setActiveMonth] = useState(months[0].id);
+    const [activeMonth, setActiveMonth] = useState(months[0]?.id ?? '');
 
     const fadeUp = {
         hidden: { opacity: 0, y: 20 },
@@ -105,187 +105,205 @@ export default function TripCalendarComponent({ months }: { months: MonthData[] 
                 </div>
             </section>
 
-            <section className="sticky top-[72px] z-20 px-6" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border-subtle)' }}>
-                <div className="max-w-[1100px] mx-auto">
-                    <motion.div
-                        className="hide-scrollbar flex gap-0 overflow-x-auto"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.3 }}
-                    >
-                        {months.map((month) => (
-                            <button
-                                key={month.id}
-                                onClick={() => setActiveMonth(month.id)}
-                                className="relative px-6 py-4 font-sans text-sm font-semibold border-none bg-transparent cursor-pointer transition-colors duration-300 whitespace-nowrap"
-                                style={{
-                                    color: activeMonth === month.id ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                                }}
-                            >
-                                {month.label}
-                                {activeMonth === month.id && (
-                                    <motion.div
-                                        layoutId="activeTab"
-                                        className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full"
-                                        style={{ background: 'var(--color-primary)' }}
-                                        transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
-                                    />
-                                )}
-                            </button>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
+            {months.length === 0 ? (
+                <section className="py-20 px-6" style={{ background: 'var(--color-bg)' }}>
+                    <div className="max-w-[600px] mx-auto text-center">
+                        <div className="rounded-2xl p-10" style={{ background: 'var(--color-white)', border: '1px solid var(--color-border-subtle)', boxShadow: 'var(--shadow-sm)' }}>
+                            <div className="text-5xl mb-4">📅</div>
+                            <h2 className="font-serif text-xl font-bold mb-3" style={{ color: 'var(--color-text)' }}>Jadwal Tur Belum Tersedia</h2>
+                            <p className="font-sans text-sm leading-relaxed mb-6" style={{ color: 'var(--color-text-muted)' }}>
+                                Saat ini belum ada jadwal tur yang tersedia. Silakan kembali lagi nanti atau hubungi kami untuk informasi lebih lanjut.
+                            </p>
+                            <a href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-sans text-sm font-semibold no-underline text-white transition-all duration-300 hover:scale-105" style={{ background: 'var(--color-primary)' }}>
+                                Kembali ke Beranda
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            ) : (<>
 
-            <section className="py-12 px-6" style={{ background: 'var(--color-bg)' }}>
-                <div className="max-w-[1100px] mx-auto">
-                    <AnimatePresence mode="wait">
-                        {months
-                            .filter((m) => activeMonth === 'all' || m.id === activeMonth)
-                            .map((month) => (
-                                <motion.div
+                <section className="sticky top-[72px] z-20 px-6" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border-subtle)' }}>
+                    <div className="max-w-[1100px] mx-auto">
+                        <motion.div
+                            className="hide-scrollbar flex gap-0 overflow-x-auto"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.3 }}
+                        >
+                            {months.map((month) => (
+                                <button
                                     key={month.id}
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    transition={{ duration: 0.35 }}
-                                    className="mb-14 last:mb-0"
+                                    onClick={() => setActiveMonth(month.id)}
+                                    className="relative px-6 py-4 font-sans text-sm font-semibold border-none bg-transparent cursor-pointer transition-colors duration-300 whitespace-nowrap"
+                                    style={{
+                                        color: activeMonth === month.id ? 'var(--color-primary)' : 'var(--color-text-muted)',
+                                    }}
                                 >
-                                    <motion.h2
-                                        className="font-serif font-bold mb-6 flex items-center gap-3"
-                                        style={{ fontSize: 'clamp(22px, 3vw, 32px)', color: 'var(--color-text)' }}
-                                        variants={fadeUp}
-                                        initial="hidden"
-                                        whileInView="visible"
-                                        viewport={{ once: true }}
-                                    >
-                                        <span className="text-2xl">📅</span>
-                                        {month.label} {month.year}
-                                    </motion.h2>
+                                    {month.label}
+                                    {activeMonth === month.id && (
+                                        <motion.div
+                                            layoutId="activeTab"
+                                            className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full"
+                                            style={{ background: 'var(--color-primary)' }}
+                                            transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                                        />
+                                    )}
+                                </button>
+                            ))}
+                        </motion.div>
+                    </div>
+                </section>
 
+                <section className="py-12 px-6" style={{ background: 'var(--color-bg)' }}>
+                    <div className="max-w-[1100px] mx-auto">
+                        <AnimatePresence mode="wait">
+                            {months
+                                .filter((m) => activeMonth === 'all' || m.id === activeMonth)
+                                .map((month) => (
                                     <motion.div
-                                        className="hidden md:block rounded-2xl overflow-hidden"
-                                        style={{
-                                            background: 'var(--color-white)',
-                                            boxShadow: 'var(--shadow-sm)',
-                                            border: '1px solid var(--color-border-subtle)',
-                                        }}
-                                        variants={stagger}
-                                        initial="hidden"
-                                        whileInView="visible"
-                                        viewport={{ once: true }}
+                                        key={month.id}
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ duration: 0.35 }}
+                                        className="mb-14 last:mb-0"
                                     >
-                                        <div
-                                            className="grid gap-0 px-6 py-4"
-                                            style={{
-                                                gridTemplateColumns: '140px 1fr 100px 150px 1fr',
-                                                borderBottom: '1px solid var(--color-border-subtle)',
-                                            }}
+                                        <motion.h2
+                                            className="font-serif font-bold mb-6 flex items-center gap-3"
+                                            style={{ fontSize: 'clamp(22px, 3vw, 32px)', color: 'var(--color-text)' }}
+                                            variants={fadeUp}
+                                            initial="hidden"
+                                            whileInView="visible"
+                                            viewport={{ once: true }}
                                         >
-                                            {['Tanggal', 'Nama Tur', 'Durasi', 'Status', 'Informasi Tur'].map((h) => (
-                                                <span
-                                                    key={h}
-                                                    className="font-sans text-xs font-bold uppercase tracking-widest"
-                                                    style={{ color: 'var(--color-text-muted)' }}
-                                                >
-                                                    {h}
-                                                </span>
-                                            ))}
-                                        </div>
+                                            <span className="text-2xl">📅</span>
+                                            {month.label} {month.year}
+                                        </motion.h2>
 
-                                        {month.trips.map((trip, i) => (
-                                            <motion.div
-                                                key={i}
-                                                variants={rowVariant}
-                                                className="grid gap-0 px-6 py-5 items-center transition-colors duration-200 hover:bg-(--color-cream)"
+                                        <motion.div
+                                            className="hidden md:block rounded-2xl overflow-hidden"
+                                            style={{
+                                                background: 'var(--color-white)',
+                                                boxShadow: 'var(--shadow-sm)',
+                                                border: '1px solid var(--color-border-subtle)',
+                                            }}
+                                            variants={stagger}
+                                            initial="hidden"
+                                            whileInView="visible"
+                                            viewport={{ once: true }}
+                                        >
+                                            <div
+                                                className="grid gap-0 px-6 py-4"
                                                 style={{
                                                     gridTemplateColumns: '140px 1fr 100px 150px 1fr',
-                                                    borderBottom: i < month.trips.length - 1 ? '1px solid var(--color-border-subtle)' : 'none',
+                                                    borderBottom: '1px solid var(--color-border-subtle)',
                                                 }}
                                             >
-                                                <span className="font-sans text-sm font-medium" style={{ color: 'var(--color-text)' }}>
-                                                    {trip.dateStart} – {trip.dateEnd}
-                                                </span>
+                                                {['Tanggal', 'Nama Tur', 'Durasi', 'Status', 'Informasi Tur'].map((h) => (
+                                                    <span
+                                                        key={h}
+                                                        className="font-sans text-xs font-bold uppercase tracking-widest"
+                                                        style={{ color: 'var(--color-text-muted)' }}
+                                                    >
+                                                        {h}
+                                                    </span>
+                                                ))}
+                                            </div>
 
-                                                <Link
-                                                    href={trip.tourLink}
-                                                    className="font-sans text-sm font-semibold no-underline transition-colors duration-300 hover:underline"
-                                                    style={{ color: 'var(--color-primary)' }}
+                                            {month.trips.map((trip, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    variants={rowVariant}
+                                                    className="grid gap-0 px-6 py-5 items-center transition-colors duration-200 hover:bg-(--color-cream)"
+                                                    style={{
+                                                        gridTemplateColumns: '140px 1fr 100px 150px 1fr',
+                                                        borderBottom: i < month.trips.length - 1 ? '1px solid var(--color-border-subtle)' : 'none',
+                                                    }}
                                                 >
-                                                    {trip.tour}
-                                                </Link>
-
-                                                <span className="font-sans text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                                                    {trip.duration}
-                                                </span>
-
-                                                <StatusBadge status={trip.status} />
-
-                                                <span className="font-sans text-sm leading-relaxed" style={{ color: 'var(--color-text-light)' }}>
-                                                    {trip.info}
-                                                </span>
-                                            </motion.div>
-                                        ))}
-                                    </motion.div>
-
-                                    <motion.div
-                                        className="flex flex-col gap-4 md:hidden"
-                                        variants={stagger}
-                                        initial="hidden"
-                                        whileInView="visible"
-                                        viewport={{ once: true }}
-                                    >
-                                        {month.trips.map((trip, i) => (
-                                            <motion.div
-                                                key={i}
-                                                variants={fadeUp}
-                                                className="rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                                                style={{
-                                                    background: 'var(--color-white)',
-                                                    boxShadow: 'var(--shadow-sm)',
-                                                    border: '1px solid var(--color-border-subtle)',
-                                                }}
-                                            >
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <span className="font-sans text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
-                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                                    <span className="font-sans text-sm font-medium" style={{ color: 'var(--color-text)' }}>
                                                         {trip.dateStart} – {trip.dateEnd}
                                                     </span>
-                                                    <StatusBadge status={trip.status} />
-                                                </div>
 
-                                                <Link
-                                                    href={trip.tourLink}
-                                                    className="font-serif text-base font-bold no-underline block mb-2 hover:underline"
-                                                    style={{ color: 'var(--color-primary)' }}
-                                                >
-                                                    {trip.tour}
-                                                </Link>
-
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <span
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-sans text-xs font-medium"
-                                                        style={{
-                                                            background: 'var(--color-cream)',
-                                                            color: 'var(--color-text)',
-                                                        }}
+                                                    <Link
+                                                        href={trip.tourLink}
+                                                        className="font-sans text-sm font-semibold no-underline transition-colors duration-300 hover:underline"
+                                                        style={{ color: 'var(--color-primary)' }}
                                                     >
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                                        {trip.tour}
+                                                    </Link>
+
+                                                    <span className="font-sans text-sm" style={{ color: 'var(--color-text-muted)' }}>
                                                         {trip.duration}
                                                     </span>
-                                                </div>
 
-                                                <p className="font-sans text-sm leading-relaxed" style={{ color: 'var(--color-text-light)' }}>
-                                                    {trip.info}
-                                                </p>
-                                            </motion.div>
-                                        ))}
+                                                    <StatusBadge status={trip.status} />
+
+                                                    <span className="font-sans text-sm leading-relaxed" style={{ color: 'var(--color-text-light)' }}>
+                                                        {trip.info}
+                                                    </span>
+                                                </motion.div>
+                                            ))}
+                                        </motion.div>
+
+                                        <motion.div
+                                            className="flex flex-col gap-4 md:hidden"
+                                            variants={stagger}
+                                            initial="hidden"
+                                            whileInView="visible"
+                                            viewport={{ once: true }}
+                                        >
+                                            {month.trips.map((trip, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    variants={fadeUp}
+                                                    className="rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                                                    style={{
+                                                        background: 'var(--color-white)',
+                                                        boxShadow: 'var(--shadow-sm)',
+                                                        border: '1px solid var(--color-border-subtle)',
+                                                    }}
+                                                >
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <span className="font-sans text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
+                                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                                            {trip.dateStart} – {trip.dateEnd}
+                                                        </span>
+                                                        <StatusBadge status={trip.status} />
+                                                    </div>
+
+                                                    <Link
+                                                        href={trip.tourLink}
+                                                        className="font-serif text-base font-bold no-underline block mb-2 hover:underline"
+                                                        style={{ color: 'var(--color-primary)' }}
+                                                    >
+                                                        {trip.tour}
+                                                    </Link>
+
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <span
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-sans text-xs font-medium"
+                                                            style={{
+                                                                background: 'var(--color-cream)',
+                                                                color: 'var(--color-text)',
+                                                            }}
+                                                        >
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                                            {trip.duration}
+                                                        </span>
+                                                    </div>
+
+                                                    <p className="font-sans text-sm leading-relaxed" style={{ color: 'var(--color-text-light)' }}>
+                                                        {trip.info}
+                                                    </p>
+                                                </motion.div>
+                                            ))}
+                                        </motion.div>
                                     </motion.div>
-                                </motion.div>
-                            ))}
-                    </AnimatePresence>
-                </div>
-            </section>
+                                ))}
+                        </AnimatePresence>
+                    </div>
+                </section>
+            </>)}
         </main>
     );
 }

@@ -5,38 +5,26 @@ import React from "react";
 import { motion } from "framer-motion";
 import { WaveDividerTop, VineDecoration } from "./NatureOverlay";
 
-const stats = [
-    {
-        number: "150+",
-        label: "Desa Wisata",
-        image: "/assets/withus01.png",
-    },
-    {
-        number: "50K+",
-        label: "Wisatawan Bahagia",
-        image: "/assets/withus02.png",
-    },
-    {
-        number: "2025",
-        label: "Pilihan Terbaik",
-        image: "/assets/withus03.png",
-    },
-    {
-        number: "10+",
-        label: "Tahun Beroperasi",
-        image: "/assets/withus05.png",
-    },
-    {
-        number: "80+",
-        label: "Paket Wisata",
-        image: "/assets/withus06.png",
-    },
-    {
-        number: "50K+",
-        label: "Wisatawan Puas",
-        image: "/assets/withus07.png",
-    },
+type StatsData = {
+    tourCount: number;
+    testimonialCount: number;
+    bookingCount: number;
+    destinationCount: number;
+};
+
+const staticImages = [
+    "/assets/withus01.png",
+    "/assets/withus02.png",
+    "/assets/withus03.png",
+    "/assets/withus05.png",
+    "/assets/withus06.png",
+    "/assets/withus07.png",
 ];
+
+function formatStat(n: number): string {
+    if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K+`;
+    return `${n}+`;
+}
 
 const containerVariants = {
     hidden: {},
@@ -50,8 +38,18 @@ const itemVariants = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
 };
 
-export default function StatsSection() {
+export default function StatsSection({ stats }: { stats: StatsData }) {
     const [expandInfo, setExpandInfo] = React.useState<boolean>(false);
+
+    const statItems = [
+        { number: formatStat(stats.destinationCount), label: "Destinasi Wisata", image: staticImages[0] },
+        { number: formatStat(stats.bookingCount), label: "Wisatawan Bahagia", image: staticImages[1] },
+        { number: "2026", label: "Pilihan Terbaik", image: staticImages[2] },
+        { number: formatStat(stats.tourCount), label: "Paket Wisata", image: staticImages[3] },
+        { number: formatStat(stats.testimonialCount), label: "Ulasan Positif", image: staticImages[4] },
+        { number: "10+", label: "Tahun Beroperasi", image: staticImages[5] },
+    ];
+
     return (
         <section
             id="about"
@@ -115,7 +113,7 @@ export default function StatsSection() {
                     whileInView="visible"
                     viewport={{ once: true, amount: 0.2 }}
                 >
-                    {stats.map((stat, i) => (
+                    {statItems.map((stat, i) => (
                         <motion.div
                             key={i}
                             variants={itemVariants}

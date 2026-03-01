@@ -6,3 +6,4 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const fmt = (n: number) => "Rp " + n.toLocaleString("id-ID");
+export const fmtDate = (d: Date | string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })

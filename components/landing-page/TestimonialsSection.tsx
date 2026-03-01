@@ -5,44 +5,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { WaveDividerTop, VineDecoration } from "./NatureOverlay";
 
-const testimonials = [
-    {
-        text: "Pengalaman luar biasa di Desa Penglipuran! Kami disambut dengan upacara tradisional, belajar membuat canang sari, dan tinggal di rumah adat Bali. Pemandu kami, Pak Wayan, sangat berpengetahuan tentang sejarah dan budaya desa. Makanan lokal yang disajikan sangat autentik dan lezat. Highly recommended!",
-        name: "Ayrein Nisya",
-        location: "Jakarta, Indonesia",
-        avatar: "/assets/default-avatar-2020-13.jpg",
-    },
-    {
-        text: "Tur ke Wae Rebo adalah highlight dari liburan kami. Trekking melalui hutan tropis yang menakjubkan, dan saat tiba di desa di atas awan, rasanya seperti masuk ke dunia lain. Rumah adat Mbaru Niang sangat unik. Tim Discover Desa Wisata mengatur segalanya dengan sangat profesional.",
-        name: "Irma Nur",
-        location: "Surabaya, Indonesia",
-        avatar: "/assets/default-avatar-2020-25.jpg",
-    },
-    {
-        text: "Kami mengambil tur keluarga 5 hari ke desa-desa di Yogyakarta. Anak-anak sangat senang belajar membatik dan menanam padi. Yang paling berkesan adalah keramahan penduduk desa. Mereka benar-benar menyambut kami sebagai bagian dari keluarga mereka. Terima kasih Discover Desa Wisata!",
-        name: "Akbar M et al.",
-        location: "Bandung, Indonesia",
-        avatar: "/assets/default-avatar-2020-3.jpg",
-    },
-    {
-        text: "Private tour ke Desa Sade di Lombok sangat berkesan. Melihat langsung proses tenun tradisional suku Sasak, arsitektur rumah adat yang unik, dan pemandangan alam yang memukau. Pemandu kami sangat informatif dan akomodatif. Worth every penny!",
-        name: "Ahmad Fauzi",
-        location: "Medan, Indonesia",
-        avatar: "/assets/default-avatar-2020-49.jpg",
-    },
-    {
-        text: "Tour 4 hari ke kawasan Nglanggeran luar biasa! Gunung Api Purba sungguh menakjubkan, air terjun tersembunyi, dan sunset dari puncak sangat indah. Agrowisata buah-buahan segar jadi bonus yang menyenangkan. Organisasinya rapi dari awal sampai akhir.",
-        name: "Dewi Lestari",
-        location: "Semarang, Indonesia",
-        avatar: "/assets/default-avatar-2020-54.jpg",
-    },
-    {
-        text: "Saya solo traveler yang bergabung grup tour ke Banyuwangi. Selain Kawah Ijen yang menakjubkan, kunjungan ke desa Osing adalah pengalaman tak terduga yang luar biasa. Budaya mereka sangat unik dan berbeda dari Jawa pada umumnya. Teman-teman satu grup juga sangat menyenangkan!",
-        name: "Carlos Adrianto",
-        location: "Makassar, Indonesia",
-        avatar: "/assets/default-avatar-2020-67.jpg",
-    },
-];
+type TestimonialItem = {
+    id: number;
+    name: string;
+    avatar: string | null;
+    role: string;
+    text: string;
+    rating: number;
+};
 
 const containerVariants = {
     hidden: {},
@@ -56,7 +26,9 @@ const cardVariants = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
-export default function TestimonialsSection() {
+export default function TestimonialsSection({ testimonials }: { testimonials: TestimonialItem[] }) {
+    if (!testimonials || testimonials.length === 0) return null;
+
     return (
         <section
             className="section-earthy-cream py-24 px-6 overflow-hidden"
@@ -96,9 +68,9 @@ export default function TestimonialsSection() {
                     whileInView="visible"
                     viewport={{ once: true, amount: 0.1 }}
                 >
-                    {testimonials.map((t, i) => (
+                    {testimonials.map((t) => (
                         <motion.div
-                            key={i}
+                            key={t.id}
                             variants={cardVariants}
                             className="rounded-2xl p-8 pb-7 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-(--shadow-lg)"
                             style={{
@@ -114,6 +86,19 @@ export default function TestimonialsSection() {
                             >
                                 ❝
                             </div>
+
+                            {/* Rating */}
+                            {t.rating > 0 && (
+                                <div className="flex gap-0.5 mb-3">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <svg key={i} width="14" height="14" viewBox="0 0 24 24"
+                                            fill={i < Math.round(t.rating) ? "var(--color-accent)" : "none"}
+                                            stroke="var(--color-accent)" strokeWidth="2">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                        </svg>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Text */}
                             <p
@@ -135,20 +120,22 @@ export default function TestimonialsSection() {
                                     className="font-sans text-[13px] mb-3"
                                     style={{ color: "var(--color-text-muted)" }}
                                 >
-                                    {t.location}
+                                    {t.role}
                                 </p>
-                                <div
-                                    className="w-14 h-14 rounded-full overflow-hidden mx-auto p-[3px]"
-                                    style={{ border: "3px dashed var(--color-accent-light)" }}
-                                >
-                                    <Image
-                                        src={t.avatar}
-                                        alt={t.name}
-                                        width={50}
-                                        height={50}
-                                        className="rounded-full object-cover w-full h-full"
-                                    />
-                                </div>
+                                {t.avatar && (
+                                    <div
+                                        className="w-14 h-14 rounded-full overflow-hidden mx-auto p-[3px]"
+                                        style={{ border: "3px dashed var(--color-accent-light)" }}
+                                    >
+                                        <Image
+                                            src={t.avatar}
+                                            alt={t.name}
+                                            width={50}
+                                            height={50}
+                                            className="rounded-full object-cover w-full h-full"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     ))}

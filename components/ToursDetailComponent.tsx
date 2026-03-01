@@ -330,7 +330,7 @@ export default function ToursDetailComponent({ tour, navItems, relatedTours }: {
                                                     </td>
                                                     <td className="py-3.5 px-5 text-right font-bold" style={{ color: 'var(--color-primary)' }}>{fmt(d.price)}</td>
                                                     <td className="py-3.5 px-5 text-right">
-                                                        <Link href={`/booking?slug=${tour.id}&start=${d.start}&end=${d.end}`}>
+                                                        <Link href={`/booking?id=${tour.id}&start=${d.start}&end=${d.end}`}>
                                                             <button className="btn-primary py-2 px-5 text-xs transition-transform duration-200 hover:scale-105">Pesan</button>
                                                         </Link>
                                                     </td>
@@ -363,7 +363,7 @@ export default function ToursDetailComponent({ tour, navItems, relatedTours }: {
                                             </div>
                                             <div className="flex justify-between items-center pt-3" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
                                                 <span className="font-sans text-lg font-extrabold" style={{ color: 'var(--color-primary)' }}>{fmt(d.price)}</span>
-                                                <Link href={`/booking?slug=${tour.id}&start=${d.start}&end=${d.end}`}>
+                                                <Link href={`/booking?id=${tour.id}&start=${d.start}&end=${d.end}`}>
                                                     <button className="btn-primary py-2.5 px-5 text-xs">Pesan</button>
                                                 </Link>
                                             </div>
@@ -531,7 +531,7 @@ export default function ToursDetailComponent({ tour, navItems, relatedTours }: {
                             >
                                 Pesan Sekarang
                             </motion.button>
-                            <Link href={`/inquiry?slug=${tour.id}`} className="block">
+                            <Link href={`/inquiry?id=${tour.id}`} className="block">
                                 <button className="btn-outline w-full justify-center py-3 px-6 mb-6 text-sm">Tanya Kami</button>
                             </Link>
 

@@ -22,6 +22,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.4.1",
     "@prisma/client": "^7.4.1",
+    "@react-pdf/renderer": "^4.3.2",
     "@tabler/icons-react": "^3.37.1",
     "@tanstack/react-table": "^8.21.3",
     "bcryptjs": "^3.0.3",

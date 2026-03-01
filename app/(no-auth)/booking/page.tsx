@@ -1,4 +1,5 @@
 import BookingComponents from "@/components/BookingComponents";
+import { prisma } from "@/lib/prisma";
 
 const NATIONALITIES = [
     "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "The Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Democratic Republic of the Congo", "Republic of Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "The Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hong Kong", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "North Korea", "South Korea", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman", "Pakistan", "Palau", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom (UK)", "United States (USA)", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
@@ -28,17 +29,47 @@ const STEPS = [
     { num: 5, label: "Selamat Berlibur!", icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" },
 ];
 
-const TOUR_LOOKUP: Record<string, { title: string; duration: string; price: number }> = {
-    "pesona-desa-wisata-penglipuran": { title: "Pesona Desa Wisata Penglipuran", duration: "3 hari", price: 2500000 },
-    "jelajah-desa-wae-rebo": { title: "Jelajah Desa Wae Rebo", duration: "4 hari", price: 3800000 },
-    "desa-wisata-nglanggeran": { title: "Desa Wisata Nglanggeran", duration: "2 hari", price: 1200000 },
-    "desa-wisata-trunyan-kintamani": { title: "Desa Wisata Trunyan & Kintamani", duration: "5 hari", price: 4200000 },
-    "desa-sade-lombok": { title: "Desa Sade Lombok", duration: "3 hari", price: 2800000 },
-    "desa-wisata-osing-banyuwangi": { title: "Desa Wisata Osing Banyuwangi", duration: "4 hari", price: 3500000 },
-};
+export default async function BookingPage({ searchParams }: { searchParams: Promise<{ id?: string; start?: string; end?: string }> }) {
+    const { id, start, end } = await searchParams;
+    const tourId = Number(id);
 
-export default function BookingPage() {
+    let tourLookup: Record<string, { id: number; title: string; duration: string; price: number }> = {};
+
+    if (tourId && !isNaN(tourId)) {
+        const dbTour = await prisma.tour.findUnique({
+            where: { id: tourId },
+            select: { id: true, title: true, durationDays: true, price: true, dates: { orderBy: { startDate: "asc" } } },
+        });
+
+        if (dbTour) {
+            let selectedPrice = dbTour.price;
+            const fmtDate = (d: Date) => d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+
+            if (start && end && dbTour.dates.length > 0) {
+                const matchingDate = dbTour.dates.find(
+                    (d) => fmtDate(d.startDate) === start && fmtDate(d.endDate) === end
+                );
+                if (matchingDate) {
+                    selectedPrice = matchingDate.price;
+                }
+            }
+
+            tourLookup[String(dbTour.id)] = {
+                id: dbTour.id,
+                title: dbTour.title,
+                duration: `${dbTour.durationDays} hari`,
+                price: selectedPrice,
+            };
+        }
+    }
+
     return (
-        <BookingComponents nationalities={NATIONALITIES} findUsOptions={FIND_US_OPTIONS} phoneCodes={PHONE_CODES} tourLookup={TOUR_LOOKUP} steps={STEPS} />
+        <BookingComponents
+            nationalities={NATIONALITIES}
+            findUsOptions={FIND_US_OPTIONS}
+            phoneCodes={PHONE_CODES}
+            tourLookup={tourLookup}
+            steps={STEPS}
+        />
     );
 }

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 import { signOut, useSession } from "next-auth/react"
 import { toast } from "sonner"
-import { Binoculars, Building, Frame, HatGlasses, Landmark, LayoutDashboard, LucideSquirrel, Map, Mountain, Newspaper, PieChart, Quote, User, UserRoundSearch, Users } from "lucide-react"
+import { Binoculars, Building, CreditCardIcon, Frame, HatGlasses, Landmark, LayoutDashboard, LucideSquirrel, Map, Mountain, Newspaper, PieChart, Quote, User, UserRoundSearch, Users } from "lucide-react"
 import Link from "next/link"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -63,6 +63,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 title: "User",
                 url: "/admin-user",
                 icon: User,
+            },
+            {
+                title: "Pembayaran",
+                url: "/admin-payment-available",
+                icon: CreditCardIcon,
             },
         ],
         documents: [

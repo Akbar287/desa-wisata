@@ -144,7 +144,20 @@ export default function PrivateTourComponents({ tours, testimonials, vipPerks }:
                         </motion.div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {tours.map((tour) => (
+                            {tours.length === 0 ? (
+                                <div className="col-span-full">
+                                    <div className="rounded-2xl p-10 text-center" style={{ background: 'var(--color-white)', border: '1px solid var(--color-border-subtle)', boxShadow: 'var(--shadow-sm)' }}>
+                                        <div className="text-5xl mb-4">🔒</div>
+                                        <h3 className="font-serif text-xl font-bold mb-3" style={{ color: 'var(--color-text)' }}>Private Tour Belum Tersedia</h3>
+                                        <p className="font-sans text-sm leading-relaxed mb-6 max-w-[400px] mx-auto" style={{ color: 'var(--color-text-muted)' }}>
+                                            Saat ini belum ada paket private tour yang tersedia. Silakan hubungi kami untuk informasi lebih lanjut atau kembali lagi nanti.
+                                        </p>
+                                        <a href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-sans text-sm font-semibold no-underline text-white transition-all duration-300 hover:scale-105" style={{ background: 'linear-gradient(135deg, #B8860B, #D4A843)' }}>
+                                            Kembali ke Beranda
+                                        </a>
+                                    </div>
+                                </div>
+                            ) : tours.map((tour) => (
                                 <motion.div
                                     key={tour.id}
                                     variants={fadeUp}

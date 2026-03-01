@@ -16,7 +16,7 @@ export default function BookingComponents({
     nationalities: string[];
     findUsOptions: string[];
     phoneCodes: { code: string; flag: string; country: string; }[];
-    tourLookup: Record<string, { title: string; duration: string; price: number }>;
+    tourLookup: Record<string, { id: number; title: string; duration: string; price: number }>;
     steps: { num: number; label: string; icon: string }[];
 }) {
     return (
@@ -258,23 +258,26 @@ function BookingContent({
     nationalities: string[];
     findUsOptions: string[];
     phoneCodes: { code: string; flag: string; country: string; }[];
-    tourLookup: Record<string, { title: string; duration: string; price: number }>;
+    tourLookup: Record<string, { id: number; title: string; duration: string; price: number }>;
     steps: { num: number; label: string; icon: string }[];
 }) {
     const searchParams = useSearchParams();
 
-    const slug = searchParams.get("slug");
+    const tourId = searchParams.get("id");
     const startDate = searchParams.get("start");
     const endDate = searchParams.get("end");
 
     // Check params
-    if (!slug || !startDate || !endDate) {
+    if (!tourId || !startDate || !endDate) {
         return <NoTourSelected />;
     }
 
-    const tour = tourLookup[slug] ?? { title: slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()), duration: "-", price: 0 };
+    const tour = tourLookup[tourId];
+    if (!tour) {
+        return <NoTourSelected />;
+    }
 
-    return <BookingForm tour={tour} startDate={startDate} endDate={endDate} nationalities={nationalities} steps={steps} findUsOptions={findUsOptions} phoneCodes={phoneCodes} />;
+    return <BookingForm tour={{ ...tour, id: Number(tourId) }} startDate={startDate} endDate={endDate} nationalities={nationalities} steps={steps} findUsOptions={findUsOptions} phoneCodes={phoneCodes} />;
 }
 
 function BookingForm({
@@ -286,7 +289,7 @@ function BookingForm({
     phoneCodes,
     steps,
 }: {
-    tour: { title: string; duration: string; price: number };
+    tour: { id: number; title: string; duration: string; price: number };
     startDate: string;
     endDate: string;
     nationalities: string[];
@@ -339,12 +342,44 @@ function BookingForm({
         }
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         setSubmitting(true);
-        setTimeout(() => {
-            alert("Pemesanan berhasil! Tim kami akan menghubungi Anda segera.");
-            router.push("/tours");
-        }, 800);
+        try {
+            const res = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tourId: tour.id,
+                    firstName: form.firstName,
+                    lastName: form.lastName,
+                    gender: form.gender,
+                    birthYear: form.birthYear,
+                    birthMonth: form.birthMonth,
+                    birthDay: form.birthDay,
+                    nationality: form.nationality,
+                    email: form.email,
+                    phoneCode: form.phoneCode,
+                    phoneNumber: form.phoneNumber,
+                    adults: form.adults,
+                    children: form.children,
+                    startDate,
+                    endDate,
+                    findUs: form.findUs,
+                    comments: form.comments,
+                    totalPrice,
+                }),
+            });
+            const json = await res.json();
+            if (json.status === 'success') {
+                router.push(`/payments?id=${json.data.id}`);
+            } else {
+                alert(json.message || 'Gagal membuat pemesanan');
+                setSubmitting(false);
+            }
+        } catch {
+            alert('Gagal terhubung ke server');
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -615,7 +650,7 @@ function BookingForm({
                             </div>
 
                             <div style={{ marginBottom: 20 }}>
-                                <Link href="/tours" style={{ fontSize: 17, fontWeight: 700, color: "var(--color-primary)", fontFamily: "var(--font-heading)", textDecoration: "none", lineHeight: 1.3, display: "block", marginBottom: 8 }}>
+                                <Link href={`/tours/${tour.id}`} style={{ fontSize: 17, fontWeight: 700, color: "var(--color-primary)", fontFamily: "var(--font-heading)", textDecoration: "none", lineHeight: 1.3, display: "block", marginBottom: 8 }}>
                                     {tour.title}
                                 </Link>
                                 <div style={{ display: "flex", gap: 12, fontSize: 13, color: "var(--color-text-muted)", fontFamily: "var(--font-body)" }}>

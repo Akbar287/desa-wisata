@@ -515,7 +515,8 @@ model Booking {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  tour     Tour      @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  payments Payment[]
 
   @@map("bookings")
 }
@@ -616,4 +617,53 @@ model File {
   updatedAt DateTime @updatedAt
 
   @@map("files")
+}
+
+enum PaymentType {
+  BANK
+  WALLET
+  QRIS
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+model PaymentAvailable {
+  id            Int         @id @default(autoincrement())
+  name          String
+  accountNumber String
+  accountName   String
+  image         String
+  description   String
+  type          PaymentType
+  isActive      Boolean
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  payments Payment[]
+
+  @@map("payment_available")
+}
+
+model Payment {
+  id                 Int           @id @default(autoincrement())
+  paymentAvailableId Int
+  bookingId          Int
+  amount             Int
+  status             PaymentStatus
+  referenceCode      String
+  proofOfPayment     String?
+  paidAt             DateTime?
+  cancelledAt        DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  paymentAvailable PaymentAvailable @relation(fields: [paymentAvailableId], references: [id], onDelete: Cascade)
+  booking          Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }

@@ -381,7 +381,7 @@ export default function BlogIdComponents({ post }: { post: BlogDetailPost }) {
                         {post.relatedPosts.map((related) => (
                             <motion.div key={related.id} variants={fadeUp}>
                                 <Link
-                                    href={`/booking/${related.id}`}
+                                    href={`/blog/${related.id}`}
                                     className="group block no-underline"
                                 >
                                     <div

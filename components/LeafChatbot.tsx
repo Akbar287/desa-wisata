@@ -95,7 +95,7 @@ export default function LeafChatbot() {
                 className="leaf-chat-btn"
                 style={{
                     position: 'fixed',
-                    bottom: 92,
+                    bottom: 36,
                     right: 24,
                     zIndex: 9998,
                     width: 64,
@@ -123,7 +123,7 @@ export default function LeafChatbot() {
                 <span
                     style={{
                         position: 'fixed',
-                        bottom: 92,
+                        bottom: 36,
                         right: 20,
                         width: 72,
                         height: 72,
@@ -136,7 +136,6 @@ export default function LeafChatbot() {
                 />
             )}
 
-            {/* Chat window */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -146,7 +145,7 @@ export default function LeafChatbot() {
                         transition={{ duration: 0.3, ease: 'easeOut' }}
                         style={{
                             position: 'fixed',
-                            bottom: 160,
+                            bottom: 100,
                             right: 24,
                             zIndex: 9999,
                             width: 380,
@@ -160,7 +159,6 @@ export default function LeafChatbot() {
                             boxShadow: '0 12px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
                         }}
                     >
-                        {/* Header — leaf themed */}
                         <div
                             style={{
                                 background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 50%, #40916C 100%)',
@@ -170,7 +168,6 @@ export default function LeafChatbot() {
                                 overflow: 'hidden',
                             }}
                         >
-                            {/* Leaf pattern overlay */}
                             <div style={{
                                 position: 'absolute',
                                 inset: 0,
@@ -211,12 +208,10 @@ export default function LeafChatbot() {
                                     </div>
                                 </div>
                             </div>
-                            {/* Decorative leaves */}
                             <span style={{ position: 'absolute', top: 8, right: 14, fontSize: 20, opacity: 0.15 }}>🍃</span>
                             <span style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 16, opacity: 0.1, transform: 'rotate(45deg)' }}>🌿</span>
                         </div>
 
-                        {/* Messages area */}
                         <div
                             style={{
                                 flex: 1,
@@ -273,7 +268,6 @@ export default function LeafChatbot() {
                                 </motion.div>
                             ))}
 
-                            {/* Typing indicator */}
                             {isTyping && (
                                 <motion.div
                                     initial={{ opacity: 0 }}
@@ -306,7 +300,6 @@ export default function LeafChatbot() {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Quick replies */}
                         {messages.length <= 2 && (
                             <div
                                 style={{
@@ -343,7 +336,6 @@ export default function LeafChatbot() {
                             </div>
                         )}
 
-                        {/* Input area */}
                         <div
                             style={{
                                 display: 'flex',
@@ -405,7 +397,6 @@ export default function LeafChatbot() {
                             </button>
                         </div>
 
-                        {/* Footer branding */}
                         <div style={{
                             textAlign: 'center',
                             padding: '6px 0',
@@ -420,7 +411,6 @@ export default function LeafChatbot() {
                 )}
             </AnimatePresence>
 
-            {/* Chatbot animations */}
             <style jsx global>{`
                 @keyframes leafPulse {
                     0%, 100% { transform: scale(1); opacity: 0.4; }

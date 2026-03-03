@@ -13,6 +13,7 @@ import { ChartAreaInteractive } from "@/components/layouts/chart-area-interactiv
 import { prisma } from "@/lib/prisma";
 import type { DashboardStats } from "@/components/layouts/section-cards";
 import type { MonthlyRevenue, PopularTour, BookingStatusData } from "@/components/layouts/chart-area-interactive";
+import WahanaSection from "@/components/landing-page/WahanaSection";
 
 async function getDashboardData() {
   const now = new Date();
@@ -28,7 +29,7 @@ async function getDashboardData() {
     thisMonthBookings,
     lastMonthBookings,
     bookingsByTour,
-    bookingStatusCounts,
+    bookingStatusCounts
   ] = await Promise.all([
     prisma.tour.count(),
     prisma.destination.count(),
@@ -190,6 +191,11 @@ export default async function Home() {
     destinationCount,
   }
 
+  const wahana = await prisma.wahana.findMany({
+    take: 5,
+    orderBy: { rating: 'desc' },
+  })
+
   return (
     <>
       <HeroSection />
@@ -199,6 +205,7 @@ export default async function Home() {
         <TopToursSection tours={tours} />
         <TravelGuideSection posts={blogPosts} />
         <WhyWithUsSection />
+        <WahanaSection wahana={wahana} />
         <TestimonialsSection testimonials={testimonials} />
       </NatureOverlay>
     </>

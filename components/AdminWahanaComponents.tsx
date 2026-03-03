@@ -1,10 +1,10 @@
 import React from 'react'
 import { SiteHeader } from './layouts/site-header'
 
-export default function AdminCategoryTourComponents() {
+export default function AdminWahanaComponents() {
     return (
         <React.Fragment>
-            <SiteHeader title="Kategori Wisata" />
+            <SiteHeader title="Wahana" />
             <div className="flex flex-1 flex-col">
                 <div className="@container/main flex flex-1 flex-col gap-2">
                     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

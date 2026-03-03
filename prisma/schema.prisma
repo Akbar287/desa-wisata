@@ -124,6 +124,7 @@ model Tour {
   tripEntries  TripEntry[]
   specialPkg   SpecialPackage?
   privatePkg   PrivatePackage?
+  TourWahana   TourWahana[]
 
   @@map("tours")
 }
@@ -666,4 +667,41 @@ model Payment {
   booking          Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("payments")
+}
+
+model Wahana {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+  price         Int
+  imageBanner   String
+  description   String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  TourWahana    TourWahana[]
+  WahanaGallery WahanaGallery[]
+
+  @@map("wahanas")
+}
+
+model WahanaGallery {
+  id        Int      @id @default(autoincrement())
+  wahanaId  Int
+  image     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wahana Wahana @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
+
+  @@map("wahana_galleries")
+}
+
+model TourWahana {
+  TourId   Int
+  WahanaId Int
+
+  Tour   Tour   @relation(fields: [TourId], references: [id], onDelete: Cascade)
+  Wahana Wahana @relation(fields: [WahanaId], references: [id], onDelete: Cascade)
+
+  @@id([TourId, WahanaId])
+  @@map("tour_wahanas")
 }

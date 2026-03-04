@@ -280,14 +280,12 @@ export default function WahanaIdComponents({
                             <div className="text-3xl font-extrabold font-sans mb-1" style={{ color: 'var(--color-primary)' }}>{fmt(wahana.price)}</div>
                             <div className="text-[13px] font-sans mb-6" style={{ color: 'var(--color-text-muted)' }}>/ tiket masuk</div>
 
-                            <motion.button
+                            <Link
                                 className="btn-primary w-full justify-center py-3.5 px-6 mb-3 text-sm"
-                                onClick={() => alert('Fitur booking akan segera hadir!')}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                                href={`/booking?id=${wahana.id}&jenis=wahana`}
                             >
                                 Pesan Sekarang
-                            </motion.button>
+                            </Link>
                             <Link href="/contact" className="block">
                                 <button className="btn-outline w-full justify-center py-3 px-6 mb-2 text-sm">Hubungi Kami</button>
                             </Link>

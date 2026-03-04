@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { WaveDividerTop } from "./NatureOverlay";
+import { WaveDividerTop, VineDecoration } from "./NatureOverlay";
 
 type TourItem = {
     id: number;
@@ -37,6 +37,8 @@ export default function TopToursSection({ tours }: { tours: TourItem[] }) {
             className="section-earthy-warm py-24 overflow-hidden"
         >
             <WaveDividerTop fill="#FFF3E0" />
+            <VineDecoration position="left" />
+            <VineDecoration position="right" />
             <div className="max-w-[1320px] mx-auto px-6 relative z-[3]">
                 {/* Heading */}
                 <motion.h2
@@ -50,7 +52,7 @@ export default function TopToursSection({ tours }: { tours: TourItem[] }) {
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
                 >
-                    Paket Wisata Unggulan
+                    Paket Wisata Terbaik
                 </motion.h2>
 
                 {/* Scrollable Cards */}

@@ -363,7 +363,7 @@ export default function ToursDetailComponent({ tour, navItems, relatedTours }: {
                                             </div>
                                             <div className="flex justify-between items-center pt-3" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
                                                 <span className="font-sans text-lg font-extrabold" style={{ color: 'var(--color-primary)' }}>{fmt(d.price)}</span>
-                                                <Link href={`/booking?id=${tour.id}&start=${d.start}&end=${d.end}`}>
+                                                <Link href={`/booking?id=${tour.id}&start=${d.start}&end=${d.end}&jenis=paket-wisata`}>
                                                     <button className="btn-primary py-2.5 px-5 text-xs">Pesan</button>
                                                 </Link>
                                             </div>

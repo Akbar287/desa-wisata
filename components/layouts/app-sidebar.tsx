@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 import { signOut, useSession } from "next-auth/react"
 import { toast } from "sonner"
-import { Binoculars, Building, CreditCardIcon, Frame, HatGlasses, Landmark, LayoutDashboard, LucideSquirrel, Map, Mountain, Newspaper, PieChart, PlaySquare, Quote, User, UserRoundSearch, Users } from "lucide-react"
+import { AppWindow, Binoculars, Building, CreditCardIcon, Frame, HatGlasses, Landmark, LayoutDashboard, LucideSquirrel, Map, Mountain, Newspaper, PieChart, PlaySquare, Quote, User, UserRoundSearch, Users } from "lucide-react"
 import Link from "next/link"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -90,6 +90,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 name: 'Yayasan Kami',
                 url: '/admin-yayasan',
                 icon: Building,
+            },
+            {
+                name: 'Landing Page',
+                url: '/admin-landing-page',
+                icon: AppWindow,
             },
         ],
         navSecondary: [

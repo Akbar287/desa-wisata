@@ -29,37 +29,105 @@ const STEPS = [
     { num: 5, label: "Selamat Berlibur!", icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" },
 ];
 
-export default async function BookingPage({ searchParams }: { searchParams: Promise<{ id?: string; start?: string; end?: string }> }) {
-    const { id, start, end } = await searchParams;
-    const tourId = Number(id);
+export default async function BookingPage({ searchParams }: { searchParams: Promise<{ id?: string; start?: string; end?: string; jenis?: string }> }) {
+    const { id, start, end, jenis } = await searchParams;
+    const itemId = Number(id);
+    const bookingType = jenis || 'paket-wisata';
 
     let tourLookup: Record<string, { id: number; title: string; duration: string; price: number }> = {};
+    let dailyQuota = 0;
+    // For wahana/destinasi: collect existing booking counts per date for calendar availability
+    let bookingCounts: Record<string, number> = {};
 
-    if (tourId && !isNaN(tourId)) {
-        const dbTour = await prisma.tour.findUnique({
-            where: { id: tourId },
-            select: { id: true, title: true, durationDays: true, price: true, dates: { orderBy: { startDate: "asc" } } },
-        });
-
-        if (dbTour) {
-            let selectedPrice = dbTour.price;
-            const fmtDate = (d: Date) => d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-
-            if (start && end && dbTour.dates.length > 0) {
-                const matchingDate = dbTour.dates.find(
-                    (d) => fmtDate(d.startDate) === start && fmtDate(d.endDate) === end
-                );
-                if (matchingDate) {
-                    selectedPrice = matchingDate.price;
+    if (itemId && !isNaN(itemId)) {
+        if (bookingType === 'destinasi') {
+            const dest = await prisma.destination.findUnique({
+                where: { id: itemId },
+                select: { id: true, name: true, priceWeekday: true, KuotaHarian: true },
+            });
+            if (dest) {
+                dailyQuota = dest.KuotaHarian;
+                tourLookup[String(dest.id)] = {
+                    id: dest.id,
+                    title: dest.name,
+                    duration: '1 hari',
+                    price: dest.priceWeekday,
+                };
+                // Get booking counts for the next 90 days
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const futureEnd = new Date(now);
+                futureEnd.setDate(futureEnd.getDate() + 90);
+                const bookings = await prisma.booking.findMany({
+                    where: {
+                        tourId: dest.id,
+                        startDate: { gte: now, lte: futureEnd },
+                        status: { not: 'CANCELLED' },
+                    },
+                    select: { startDate: true, adults: true, children: true },
+                });
+                for (const b of bookings) {
+                    const key = b.startDate.toISOString().split('T')[0];
+                    bookingCounts[key] = (bookingCounts[key] || 0) + b.adults + b.children;
                 }
             }
+        } else if (bookingType === 'wahana') {
+            const wahana = await prisma.wahana.findUnique({
+                where: { id: itemId },
+                select: { id: true, name: true, price: true },
+            });
+            if (wahana) {
+                dailyQuota = 100; // Default capacity for wahana
+                tourLookup[String(wahana.id)] = {
+                    id: wahana.id,
+                    title: wahana.name,
+                    duration: '1 hari',
+                    price: wahana.price,
+                };
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const futureEnd = new Date(now);
+                futureEnd.setDate(futureEnd.getDate() + 90);
+                const bookings = await prisma.booking.findMany({
+                    where: {
+                        tourId: wahana.id,
+                        startDate: { gte: now, lte: futureEnd },
+                        status: { not: 'CANCELLED' },
+                    },
+                    select: { startDate: true, adults: true, children: true },
+                });
+                for (const b of bookings) {
+                    const key = b.startDate.toISOString().split('T')[0];
+                    bookingCounts[key] = (bookingCounts[key] || 0) + b.adults + b.children;
+                }
+            }
+        } else {
+            // paket-wisata — existing logic
+            const dbTour = await prisma.tour.findUnique({
+                where: { id: itemId },
+                select: { id: true, title: true, durationDays: true, price: true, dates: { orderBy: { startDate: "asc" } } },
+            });
 
-            tourLookup[String(dbTour.id)] = {
-                id: dbTour.id,
-                title: dbTour.title,
-                duration: `${dbTour.durationDays} hari`,
-                price: selectedPrice,
-            };
+            if (dbTour) {
+                let selectedPrice = dbTour.price;
+                const fmtDate = (d: Date) => d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+
+                if (start && end && dbTour.dates.length > 0) {
+                    const matchingDate = dbTour.dates.find(
+                        (d) => fmtDate(d.startDate) === start && fmtDate(d.endDate) === end
+                    );
+                    if (matchingDate) {
+                        selectedPrice = matchingDate.price;
+                    }
+                }
+
+                tourLookup[String(dbTour.id)] = {
+                    id: dbTour.id,
+                    title: dbTour.title,
+                    duration: `${dbTour.durationDays} hari`,
+                    price: selectedPrice,
+                };
+            }
         }
     }
 
@@ -70,6 +138,9 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
             phoneCodes={PHONE_CODES}
             tourLookup={tourLookup}
             steps={STEPS}
+            bookingType={bookingType}
+            dailyQuota={dailyQuota}
+            bookingCounts={bookingCounts}
         />
     );
 }

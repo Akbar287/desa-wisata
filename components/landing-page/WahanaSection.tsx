@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { WaveDividerTop } from "./NatureOverlay";
+import { WaveDividerTop, VineDecoration } from "./NatureOverlay";
 import { fmt } from "@/lib/utils";
 import { Wahana } from "@/generated/prisma/client";
 
@@ -25,6 +25,8 @@ export default function WahanaSection({ wahana }: { wahana: Wahana[] }) {
             className="section-earthy-warm py-24 overflow-hidden"
         >
             <WaveDividerTop fill="#FFF3E0" />
+            <VineDecoration position="left" />
+            <VineDecoration position="right" />
             <div className="max-w-[1320px] mx-auto px-6 relative z-3">
                 <motion.h2
                     className="font-serif font-bold text-center mb-12"
@@ -37,7 +39,7 @@ export default function WahanaSection({ wahana }: { wahana: Wahana[] }) {
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
                 >
-                    Wahana
+                    Wahana Populer
                 </motion.h2>
 
                 <motion.div

@@ -70,15 +70,110 @@ enum PrivatePackageTier {
   DIAMOND
 }
 
-model Destination {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model DestinationLabel {
+  id           Int                           @id @default(autoincrement())
+  name         String                        @unique
+  description  String
+  icon         String
+  createdAt    DateTime                      @default(now())
+  updatedAt    DateTime                      @updatedAt
+  destinations DestinationLabelDestination[]
 
-  tours TourDestination[]
+  @@map("destination_labels")
+}
+
+model DestinationAccessibility {
+  id           Int                                   @id @default(autoincrement())
+  name         String                                @unique
+  description  String
+  icon         String
+  createdAt    DateTime                              @default(now())
+  updatedAt    DateTime                              @updatedAt
+  destinations DestinationAccessibilityDestination[]
+
+  @@map("destination_accessibilities")
+}
+
+model DestinationFacility {
+  id           Int                              @id @default(autoincrement())
+  name         String                           @unique
+  description  String
+  icon         String
+  createdAt    DateTime                         @default(now())
+  updatedAt    DateTime                         @updatedAt
+  destinations DestinationFacilityDestination[]
+
+  @@map("destination_facilities")
+}
+
+model Destination {
+  id                Int      @id @default(autoincrement())
+  name              String   @unique
+  priceWeekend      Int
+  priceWeekday      Int
+  priceGroup        Int
+  minimalGroup      Int
+  jamBuka           String
+  jamTutup          String
+  durasiRekomendasi String
+  isAktif           Boolean
+  imageBanner       String
+  description       String
+  KuotaHarian       Int
+  rating            Float    @default(0)
+  reviewCount       Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tours                      TourDestination[]
+  destinationGalleries       DestinationGallery[]
+  destinationAccessibilities DestinationAccessibilityDestination[]
+  destinationFacilities      DestinationFacilityDestination[]
+  destinationLabels          DestinationLabelDestination[]
 
   @@map("destinations")
+}
+
+model DestinationAccessibilityDestination {
+  destinationId   Int
+  accessibilityId Int
+  destination     Destination              @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  accessibility   DestinationAccessibility @relation(fields: [accessibilityId], references: [id], onDelete: Cascade)
+
+  @@id([destinationId, accessibilityId])
+  @@map("destination_accessibility_destinations")
+}
+
+model DestinationFacilityDestination {
+  destinationId Int
+  facilityId    Int
+  destination   Destination         @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  facility      DestinationFacility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@id([destinationId, facilityId])
+  @@map("destination_facility_destinations")
+}
+
+model DestinationLabelDestination {
+  destinationId Int
+  labelId       Int
+  destination   Destination      @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  label         DestinationLabel @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([destinationId, labelId])
+  @@map("destination_label_destinations")
+}
+
+model DestinationGallery {
+  id            Int      @id @default(autoincrement())
+  destinationId Int
+  image         String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@map("destination_galleries")
 }
 
 model Theme {
@@ -305,6 +400,7 @@ model PrivatePackageInclusion {
 
 model Testimonial {
   id        Int      @id @default(autoincrement())
+  bookingId Int
   name      String
   avatar    String?
   role      String
@@ -312,6 +408,7 @@ model Testimonial {
   rating    Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("testimonials")
 }
@@ -516,8 +613,9 @@ model Booking {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  tour     Tour      @relation(fields: [tourId], references: [id], onDelete: Cascade)
-  payments Payment[]
+  tour         Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  payments     Payment[]
+  testimonials Testimonial[]
 
   @@map("bookings")
 }
@@ -706,4 +804,28 @@ model TourWahana {
 
   @@id([TourId, WahanaId])
   @@map("tour_wahanas")
+}
+
+model LandingPageStatistic {
+  id        Int      @id @default(autoincrement())
+  title     String
+  count     Int
+  image     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("landing_page_statistics")
+}
+
+model LandingPageWithUs {
+  id        Int      @id @default(autoincrement())
+  title     String
+  subtitle  String
+  image     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("landing_page_with_us")
 }

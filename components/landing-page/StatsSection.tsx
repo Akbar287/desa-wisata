@@ -12,14 +12,13 @@ type StatsData = {
     destinationCount: number;
 };
 
-const staticImages = [
-    "/assets/withus01.png",
-    "/assets/withus02.png",
-    "/assets/withus03.png",
-    "/assets/withus05.png",
-    "/assets/withus06.png",
-    "/assets/withus07.png",
-];
+type LandingPageStatisticItem = {
+    id: number;
+    title: string;
+    count: number;
+    image: string;
+    order: number;
+};
 
 function formatStat(n: number): string {
     if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K+`;
@@ -38,17 +37,17 @@ const itemVariants = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
 };
 
-export default function StatsSection({ stats }: { stats: StatsData }) {
+export default function StatsSection({ stats, landingPageStatistics }: { stats: StatsData; landingPageStatistics: LandingPageStatisticItem[] }) {
     const [expandInfo, setExpandInfo] = React.useState<boolean>(false);
 
-    const statItems = [
-        { number: formatStat(stats.destinationCount), label: "Destinasi Wisata", image: staticImages[0] },
-        { number: formatStat(stats.bookingCount), label: "Wisatawan Bahagia", image: staticImages[1] },
-        { number: "2026", label: "Pilihan Terbaik", image: staticImages[2] },
-        { number: formatStat(stats.tourCount), label: "Paket Wisata", image: staticImages[3] },
-        { number: formatStat(stats.testimonialCount), label: "Ulasan Positif", image: staticImages[4] },
-        { number: "10+", label: "Tahun Beroperasi", image: staticImages[5] },
-    ];
+    const statItems = landingPageStatistics.length > 0
+        ? landingPageStatistics.map((s) => ({ number: formatStat(s.count), label: s.title, image: s.image }))
+        : [
+            { number: formatStat(stats.destinationCount), label: "Destinasi Wisata", image: "/assets/withus01.png" },
+            { number: formatStat(stats.bookingCount), label: "Wisatawan Bahagia", image: "/assets/withus02.png" },
+            { number: formatStat(stats.tourCount), label: "Paket Wisata", image: "/assets/withus05.png" },
+            { number: formatStat(stats.testimonialCount), label: "Ulasan Positif", image: "/assets/withus06.png" },
+        ];
 
     return (
         <section

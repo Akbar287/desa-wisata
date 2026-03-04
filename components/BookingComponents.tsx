@@ -12,16 +12,22 @@ export default function BookingComponents({
     phoneCodes,
     tourLookup,
     steps,
+    bookingType = 'paket-wisata',
+    dailyQuota = 0,
+    bookingCounts = {},
 }: {
     nationalities: string[];
     findUsOptions: string[];
     phoneCodes: { code: string; flag: string; country: string; }[];
     tourLookup: Record<string, { id: number; title: string; duration: string; price: number }>;
     steps: { num: number; label: string; icon: string }[];
+    bookingType?: string;
+    dailyQuota?: number;
+    bookingCounts?: Record<string, number>;
 }) {
     return (
         <Suspense fallback={<div style={{ minHeight: "100vh" }} />}>
-            <BookingContent nationalities={nationalities} findUsOptions={findUsOptions} phoneCodes={phoneCodes} tourLookup={tourLookup} steps={steps} />
+            <BookingContent nationalities={nationalities} findUsOptions={findUsOptions} phoneCodes={phoneCodes} tourLookup={tourLookup} steps={steps} bookingType={bookingType} dailyQuota={dailyQuota} bookingCounts={bookingCounts} />
         </Suspense>
     );
 }
@@ -254,21 +260,28 @@ function BookingContent({
     phoneCodes,
     tourLookup,
     steps,
+    bookingType,
+    dailyQuota,
+    bookingCounts,
 }: {
     nationalities: string[];
     findUsOptions: string[];
     phoneCodes: { code: string; flag: string; country: string; }[];
     tourLookup: Record<string, { id: number; title: string; duration: string; price: number }>;
     steps: { num: number; label: string; icon: string }[];
+    bookingType: string;
+    dailyQuota: number;
+    bookingCounts: Record<string, number>;
 }) {
     const searchParams = useSearchParams();
 
     const tourId = searchParams.get("id");
     const startDate = searchParams.get("start");
     const endDate = searchParams.get("end");
+    const needsCalendar = bookingType === 'wahana' || bookingType === 'destinasi';
 
-    // Check params
-    if (!tourId || !startDate || !endDate) {
+    // For paket-wisata, require start/end. For wahana/destinasi, only require id.
+    if (!tourId || (!needsCalendar && (!startDate || !endDate))) {
         return <NoTourSelected />;
     }
 
@@ -277,7 +290,152 @@ function BookingContent({
         return <NoTourSelected />;
     }
 
-    return <BookingForm tour={{ ...tour, id: Number(tourId) }} startDate={startDate} endDate={endDate} nationalities={nationalities} steps={steps} findUsOptions={findUsOptions} phoneCodes={phoneCodes} />;
+    return <BookingForm tour={{ ...tour, id: Number(tourId) }} startDate={startDate || ''} endDate={endDate || ''} nationalities={nationalities} steps={steps} findUsOptions={findUsOptions} phoneCodes={phoneCodes} bookingType={bookingType} dailyQuota={dailyQuota} bookingCounts={bookingCounts} />;
+}
+
+/* ─────────────────────── Calendar Component ─────────────────────── */
+
+function BookingCalendar({ selectedDate, onSelectDate, dailyQuota, bookingCounts, dateError }: {
+    selectedDate: string;
+    onSelectDate: (date: string) => void;
+    dailyQuota: number;
+    bookingCounts: Record<string, number>;
+    dateError: string;
+}) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [viewMonth, setViewMonth] = useState(today.getMonth());
+    const [viewYear, setViewYear] = useState(today.getFullYear());
+
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
+    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+    const prevMonth = () => {
+        if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); } else { setViewMonth(viewMonth - 1); }
+    };
+    const nextMonth = () => {
+        if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); } else { setViewMonth(viewMonth + 1); }
+    };
+
+    const getStatus = (dateKey: string): 'available' | 'almost_full' | 'full' => {
+        const count = bookingCounts[dateKey] || 0;
+        if (dailyQuota <= 0) return 'available';
+        const ratio = count / dailyQuota;
+        if (ratio >= 1) return 'full';
+        if (ratio >= 0.7) return 'almost_full';
+        return 'available';
+    };
+
+    const statusColors = {
+        available: { bg: '#DCFCE7', border: '#22C55E', dot: '#22C55E' },
+        almost_full: { bg: '#FEF3C7', border: '#F59E0B', dot: '#F59E0B' },
+        full: { bg: '#FEE2E2', border: '#EF4444', dot: '#EF4444' },
+    };
+
+    const canGoPrev = viewYear > today.getFullYear() || (viewYear === today.getFullYear() && viewMonth > today.getMonth());
+
+    return (
+        <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Pilih Tanggal Booking <span style={{ color: '#DC2626' }}>*</span></label>
+            <div style={{ border: dateError ? '2px solid #DC2626' : '1.5px solid rgba(0,0,0,0.10)', borderRadius: 'var(--radius-md)', padding: 16, background: 'white' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <button type="button" onClick={prevMonth} disabled={!canGoPrev} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: canGoPrev ? 'var(--color-bg-light)' : 'transparent', cursor: canGoPrev ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canGoPrev ? 1 : 0.3, transition: 'all 0.2s' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text)" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+                    </button>
+                    <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--color-text)' }}>{monthNames[viewMonth]} {viewYear}</span>
+                    <button type="button" onClick={nextMonth} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: 'var(--color-bg-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text)" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                    </button>
+                </div>
+
+                {/* Day names */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+                    {dayNames.map((d) => (
+                        <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', padding: '4px 0' }}>{d}</div>
+                    ))}
+                </div>
+
+                {/* Calendar grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+                    {/* Empty cells for offset */}
+                    {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                        <div key={`empty-${i}`} />
+                    ))}
+                    {/* Day cells */}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const day = i + 1;
+                        const date = new Date(viewYear, viewMonth, day);
+                        const dateKey = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const isPast = date < today;
+                        const isSelected = selectedDate === dateKey;
+                        const status = getStatus(dateKey);
+                        const colors = statusColors[status];
+                        const isFull = status === 'full';
+                        const isDisabled = isPast || isFull;
+                        const booked = bookingCounts[dateKey] || 0;
+
+                        return (
+                            <button
+                                key={day}
+                                type="button"
+                                disabled={isDisabled}
+                                onClick={() => onSelectDate(dateKey)}
+                                title={isPast ? 'Sudah lewat' : isFull ? `Penuh (${booked}/${dailyQuota})` : `${booked}/${dailyQuota} terisi`}
+                                style={{
+                                    width: '100%',
+                                    aspectRatio: '1',
+                                    borderRadius: 8,
+                                    border: isSelected ? `2px solid var(--color-primary)` : `1.5px solid ${isPast ? 'transparent' : colors.border + '40'}`,
+                                    background: isSelected ? 'var(--color-bg-light)' : isPast ? 'transparent' : colors.bg + '60',
+                                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                    opacity: isPast ? 0.35 : 1,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 2,
+                                    fontSize: 13,
+                                    fontWeight: isSelected ? 700 : 500,
+                                    fontFamily: 'var(--font-body)',
+                                    color: isSelected ? 'var(--color-primary)' : isFull ? '#EF4444' : 'var(--color-text)',
+                                    transition: 'all 0.15s',
+                                    position: 'relative',
+                                }}
+                            >
+                                {day}
+                                {!isPast && (
+                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: colors.dot, flexShrink: 0 }} />
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Legend */}
+                <div style={{ display: 'flex', gap: 16, marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    {[
+                        { color: '#22C55E', label: 'Tersedia' },
+                        { color: '#F59E0B', label: 'Hampir Penuh' },
+                        { color: '#EF4444', label: 'Penuh' },
+                    ].map((l) => (
+                        <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontFamily: 'var(--font-body)', color: 'var(--color-text-muted)' }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, flexShrink: 0 }} />
+                            {l.label}
+                        </div>
+                    ))}
+                </div>
+            </div>
+            {selectedDate && (
+                <div style={{ marginTop: 8, fontSize: 13, fontFamily: 'var(--font-body)', color: 'var(--color-primary)', fontWeight: 600 }}>
+                    📅 Tanggal dipilih: {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+            )}
+            {dateError && <FieldError msg={dateError} />}
+        </div>
+    );
 }
 
 function BookingForm({
@@ -288,6 +446,9 @@ function BookingForm({
     findUsOptions,
     phoneCodes,
     steps,
+    bookingType,
+    dailyQuota,
+    bookingCounts,
 }: {
     tour: { id: number; title: string; duration: string; price: number };
     startDate: string;
@@ -296,8 +457,19 @@ function BookingForm({
     findUsOptions: string[];
     phoneCodes: { code: string; flag: string; country: string; }[];
     steps: { num: number; label: string; icon: string }[];
+    bookingType: string;
+    dailyQuota: number;
+    bookingCounts: Record<string, number>;
 }) {
     const router = useRouter();
+    const needsCalendar = bookingType === 'wahana' || bookingType === 'destinasi';
+
+    const [selectedDate, setSelectedDate] = useState<string>('');
+
+    const fmtDateId = (d: Date) => d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+
+    const effectiveStartDate = needsCalendar && selectedDate ? fmtDateId(new Date(selectedDate)) : startDate;
+    const effectiveEndDate = needsCalendar && selectedDate ? fmtDateId(new Date(selectedDate)) : endDate;
 
     const [form, setForm] = useState({
         firstName: "", lastName: "", gender: "", birthYear: "", birthMonth: "", birthDay: "",
@@ -308,6 +480,7 @@ function BookingForm({
     const [showConfirm, setShowConfirm] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [legalModal, setLegalModal] = useState<"terms" | "privacy" | null>(null);
+    const [dateError, setDateError] = useState('');
 
     const set = useCallback((field: string, value: string | number | boolean) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -323,6 +496,11 @@ function BookingForm({
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
     const handleSubmit = async () => {
+        if (needsCalendar && !selectedDate) {
+            setDateError('Silakan pilih tanggal booking terlebih dahulu');
+            return;
+        }
+        setDateError('');
         try {
             await bookingSchema.validate(form, { abortEarly: false });
             setErrors({});
@@ -362,8 +540,8 @@ function BookingForm({
                     phoneNumber: form.phoneNumber,
                     adults: form.adults,
                     children: form.children,
-                    startDate,
-                    endDate,
+                    startDate: effectiveStartDate,
+                    endDate: effectiveEndDate,
                     findUs: form.findUs,
                     comments: form.comments,
                     totalPrice,
@@ -559,17 +737,27 @@ function BookingForm({
                                 </div>
                             </div>
 
-                            {/* Dates (read-only) */}
-                            <div className="form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
-                                <div>
-                                    <label style={labelStyle}>Tanggal Berangkat</label>
-                                    <input value={startDate} readOnly style={{ ...inputStyle, background: "var(--color-bg-light)", color: "var(--color-text-muted)" }} />
+                            {/* Dates */}
+                            {needsCalendar ? (
+                                <BookingCalendar
+                                    selectedDate={selectedDate}
+                                    onSelectDate={(d: string) => { setSelectedDate(d); setDateError(''); }}
+                                    dailyQuota={dailyQuota}
+                                    bookingCounts={bookingCounts}
+                                    dateError={dateError}
+                                />
+                            ) : (
+                                <div className="form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+                                    <div>
+                                        <label style={labelStyle}>Tanggal Berangkat</label>
+                                        <input value={effectiveStartDate} readOnly style={{ ...inputStyle, background: "var(--color-bg-light)", color: "var(--color-text-muted)" }} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Tanggal Kembali</label>
+                                        <input value={effectiveEndDate} readOnly style={{ ...inputStyle, background: "var(--color-bg-light)", color: "var(--color-text-muted)" }} />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label style={labelStyle}>Tanggal Kembali</label>
-                                    <input value={endDate} readOnly style={{ ...inputStyle, background: "var(--color-bg-light)", color: "var(--color-text-muted)" }} />
-                                </div>
-                            </div>
+                            )}
 
                             {/* Adults / Children */}
                             <div className="form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
@@ -660,8 +848,8 @@ function BookingForm({
 
                             <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.07)" }}>
                                 {[
-                                    { l: "Berangkat", v: startDate },
-                                    { l: "Kembali", v: endDate },
+                                    { l: needsCalendar ? "Tanggal Booking" : "Berangkat", v: effectiveStartDate || '—' },
+                                    ...(!needsCalendar ? [{ l: "Kembali", v: effectiveEndDate }] : []),
                                     { l: "Dewasa", v: `${form.adults} orang` },
                                     { l: "Anak", v: `${form.children} orang` },
                                     { l: "Harga / pax", v: fmt(tour.price) },
@@ -694,8 +882,8 @@ function BookingForm({
                 <ConfirmModal
                     data={form as unknown as BookingFormData}
                     tour={tour}
-                    startDate={startDate}
-                    endDate={endDate}
+                    startDate={effectiveStartDate}
+                    endDate={effectiveEndDate}
                     onCancel={() => setShowConfirm(false)}
                     onConfirm={handleConfirm}
                 />

@@ -72,7 +72,20 @@ app.post('/', async (c) => {
         }
 
         const data = await prisma.destination.create({
-            data: { name },
+            data: {
+                name,
+                priceWeekend: 0,
+                priceWeekday: 0,
+                priceGroup: 0,
+                minimalGroup: 1,
+                jamBuka: '08:00',
+                jamTutup: '17:00',
+                durasiRekomendasi: '',
+                isAktif: true,
+                imageBanner: '',
+                description: '',
+                KuotaHarian: 0,
+            },
             include: { _count: { select: { tours: true } } },
         })
 

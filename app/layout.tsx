@@ -12,6 +12,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { RouteProgress } from '@/lib/router-progress'
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layouts/app-sidebar";
+import SessionTimeout from "@/components/SessionTimeout";
 
 const playfair = Playfair({
   subsets: ["latin"],
@@ -122,11 +123,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getSession()
-  console.log(session)
   return (
     <html lang="id" className={`${playfair.variable} ${playfair.className} antialiased`} suppressHydrationWarning>
       <body>
         <RouteProgress />
+        <SessionTimeout />
         <Providers session={session}>
           <ThemeProvider
             attribute="class"

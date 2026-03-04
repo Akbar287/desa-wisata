@@ -4,47 +4,23 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { WaveDividerTop, FireflyParticles } from "./NatureOverlay";
 
-const reasons = [
-    {
-        title: "Autentik",
-        description: "Pengalaman budaya asli langsung dari masyarakat lokal",
-        image: "/assets/withus01.png",
-    },
-    {
-        title: "Berpengalaman",
-        description: "Lebih dari 10 tahun menghubungkan wisatawan dengan desa",
-        image: "/assets/withus02.png",
-    },
-    {
-        title: "Bersejarah",
-        description: "Kunjungi desa-desa dengan warisan sejarah yang kaya",
-        image: "/assets/withus03.png",
-    },
-    {
-        title: "Profesional",
-        description: "Tim pemandu terlatih dan berpengetahuan luas",
-        image: "/assets/withus05.png",
-    },
-    {
-        title: "Petualangan",
-        description: "Jelajahi tempat-tempat tersembunyi yang menakjubkan",
-        image: "/assets/withus06.png",
-    },
-    {
-        title: "Berkesan",
-        description: "Kenangan tak terlupakan di setiap perjalanan",
-        image: "/assets/withus07.png",
-    },
-    {
-        title: "Ramah",
-        description: "Sambutan hangat dari penduduk desa yang ramah",
-        image: "/assets/withus08.png",
-    },
-    {
-        title: "Komunitas",
-        description: "Mendukung pemberdayaan ekonomi masyarakat desa",
-        image: "/assets/4e5c0835-ea10-41d5-b91d-59bb403cc22b-company01.png",
-    },
+type WithUsItem = {
+    id: number;
+    title: string;
+    subtitle: string;
+    image: string;
+    order: number;
+};
+
+const defaultReasons = [
+    { title: "Autentik", description: "Pengalaman budaya asli langsung dari masyarakat lokal", image: "/assets/withus01.png" },
+    { title: "Berpengalaman", description: "Lebih dari 10 tahun menghubungkan wisatawan dengan desa", image: "/assets/withus02.png" },
+    { title: "Bersejarah", description: "Kunjungi desa-desa dengan warisan sejarah yang kaya", image: "/assets/withus03.png" },
+    { title: "Profesional", description: "Tim pemandu terlatih dan berpengetahuan luas", image: "/assets/withus05.png" },
+    { title: "Petualangan", description: "Jelajahi tempat-tempat tersembunyi yang menakjubkan", image: "/assets/withus06.png" },
+    { title: "Berkesan", description: "Kenangan tak terlupakan di setiap perjalanan", image: "/assets/withus07.png" },
+    { title: "Ramah", description: "Sambutan hangat dari penduduk desa yang ramah", image: "/assets/withus08.png" },
+    { title: "Komunitas", description: "Mendukung pemberdayaan ekonomi masyarakat desa", image: "/assets/4e5c0835-ea10-41d5-b91d-59bb403cc22b-company01.png" },
 ];
 
 const containerVariants = {
@@ -59,7 +35,10 @@ const itemVariants = {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
-export default function WhyWithUsSection() {
+export default function WhyWithUsSection({ reasons: dbReasons }: { reasons: WithUsItem[] }) {
+    const reasons = dbReasons.length > 0
+        ? dbReasons.map((r) => ({ title: r.title, description: r.subtitle, image: r.image }))
+        : defaultReasons;
     return (
         <section
             id="about-us"

@@ -1,7 +1,6 @@
 import HeroSection from "@/components/landing-page/HeroSection";
 import StatsSection from "@/components/landing-page/StatsSection";
 import TopToursSection from "@/components/landing-page/TopToursSection";
-import TripTypesSection from "@/components/landing-page/TripTypesSection";
 import WhyWithUsSection from "@/components/landing-page/WhyWithUsSection";
 import TravelGuideSection from "@/components/landing-page/TravelGuideSection";
 import TestimonialsSection from "@/components/landing-page/TestimonialsSection";
@@ -14,6 +13,8 @@ import { prisma } from "@/lib/prisma";
 import type { DashboardStats } from "@/components/layouts/section-cards";
 import type { MonthlyRevenue, PopularTour, BookingStatusData } from "@/components/layouts/chart-area-interactive";
 import WahanaSection from "@/components/landing-page/WahanaSection";
+import DestinationSection from "@/components/landing-page/DestinationSection";
+import ProfilDesaSection from "@/components/landing-page/ProfilDesaSection";
 
 async function getDashboardData() {
   const now = new Date();
@@ -159,7 +160,7 @@ export default async function Home() {
     )
   }
 
-  const [tours, testimonials, blogPosts, tourCount, testimonialCount, bookingCount, destinationCount] = await Promise.all([
+  const [tours, testimonials, blogPosts, tourCount, testimonialCount, bookingCount, destinationCount, landingPageStatistics, landingPageWithUs] = await Promise.all([
     prisma.tour.findMany({
       take: 4,
       orderBy: { rating: 'desc' },
@@ -182,6 +183,8 @@ export default async function Home() {
     prisma.testimonial.count(),
     prisma.booking.count(),
     prisma.destination.count(),
+    prisma.landingPageStatistic.findMany({ orderBy: { order: 'asc' }, select: { id: true, title: true, count: true, image: true, order: true } }),
+    prisma.landingPageWithUs.findMany({ orderBy: { order: 'asc' }, select: { id: true, title: true, subtitle: true, image: true, order: true } }),
   ])
 
   const stats = {
@@ -196,16 +199,39 @@ export default async function Home() {
     orderBy: { rating: 'desc' },
   })
 
+  const destinations = await prisma.destination.findMany({
+    where: { isAktif: true },
+    take: 8,
+    orderBy: { reviewCount: 'desc' },
+    include: {
+      destinationLabels: { include: { label: { select: { name: true } } } },
+      destinationFacilities: { include: { facility: { select: { name: true } } } },
+    },
+  })
+
+  const destinationsSerialized = destinations.map(d => ({
+    id: d.id,
+    name: d.name,
+    imageBanner: d.imageBanner,
+    description: d.description,
+    priceWeekday: d.priceWeekday,
+    jamBuka: d.jamBuka,
+    jamTutup: d.jamTutup,
+    labels: d.destinationLabels.map(dl => dl.label.name),
+    facilities: d.destinationFacilities.map(df => df.facility.name),
+  }))
+
   return (
     <>
       <HeroSection />
       <NatureOverlay>
-        <StatsSection stats={stats} />
-        <TripTypesSection />
-        <TopToursSection tours={tours} />
-        <TravelGuideSection posts={blogPosts} />
-        <WhyWithUsSection />
+        <ProfilDesaSection />
+        <StatsSection stats={stats} landingPageStatistics={landingPageStatistics} />
+        <DestinationSection destinations={destinationsSerialized} />
         <WahanaSection wahana={wahana} />
+        <TopToursSection tours={tours} />
+        <WhyWithUsSection reasons={landingPageWithUs} />
+        <TravelGuideSection posts={blogPosts} />
         <TestimonialsSection testimonials={testimonials} />
       </NatureOverlay>
     </>

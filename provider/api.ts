@@ -88,7 +88,11 @@ const authOptions: AuthOptions = {
     ],
     session: {
         strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60,
+        maxAge: 30 * 60,
+        updateAge: 5 * 60,
+    },
+    jwt: {
+        maxAge: 30 * 60
     },
     callbacks: {
         async jwt({ token, user }: { token: any; user?: any; }) {

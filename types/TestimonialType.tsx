@@ -5,6 +5,7 @@ export interface TestimonialData {
     role: string;
     text: string;
     rating: number;
+    bookingId: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -15,4 +16,5 @@ export interface TestimonialFormData {
     role: string;
     text: string;
     rating: number;
+    bookingId: number;
 }

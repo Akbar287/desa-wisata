@@ -18,7 +18,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
-import { IconEdit, IconPlus, IconSearch, IconTrash, IconUpload } from '@tabler/icons-react'
+import { IconEdit, IconPlus, IconSearch, IconTrash, IconUpload, IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+import { fmt } from '@/lib/utils'
 
 const API_URL = '/api/testimonials'
 const IMG_API = '/api/img'
@@ -62,6 +63,132 @@ function getPageNumbers(page: number, totalPages: number): (number | 'e')[] {
     return p
 }
 
+type BookingItem = {
+    id: number; firstName: string; lastName: string; email: string; status: string;
+    startDate: string; totalPrice: number; adults: number; children: number; createdAt: string;
+    tour: { title: string };
+}
+
+function BookingSelector({ value, onChange, error }: { value: number; onChange: (id: number) => void; error?: string }) {
+    const [open, setOpen] = useState(false)
+    const [bookings, setBookings] = useState<BookingItem[]>([])
+    const [bkLoading, setBkLoading] = useState(false)
+    const [bkSearch, setBkSearch] = useState('')
+    const [bkSearchInput, setBkSearchInput] = useState('')
+    const [bkPage, setBkPage] = useState(1)
+    const [bkPagination, setBkPagination] = useState<PaginationMeta | null>(null)
+    const [selectedBooking, setSelectedBooking] = useState<BookingItem | null>(null)
+
+    const fetchBookings = useCallback(async () => {
+        setBkLoading(true)
+        try {
+            const params = new URLSearchParams({ page: String(bkPage), limit: '5' })
+            if (bkSearch) params.set('search', bkSearch)
+            const res = await fetch(`/api/bookings?${params}`)
+            const json = await res.json()
+            if (json.status === 'success') { setBookings(json.data); setBkPagination(json.pagination) }
+        } catch { /* ignore */ }
+        finally { setBkLoading(false) }
+    }, [bkPage, bkSearch])
+
+    useEffect(() => { if (open) fetchBookings() }, [open, fetchBookings])
+    useEffect(() => { const t = setTimeout(() => { if (bkSearchInput !== bkSearch) { setBkSearch(bkSearchInput); setBkPage(1) } }, 400); return () => clearTimeout(t) }, [bkSearchInput, bkSearch])
+
+    // Fetch selected booking info when value is set but selectedBooking is not loaded
+    useEffect(() => {
+        if (value > 0 && (!selectedBooking || selectedBooking.id !== value)) {
+            fetch(`/api/bookings?search=&page=1&limit=1`).then(() => {
+                // try to find from current list
+                const found = bookings.find(b => b.id === value)
+                if (found) setSelectedBooking(found)
+            })
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value])
+
+    const statusLabel: Record<string, string> = { PENDING: 'Pending', CONFIRMED: 'Terkonfirmasi', CANCELLED: 'Dibatalkan', COMPLETED: 'Selesai' }
+    const statusColor: Record<string, string> = { PENDING: 'bg-yellow-100 text-yellow-800', CONFIRMED: 'bg-green-100 text-green-800', CANCELLED: 'bg-red-100 text-red-800', COMPLETED: 'bg-blue-100 text-blue-800' }
+    const fmtD = (s: string) => new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+
+    return (
+        <div className="space-y-2">
+            <Label>Booking <span className="text-destructive">*</span></Label>
+            {value > 0 && selectedBooking ? (
+                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/40">
+                    <div className="text-sm">
+                        <span className="font-semibold">#{selectedBooking.id}</span>{' — '}
+                        <span>{selectedBooking.firstName} {selectedBooking.lastName}</span>{' — '}
+                        <span className="text-muted-foreground">{selectedBooking.tour.title}</span>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>Ganti</Button>
+                </div>
+            ) : value > 0 ? (
+                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/40">
+                    <span className="text-sm">Booking ID: <span className="font-semibold">#{value}</span></span>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>Ganti</Button>
+                </div>
+            ) : (
+                <Button type="button" variant="outline" className="w-full justify-start text-muted-foreground" onClick={() => setOpen(true)}>
+                    <IconSearch className="mr-2 size-4" />Pilih Booking...
+                </Button>
+            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Pilih Booking</DialogTitle>
+                        <DialogDescription>Cari dan pilih booking untuk testimoni ini.</DialogDescription>
+                    </DialogHeader>
+                    <div className="relative mb-3">
+                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <Input placeholder="Cari nama atau email..." value={bkSearchInput} onChange={e => setBkSearchInput(e.target.value)} className="pl-9" />
+                    </div>
+                    <div className="flex-1 overflow-auto border rounded-lg">
+                        {bkLoading ? (
+                            <div className="flex items-center justify-center h-32 gap-2"><Spinner className="size-5" /><span className="text-muted-foreground text-sm">Memuat...</span></div>
+                        ) : bookings.length === 0 ? (
+                            <div className="flex items-center justify-center h-32"><p className="text-muted-foreground text-sm">Tidak ada booking ditemukan.</p></div>
+                        ) : (
+                            <div className="divide-y">
+                                {bookings.map(b => (
+                                    <button
+                                        key={b.id}
+                                        type="button"
+                                        onClick={() => { onChange(b.id); setSelectedBooking(b); setOpen(false) }}
+                                        className={`w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-center justify-between gap-3 ${b.id === value ? 'bg-primary/5 border-l-2 border-primary' : ''}`}
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <span className="text-sm font-semibold">#{b.id}</span>
+                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${statusColor[b.status] || 'bg-gray-100'}`}>{statusLabel[b.status] || b.status}</span>
+                                            </div>
+                                            <div className="text-sm">{b.firstName} {b.lastName} <span className="text-muted-foreground">• {b.email}</span></div>
+                                            <div className="text-xs text-muted-foreground mt-0.5">{b.tour.title} • {fmtD(b.startDate)} • {fmt(b.totalPrice)}</div>
+                                        </div>
+                                        {b.id === value && (
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-primary flex-shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {bkPagination && bkPagination.totalPages > 1 && (
+                        <div className="flex items-center justify-between pt-2 text-sm">
+                            <span className="text-muted-foreground">Hal {bkPagination.page}/{bkPagination.totalPages} ({bkPagination.total} booking)</span>
+                            <div className="flex gap-1">
+                                <Button type="button" variant="outline" size="icon" className="size-8" disabled={!bkPagination.hasPrevPage} onClick={() => setBkPage(p => p - 1)}><IconChevronLeft className="size-4" /></Button>
+                                <Button type="button" variant="outline" size="icon" className="size-8" disabled={!bkPagination.hasNextPage} onClick={() => setBkPage(p => p + 1)}><IconChevronRight className="size-4" /></Button>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </div>
+    )
+}
+
 export default function AdminTestimoniComponents() {
     const [testimonials, setTestimonials] = useState<TestimonialData[]>([])
     const [loading, setLoading] = useState(true)
@@ -79,7 +206,7 @@ export default function AdminTestimoniComponents() {
 
     const { register, handleSubmit, reset, formState: { errors }, watch, setValue } = useForm({
         resolver: yupResolver(testimonialSchema),
-        defaultValues: { name: '', avatar: '', role: '', text: '', rating: 5 },
+        defaultValues: { name: '', avatar: '', role: '', text: '', rating: 5, bookingId: 0 },
     })
 
     const fetchTestimonials = useCallback(async () => {
@@ -98,8 +225,8 @@ export default function AdminTestimoniComponents() {
     useEffect(() => { fetchTestimonials() }, [fetchTestimonials])
     useEffect(() => { const t = setTimeout(() => { if (searchInput !== search) { setSearch(searchInput); setPage(1) } }, 400); return () => clearTimeout(t) }, [searchInput, search])
 
-    const handleAdd = () => { setEditingTestimonial(null); reset({ name: '', avatar: '', role: '', text: '', rating: 5 }); setFormOpen(true) }
-    const handleEdit = (t: TestimonialData) => { setEditingTestimonial(t); reset({ name: t.name, avatar: t.avatar || '', role: t.role, text: t.text, rating: t.rating }); setFormOpen(true) }
+    const handleAdd = () => { setEditingTestimonial(null); reset({ name: '', avatar: '', role: '', text: '', rating: 5, bookingId: 0 }); setFormOpen(true) }
+    const handleEdit = (t: TestimonialData) => { setEditingTestimonial(t); reset({ name: t.name, avatar: t.avatar || '', role: t.role, text: t.text, rating: t.rating, bookingId: t.bookingId || 0 }); setFormOpen(true) }
     const handleDeleteClick = (t: TestimonialData) => { setDeletingTestimonial(t); setDeleteOpen(true) }
 
     const onSubmit = async (formData: Record<string, unknown>) => {
@@ -206,7 +333,7 @@ export default function AdminTestimoniComponents() {
             </div>
 
             {/* Add / Edit Dialog */}
-            <Dialog open={formOpen} onOpenChange={o => { if (!o) { setFormOpen(false); setEditingTestimonial(null); reset({ name: '', avatar: '', role: '', text: '', rating: 5 }) } }}>
+            <Dialog open={formOpen} onOpenChange={o => { if (!o) { setFormOpen(false); setEditingTestimonial(null); reset({ name: '', avatar: '', role: '', text: '', rating: 5, bookingId: 0 }) } }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingTestimonial ? 'Edit Testimoni' : 'Tambah Testimoni'}</DialogTitle>
@@ -230,6 +357,7 @@ export default function AdminTestimoniComponents() {
                             {errors.rating && <p className="text-sm text-destructive">{errors.rating.message}</p>}
                         </div>
                         <ImageUploadField value={watch('avatar')} onChange={v => setValue('avatar', v)} label="Avatar" />
+                        <BookingSelector value={watch('bookingId') || 0} onChange={v => setValue('bookingId', v)} error={errors.bookingId?.message} />
                         <div className="space-y-2"><Label>Teks Testimoni</Label><Textarea rows={4} {...register('text')} placeholder="Pengalaman wisata yang menyenangkan..." />{errors.text && <p className="text-sm text-destructive">{errors.text.message}</p>}</div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={submitting}>Batal</Button>

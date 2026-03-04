@@ -26,7 +26,7 @@ app.post('/', async (c) => {
     try {
         const body = await c.req.json()
         const data = await prisma.testimonial.create({
-            data: { name: body.name, avatar: body.avatar || null, role: body.role, text: body.text, rating: Number(body.rating) },
+            data: { name: body.name, avatar: body.avatar || null, role: body.role, text: body.text, rating: Number(body.rating), bookingId: Number(body.bookingId) },
         })
         return c.json({ data, status: 'success', message: 'Testimoni berhasil ditambahkan' }, { status: 201 })
     } catch (error) {
@@ -41,7 +41,7 @@ app.put('/', async (c) => {
         const body = await c.req.json()
         const data = await prisma.testimonial.update({
             where: { id },
-            data: { name: body.name, avatar: body.avatar || null, role: body.role, text: body.text, rating: Number(body.rating) },
+            data: { name: body.name, avatar: body.avatar || null, role: body.role, text: body.text, rating: Number(body.rating), bookingId: Number(body.bookingId) },
         })
         return c.json({ data, status: 'success', message: 'Testimoni berhasil diperbarui' })
     } catch (error) {

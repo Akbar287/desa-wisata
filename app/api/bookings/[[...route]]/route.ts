@@ -4,6 +4,49 @@ import { prisma } from '@/lib/prisma'
 
 const app = new Hono().basePath('/api/bookings')
 
+app.get('/', async (c) => {
+    try {
+        const page = Math.max(1, Number(c.req.query('page')) || 1)
+        const limit = Math.min(50, Math.max(1, Number(c.req.query('limit')) || 10))
+        const search = c.req.query('search')?.trim() || ''
+        const skip = (page - 1) * limit
+
+        const where = search ? {
+            OR: [
+                { firstName: { contains: search, mode: 'insensitive' as const } },
+                { lastName: { contains: search, mode: 'insensitive' as const } },
+                { email: { contains: search, mode: 'insensitive' as const } },
+            ],
+        } : {}
+
+        const [data, total] = await Promise.all([
+            prisma.booking.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true, firstName: true, lastName: true, email: true, status: true,
+                    startDate: true, endDate: true, totalPrice: true, adults: true, children: true,
+                    createdAt: true,
+                    tour: { select: { title: true } },
+                },
+            }),
+            prisma.booking.count({ where }),
+        ])
+
+        const totalPages = Math.ceil(total / limit)
+        return c.json({
+            status: 'success',
+            data,
+            pagination: { page, limit, total, totalPages, hasPrevPage: page > 1, hasNextPage: page < totalPages },
+        })
+    } catch (err) {
+        console.error('Booking list error:', err)
+        return c.json({ status: 'error', message: 'Gagal memuat data' }, 500)
+    }
+})
+
 app.post('/', async (c) => {
     try {
         const body = await c.req.json()

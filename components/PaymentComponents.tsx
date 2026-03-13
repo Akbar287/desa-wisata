@@ -18,7 +18,7 @@ const focusCss = `
 `
 
 const STEPS = [
-    { num: 1, label: 'Pilih Tur', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+    { num: 1, label: 'Pilih Paket', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
     { num: 2, label: 'Isi Data', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
     { num: 3, label: 'Pembayaran', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
     { num: 4, label: 'Konfirmasi', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -107,6 +107,9 @@ export default function PaymentComponents({ bookingData, paymentMethods }: {
 
     const activeStep = step === 'select' ? 3 : step === 'pay' ? 3 : 4
 
+    const itemName = bookingData.tour?.title ?? bookingData.destination?.name ?? bookingData.wahana?.name ?? 'Paket'
+    const itemPath = bookingData.tourId ? `/tours/${bookingData.tourId}` : bookingData.destinationId ? `/destinasi/${bookingData.destinationId}` : bookingData.wahanaId ? `/wahana/${bookingData.wahanaId}` : '#'
+
     return (
         <>
             <style>{focusCss}</style>
@@ -171,7 +174,7 @@ export default function PaymentComponents({ bookingData, paymentMethods }: {
                                     </div>
                                 )}
                                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 28 }}>
-                                    <Link href="/tours" className="btn-outline" style={{ padding: '12px 24px' }}>Lihat Paket Lain</Link>
+                                    <Link href={itemPath} className="btn-outline" style={{ padding: '12px 24px' }}>Lihat Detail</Link>
                                     <Link href="/" className="btn-primary" style={{ padding: '12px 24px' }}>Kembali ke Beranda</Link>
                                 </div>
                             </div>
@@ -388,20 +391,22 @@ export default function PaymentComponents({ bookingData, paymentMethods }: {
                             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14, paddingBottom: 12, borderTop: 'none', borderBottom: '2px solid var(--color-primary)' }}>Ringkasan Pemesanan</div>
 
                             <div style={{ marginBottom: 20 }}>
-                                <Link href={`/tours/${bookingData.tourId}`} style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-primary)', fontFamily: 'var(--font-heading)', textDecoration: 'none', lineHeight: 1.3, display: 'block', marginBottom: 8 }}>
-                                    {bookingData.tour.title}
+                                <Link href={itemPath} style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-primary)', fontFamily: 'var(--font-heading)', textDecoration: 'none', lineHeight: 1.3, display: 'block', marginBottom: 8 }}>
+                                    {itemName}
                                 </Link>
-                                <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)' }}>⏱ {bookingData.tour.durationDays} hari</span>
+                                {bookingData.tour && (
+                                    <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)' }}>⏱ {bookingData.tour.durationDays} hari</span>
+                                )}
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 14, borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-                                {[
+                                {([
                                     { l: 'Nama', v: `${bookingData.firstName} ${bookingData.lastName}` },
                                     { l: 'Email', v: bookingData.email },
-                                    { l: 'Berangkat', v: fmtDate(bookingData.startDate) },
-                                    { l: 'Kembali', v: fmtDate(bookingData.endDate) },
+                                    bookingData.tour ? { l: 'Berangkat', v: fmtDate(bookingData.startDate) } : { l: 'Tanggal Kunjungan', v: fmtDate(bookingData.startDate) },
+                                    bookingData.tour ? { l: 'Kembali', v: fmtDate(bookingData.endDate) } : null,
                                     { l: 'Peserta', v: `${bookingData.adults} dewasa, ${bookingData.children} anak` },
-                                ].map(r => (
+                                ].filter(Boolean) as { l: string; v: string }[]).map((r) => (
                                     <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontFamily: 'var(--font-body)' }}>
                                         <span style={{ color: 'var(--color-text-muted)' }}>{r.l}</span>
                                         <span style={{ color: 'var(--color-text)', fontWeight: 500, textAlign: 'right', maxWidth: '55%' }}>{r.v}</span>

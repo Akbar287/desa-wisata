@@ -15,11 +15,14 @@ const fmtDate = (d: Date | string) => new Date(d).toLocaleDateString('id-ID', { 
 const WA_GROUP_LINK = 'https://chat.whatsapp.com/dtpl-2025sa'
 
 type BookingData = {
-    id: number; tourId: number; firstName: string; lastName: string;
+    id: number; tourId?: number | null; destinationId?: number | null; wahanaId?: number | null;
+    firstName: string; lastName: string;
     email: string; phoneCode: string; phoneNumber: string; adults: number; children: number;
     startDate: Date | string; endDate: Date | string; totalPrice: number; status: string;
     createdAt: Date | string;
-    tour: { id: number; title: string; durationDays: number; price: number; image: string };
+    tour?: { id: number; title: string; durationDays: number; price: number; image: string } | null;
+    destination?: { id: number; name: string; priceWeekday: number; priceWeekend: number; priceGroup: number; imageBanner: string } | null;
+    wahana?: { id: number; name: string; price: number; imageBanner: string } | null;
     payments: {
         id: number; amount: number; status: string; referenceCode: string;
         proofOfPayment: string | null; paidAt: Date | string | null;
@@ -63,6 +66,8 @@ export default function CongratulationComponents({ booking }: { booking: Booking
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
     }
+
+    const itemName = booking.tour?.title ?? booking.destination?.name ?? booking.wahana?.name ?? 'Paket'
 
     return (
         <>
@@ -124,17 +129,17 @@ export default function CongratulationComponents({ booking }: { booking: Booking
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {[
-                            { l: 'Paket Wisata', v: booking.tour.title },
-                            { l: 'Tanggal', v: `${fmtDate(booking.startDate)} — ${fmtDate(booking.endDate)}` },
-                            { l: 'Durasi', v: `${booking.tour.durationDays} hari` },
+                        {([
+                            { l: 'Paket / Tiket', v: itemName },
+                            booking.tour ? { l: 'Tanggal', v: `${fmtDate(booking.startDate)} — ${fmtDate(booking.endDate)}` } : { l: 'Tanggal Kunjungan', v: fmtDate(booking.startDate) },
+                            booking.tour ? { l: 'Durasi', v: `${booking.tour.durationDays} hari` } : null,
                             { l: 'Nama', v: `${booking.firstName} ${booking.lastName}` },
                             { l: 'Email', v: booking.email },
                             { l: 'Telepon', v: `${booking.phoneCode} ${booking.phoneNumber}` },
                             { l: 'Peserta', v: `${booking.adults} dewasa, ${booking.children} anak` },
                             { l: 'Metode Pembayaran', v: paidPayment?.paymentAvailable?.name ?? '-' },
                             { l: 'Tanggal Bayar', v: paidPayment?.paidAt ? fmtDate(paidPayment.paidAt) : fmtDate(booking.createdAt) },
-                        ].map(r => (
+                        ].filter(Boolean) as { l: string; v: string }[]).map(r => (
                             <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontFamily: 'var(--font-body)', paddingBottom: 10, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                                 <span style={{ color: 'var(--color-text-muted)' }}>{r.l}</span>
                                 <span style={{ color: 'var(--color-text)', fontWeight: 500, textAlign: 'right', maxWidth: '60%' }}>{r.v}</span>

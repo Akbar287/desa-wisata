@@ -159,7 +159,7 @@ export default function DestinationComponents({
                         Destinasi Wisata
                     </motion.h1>
                     <motion.p className="font-sans text-white/80 max-w-[540px] leading-relaxed" style={{ fontSize: 'clamp(14px, 1.2vw, 17px)' }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-                        Temukan berbagai destinasi wisata menarik di Desa Manuk Jaya — dari panorama alam, wisata budaya, hingga spot foto instagramable.
+                        Temukan berbagai destinasi wisata menarik di Desa Manud Jaya — dari panorama alam, wisata budaya, hingga spot foto instagramable.
                     </motion.p>
 
                     <motion.div className="flex flex-wrap gap-6 mt-8" initial="hidden" animate="visible" variants={stagger}>
@@ -334,7 +334,7 @@ function DestinationCard({ dest }: { dest: DestinationItem }) {
                     </h3>
 
                     <p className="font-sans text-[13px] leading-relaxed mb-4 flex-1 line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
-                        {dest.description || 'Destinasi wisata menarik di Desa Manuk Jaya'}
+                        {dest.description || 'Destinasi wisata menarik di Desa Manud Jaya'}
                     </p>
 
                     {/* Rating */}

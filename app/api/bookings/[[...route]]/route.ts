@@ -50,9 +50,9 @@ app.get('/', async (c) => {
 app.post('/', async (c) => {
     try {
         const body = await c.req.json()
-        const { tourId, firstName, lastName, gender, birthYear, birthMonth, birthDay, nationality, email, phoneCode, phoneNumber, adults, children, startDate, endDate, findUs, comments, totalPrice } = body
+        const { tourId, firstName, lastName, gender, birthYear, birthMonth, birthDay, nationality, email, phoneCode, phoneNumber, adults, children, startDate, endDate, findUs, comments, totalPrice, type } = body
 
-        if (!tourId || !firstName || !lastName || !gender || !birthYear || !birthMonth || !birthDay || !nationality || !email || !phoneCode || !phoneNumber || !adults || !startDate || !endDate || !findUs) {
+        if (!tourId || !firstName || !lastName || !gender || !birthYear || !birthMonth || !birthDay || !nationality || !email || !phoneCode || !phoneNumber || !adults || !startDate || !endDate || !findUs || !type) {
             return c.json({ status: 'error', message: 'Data tidak lengkap' }, 400)
         }
 
@@ -72,30 +72,47 @@ app.post('/', async (c) => {
 
         const genderMap: Record<string, string> = { male: 'MALE', female: 'FEMALE' }
 
-        const booking = await prisma.booking.create({
-            data: {
-                tourId: Number(tourId),
-                firstName,
-                lastName,
-                gender: genderMap[gender] as 'MALE' | 'FEMALE',
-                birthDate,
-                nationality,
-                email,
-                phoneCode,
-                phoneNumber,
-                adults: Number(adults),
-                children: Number(children ?? 0),
-                startDate: parseIdDate(startDate),
-                endDate: parseIdDate(endDate),
-                findUs,
-                comments: comments || null,
-                acceptTerms: true,
-                status: 'PENDING',
-                totalPrice: Number(totalPrice ?? 0),
-            },
-        })
+        let bookingData: any = {
+            firstName,
+            lastName,
+            gender: genderMap[gender] as 'MALE' | 'FEMALE',
+            birthDate,
+            nationality,
+            email,
+            phoneCode,
+            phoneNumber,
+            adults: Number(adults),
+            children: Number(children ?? 0),
+            startDate: parseIdDate(startDate),
+            endDate: parseIdDate(endDate),
+            findUs,
+            comments: comments || null,
+            acceptTerms: true,
+            status: 'PENDING',
+            totalPrice: Number(totalPrice ?? 0),
+        }
 
-        const existingUser = await prisma.user.findUnique({ where: { email } })
+        if (type === 'tour') {
+            const tour = await prisma.tour.findFirst({ where: { id: Number(tourId) } })
+            if (!tour) return c.json({ status: 'error', message: 'Tour tidak ditemukan' }, 404)
+            bookingData.tourId = tour.id
+        } else if (type === 'destinasi') {
+            const dest = await prisma.destination.findFirst({ where: { id: Number(tourId) } })
+            if (!dest) return c.json({ status: 'error', message: 'Destinasi tidak ditemukan' }, 404)
+            bookingData.destinationId = dest.id
+        } else if (type === 'wahana') {
+            const wahana = await prisma.wahana.findFirst({ where: { id: Number(tourId) } })
+            if (!wahana) return c.json({ status: 'error', message: 'Wahana tidak ditemukan' }, 404)
+            bookingData.wahanaId = wahana.id
+        } else {
+            return c.json({ status: 'error', message: 'Type tidak valid' }, 400)
+        }
+
+        const booking = await prisma.booking.create({
+            data: bookingData,
+        });
+
+        const existingUser = await prisma.user.findUnique({ where: { email } });
         if (!existingUser) {
             const user = await prisma.user.create({
                 data: {
@@ -109,22 +126,22 @@ app.post('/', async (c) => {
                     address: email,
                     avatar: '/api/img?id=default.png'
                 }
-            })
+            });
 
             const role = await prisma.role.findUnique({ where: { name: 'Pengguna' } })
             if (role && user) {
                 await prisma.userRole.create({
                     data: { userId: user.id, roleId: role.id }
-                })
+                });
             }
         }
 
-        return c.json({ status: 'success', message: 'Pemesanan berhasil dibuat', data: { id: booking.id } })
+        return c.json({ status: 'success', message: 'Pemesanan berhasil dibuat', data: { id: booking.id } });
     } catch (err) {
-        console.error('Booking error:', err)
-        return c.json({ status: 'error', message: 'Gagal membuat pemesanan' }, 500)
+        console.error('Booking error:', err);
+        return c.json({ status: 'error', message: 'Gagal membuat pemesanan' }, 500);
     }
-})
+});
 
 app.post('/create-payment', async (c) => {
     try {
@@ -204,7 +221,9 @@ app.post('/confirm-payment', async (c) => {
     }
 })
 
-export const GET = handle(app)
-export const POST = handle(app)
-export const PUT = handle(app)
-export const DELETE = handle(app)
+const handler = handle(app)
+
+export const GET = (req: Request) => handler(req)
+export const POST = (req: Request) => handler(req)
+export const PUT = (req: Request) => handler(req)
+export const DELETE = (req: Request) => handler(req)

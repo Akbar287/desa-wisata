@@ -12,9 +12,12 @@ export type PaymentRecord = {
 }
 
 export type BookingData = {
-    id: number; tourId: number; firstName: string; lastName: string;
+    id: number; tourId: number | null; destinationId: number | null; wahanaId: number | null;
+    firstName: string; lastName: string;
     email: string; phoneCode: string; phoneNumber: string; adults: number; children: number;
     startDate: Date | string; endDate: Date | string; totalPrice: number; status: string;
-    tour: { id: number; title: string; durationDays: number; price: number; image: string };
+    tour?: { id: number; title: string; durationDays: number; price: number; image: string } | null;
+    destination?: { id: number; name: string; priceWeekday: number; priceWeekend: number; imageBanner: string } | null;
+    wahana?: { id: number; name: string; price: number; imageBanner: string } | null;
     payments: PaymentRecord[];
 }

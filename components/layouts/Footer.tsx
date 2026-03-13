@@ -232,7 +232,7 @@ export default function Footer() {
                             color: "rgba(255,255,255,0.5)",
                         }}
                     >
-                        © 2026 Desa Wisata Manuk Jaya. Hak Cipta Dilindungi.
+                        © 2026 Desa Wisata Manud Jaya. Hak Cipta Dilindungi.
                     </p>
 
                     {/* Social Links */}

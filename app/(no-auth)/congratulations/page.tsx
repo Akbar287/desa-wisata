@@ -13,6 +13,12 @@ export default async function page({ searchParams }: { searchParams: Promise<{ i
             tour: {
                 select: { id: true, title: true, durationDays: true, price: true, image: true }
             },
+            destination: {
+                select: { id: true, name: true, priceWeekday: true, priceWeekend: true, priceGroup: true, imageBanner: true }
+            },
+            wahana: {
+                select: { id: true, name: true, price: true, imageBanner: true }
+            },
             payments: {
                 include: {
                     paymentAvailable: {

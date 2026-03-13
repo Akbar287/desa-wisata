@@ -91,15 +91,16 @@ async function getDashboardData() {
   }
 
   // Popular tours (top 5)
-  const tourIds = bookingsByTour.map((b) => b.tourId);
+  const validBookingsByTour = bookingsByTour.filter(b => b.tourId !== null);
+  const tourIds = validBookingsByTour.map((b) => b.tourId as number);
   const tours = tourIds.length > 0
     ? await prisma.tour.findMany({ where: { id: { in: tourIds } }, select: { id: true, title: true } })
     : [];
   const tourMap = new Map(tours.map((t) => [t.id, t.title]));
-  const popularTours: PopularTour[] = bookingsByTour.map((b) => ({
-    name: (tourMap.get(b.tourId) ?? 'Paket Wisata').length > 25
-      ? (tourMap.get(b.tourId) ?? 'Paket Wisata').slice(0, 22) + '...'
-      : tourMap.get(b.tourId) ?? 'Paket Wisata',
+  const popularTours: PopularTour[] = validBookingsByTour.map((b) => ({
+    name: (tourMap.get(b.tourId!) ?? 'Paket Wisata').length > 25
+      ? (tourMap.get(b.tourId!) ?? 'Paket Wisata').slice(0, 22) + '...'
+      : tourMap.get(b.tourId!) ?? 'Paket Wisata',
     bookings: b._count.id,
   }));
 
@@ -141,7 +142,7 @@ export default async function Home() {
     const { stats, monthlyRevenue, popularTours, bookingStatus } = await getDashboardData();
     return (
       <>
-        <SiteHeader title="Dashboard — Desa Manuk Jaya" />
+        <SiteHeader title="Dashboard — Desa Manud Jaya" />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

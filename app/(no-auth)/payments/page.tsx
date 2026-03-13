@@ -11,6 +11,8 @@ export default async function page({ searchParams }: { searchParams: Promise<{ i
         where: { id: bookingId },
         include: {
             tour: true,
+            destination: true,
+            wahana: true,
             payments: { include: { paymentAvailable: true }, orderBy: { createdAt: "desc" } },
         },
     });

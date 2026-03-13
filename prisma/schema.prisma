@@ -130,6 +130,7 @@ model Destination {
   destinationAccessibilities DestinationAccessibilityDestination[]
   destinationFacilities      DestinationFacilityDestination[]
   destinationLabels          DestinationLabelDestination[]
+  bookings                   Booking[]
 
   @@map("destinations")
 }
@@ -591,29 +592,33 @@ model JobQualification {
 }
 
 model Booking {
-  id          Int           @id @default(autoincrement())
-  tourId      Int
-  firstName   String        @db.VarChar(50)
-  lastName    String        @db.VarChar(50)
-  gender      Gender
-  birthDate   DateTime
-  nationality String
-  email       String
-  phoneCode   String
-  phoneNumber String
-  adults      Int
-  children    Int           @default(0)
-  startDate   DateTime
-  endDate     DateTime
-  findUs      String
-  comments    String?       @db.Text
-  acceptTerms Boolean       @default(true)
-  status      BookingStatus @default(PENDING)
-  totalPrice  Int           @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id            Int           @id @default(autoincrement())
+  tourId        Int?
+  destinationId Int?
+  wahanaId      Int?
+  firstName     String        @db.VarChar(50)
+  lastName      String        @db.VarChar(50)
+  gender        Gender
+  birthDate     DateTime
+  nationality   String
+  email         String
+  phoneCode     String
+  phoneNumber   String
+  adults        Int
+  children      Int           @default(0)
+  startDate     DateTime
+  endDate       DateTime
+  findUs        String
+  comments      String?       @db.Text
+  acceptTerms   Boolean       @default(true)
+  status        BookingStatus @default(PENDING)
+  totalPrice    Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  tour         Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  tour         Tour?         @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  destination  Destination?  @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  wahana       Wahana?       @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
   payments     Payment[]
   testimonials Testimonial[]
 
@@ -779,6 +784,7 @@ model Wahana {
   updatedAt     DateTime        @updatedAt
   TourWahana    TourWahana[]
   WahanaGallery WahanaGallery[]
+  bookings      Booking[]
 
   @@map("wahanas")
 }

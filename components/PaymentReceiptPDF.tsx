@@ -85,12 +85,15 @@ type PaymentInfo = {
 }
 
 type BookingInfo = {
-    id: number; firstName: string; lastName: string;
+    id: number; tourId?: number | null; destinationId?: number | null; wahanaId?: number | null;
+    firstName: string; lastName: string;
     email: string; phoneCode: string; phoneNumber: string;
     adults: number; children: number;
     startDate: Date | string; endDate: Date | string;
     totalPrice: number; status: string; createdAt: Date | string;
-    tour: { id: number; title: string; durationDays: number; price: number };
+    tour?: { id: number; title: string; durationDays: number; price: number } | null;
+    destination?: { id: number; name: string; priceWeekday: number; priceWeekend: number; priceGroup: number; imageBanner: string } | null;
+    wahana?: { id: number; name: string; price: number; imageBanner: string } | null;
 }
 
 const typeLabels: Record<string, string> = { BANK: 'Transfer Bank', WALLET: 'E-Wallet', QRIS: 'QRIS' }
@@ -99,6 +102,8 @@ export default function PaymentReceiptPDF({ booking, payment }: { booking: Booki
     const now = new Date()
     const invoiceNo = `INV-${booking.id}-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
 
+    const itemName = booking.tour?.title ?? booking.destination?.name ?? booking.wahana?.name ?? 'Paket'
+
     return (
         <Document>
             <Page size="A4" style={s.page}>
@@ -106,7 +111,7 @@ export default function PaymentReceiptPDF({ booking, payment }: { booking: Booki
                 <View style={s.header}>
                     <View style={s.headerDecor1} />
                     <View style={s.headerDecor2} />
-                    <Text style={s.headerTitle}>Desa Manuk Jaya</Text>
+                    <Text style={s.headerTitle}>Desa Manud Jaya</Text>
                     <Text style={s.headerSub}>Bukti Pembayaran / Payment Receipt</Text>
                     <View style={s.headerLine} />
                     <View style={s.headerMeta}>
@@ -146,18 +151,18 @@ export default function PaymentReceiptPDF({ booking, payment }: { booking: Booki
                         </Text>
                     </View>
 
-                    {/* Tour Info */}
                     <Text style={s.sectionTitle}>Informasi Paket</Text>
                     <View style={s.sectionBox}>
                         <View style={s.sectionHeader}>
-                            <Text style={s.sectionHeaderText}>{booking.tour.title}</Text>
+                            <Text style={s.sectionHeaderText}>{itemName}</Text>
                         </View>
-                        {[
-                            { l: 'Tanggal Berangkat', v: fmtDate(booking.startDate) },
-                            { l: 'Tanggal Kembali', v: fmtDate(booking.endDate) },
-                            { l: 'Durasi', v: `${booking.tour.durationDays} hari` },
+                        {([
+                            booking.tour ? { l: 'Tanggal Berangkat', v: fmtDate(booking.startDate) } : null,
+                            booking.tour ? { l: 'Tanggal Kembali', v: fmtDate(booking.endDate) } : null,
+                            !booking.tour ? { l: 'Tanggal Kunjungan', v: fmtDate(booking.startDate) } : null,
+                            booking.tour ? { l: 'Durasi', v: `${booking.tour.durationDays} hari` } : null,
                             { l: 'Peserta', v: `${booking.adults} dewasa, ${booking.children} anak` },
-                        ].map((r, i, arr) => (
+                        ].filter(Boolean) as { l: string; v: string }[]).map((r, i, arr) => (
                             <View key={r.l} style={i === arr.length - 1 ? s.rowLast : s.row}>
                                 <Text style={s.rowLabel}>{r.l}</Text>
                                 <Text style={s.rowValue}>{r.v}</Text>
@@ -222,11 +227,11 @@ export default function PaymentReceiptPDF({ booking, payment }: { booking: Booki
                 {/* Footer */}
                 <View style={s.footer}>
                     <View style={s.footerLeft}>
-                        <Text style={s.footerText}>Dokumen ini digenerate secara otomatis oleh sistem Desa Manuk Jaya.</Text>
+                        <Text style={s.footerText}>Dokumen ini digenerate secara otomatis oleh sistem Desa Manud Jaya.</Text>
                         <Text style={s.footerText}>Untuk pertanyaan, hubungi: support@desa-wisata-ui.vercel.app | +62 812-3456-7890</Text>
                     </View>
                     <View style={s.footerRight}>
-                        <Text style={s.footerBrand}>Desa Manuk Jaya</Text>
+                        <Text style={s.footerBrand}>Desa Manud Jaya</Text>
                         <Text style={s.footerTagline}>Jelajahi Keindahan Desa Indonesia</Text>
                     </View>
                 </View>

@@ -545,6 +545,7 @@ function BookingForm({
                     findUs: form.findUs,
                     comments: form.comments,
                     totalPrice,
+                    type: bookingType,
                 }),
             });
             const json = await res.json();

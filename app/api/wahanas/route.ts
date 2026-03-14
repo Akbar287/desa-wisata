@@ -4,6 +4,71 @@ import { prisma } from '@/lib/prisma'
 
 const app = new Hono().basePath('/api/wahanas')
 
+const normalizeMapIds = (input: unknown): number[] => {
+    if (!Array.isArray(input)) return []
+    const normalized = input
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id) && id > 0)
+
+    return [...new Set(normalized)]
+}
+
+const serializeWahana = (item: {
+    id: number
+    name: string
+    price: number
+    description: string
+    imageBanner: string
+    rating: number
+    reviewCount: number
+    createdAt: Date
+    updatedAt: Date
+    WahanaGallery: { id: number; image: string; createdAt: Date; updatedAt: Date }[]
+    maps: {
+        id: number
+        mapId: number
+        wahanaId: number
+        order: number
+        map: {
+            id: number
+            title: string
+            content: string
+            image: string
+            icon: string
+            lat: number
+            lng: number
+            fasilitas: boolean
+        }
+    }[]
+}) => ({
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    description: item.description,
+    imageBanner: item.imageBanner,
+    rating: item.rating,
+    reviewCount: item.reviewCount,
+    createdAt: item.createdAt.toISOString(),
+    updatedAt: item.updatedAt.toISOString(),
+    WahanaGallery: item.WahanaGallery.map((gallery) => ({
+        id: gallery.id,
+        image: gallery.image,
+    })),
+    maps: item.maps.map((mapRelation) => ({
+        id: mapRelation.map.id,
+        mapId: mapRelation.mapId,
+        wahanaId: mapRelation.wahanaId,
+        title: mapRelation.map.title,
+        content: mapRelation.map.content,
+        image: mapRelation.map.image,
+        icon: mapRelation.map.icon,
+        lat: mapRelation.map.lat,
+        lng: mapRelation.map.lng,
+        fasilitas: mapRelation.map.fasilitas,
+        order: mapRelation.order,
+    })),
+})
+
 // GET - List wahanas with pagination & search
 app.get('/', async (c) => {
     try {
@@ -15,17 +80,37 @@ app.get('/', async (c) => {
             ? { name: { contains: search, mode: 'insensitive' as const } }
             : {}
 
-        const [data, total] = await Promise.all([
+        const [rows, total] = await Promise.all([
             prisma.wahana.findMany({
                 where,
                 orderBy: { createdAt: 'desc' },
-                include: { WahanaGallery: true },
+                include: {
+                    WahanaGallery: { orderBy: { createdAt: 'desc' } },
+                    maps: {
+                        orderBy: { order: 'asc' },
+                        include: {
+                            map: {
+                                select: {
+                                    id: true,
+                                    title: true,
+                                    content: true,
+                                    image: true,
+                                    icon: true,
+                                    lat: true,
+                                    lng: true,
+                                    fasilitas: true,
+                                },
+                            },
+                        },
+                    },
+                },
                 skip: (page - 1) * limit,
                 take: limit,
             }),
             prisma.wahana.count({ where }),
         ])
 
+        const data = rows.map(serializeWahana)
         const totalPages = Math.ceil(total / limit)
 
         return c.json({
@@ -54,7 +139,7 @@ app.get('/', async (c) => {
 app.post('/', async (c) => {
     try {
         const body = await c.req.json()
-        const { name, price, description, imageBanner, gallery } = body
+        const { name, price, description, imageBanner, gallery, mapIds } = body
 
         if (!name || isNaN(Number(price)) || !description || !imageBanner) {
             return c.json(
@@ -71,6 +156,8 @@ app.post('/', async (c) => {
             )
         }
 
+        const normalizedMapIds = normalizeMapIds(mapIds)
+
         const data = await prisma.wahana.create({
             data: {
                 name,
@@ -78,15 +165,43 @@ app.post('/', async (c) => {
                 description,
                 imageBanner,
                 WahanaGallery: {
-                    create: Array.isArray(gallery) ? gallery.map((g: any) => ({
+                    create: Array.isArray(gallery) ? gallery.map((g: { image: string }) => ({
                         image: g.image
                     })) : []
-                }
+                },
+                maps: {
+                    create: normalizedMapIds.map((mapId, index) => ({
+                        map: { connect: { id: mapId } },
+                        order: index,
+                    })),
+                },
             },
-            include: { WahanaGallery: true }
+            include: {
+                WahanaGallery: true,
+                maps: {
+                    orderBy: { order: 'asc' },
+                    include: {
+                        map: {
+                            select: {
+                                id: true,
+                                title: true,
+                                content: true,
+                                image: true,
+                                icon: true,
+                                lat: true,
+                                lng: true,
+                                fasilitas: true,
+                            },
+                        },
+                    },
+                },
+            },
         })
 
-        return c.json({ data, status: 'success', message: 'Wahana berhasil ditambahkan' }, { status: 201 })
+        return c.json(
+            { data: serializeWahana(data), status: 'success', message: 'Wahana berhasil ditambahkan' },
+            { status: 201 }
+        )
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
         return c.json(
@@ -107,9 +222,17 @@ app.put('/', async (c) => {
         )
     }
 
+    const idNum = Number(id)
+    if (!Number.isFinite(idNum) || idNum <= 0) {
+        return c.json(
+            { data: null, status: 'error', message: 'ID wahana tidak valid' },
+            { status: 400 }
+        )
+    }
+
     try {
         const body = await c.req.json()
-        const { name, price, description, imageBanner, gallery } = body
+        const { name, price, description, imageBanner, gallery, mapIds } = body
 
         if (!name || isNaN(Number(price)) || !description || !imageBanner) {
             return c.json(
@@ -118,8 +241,12 @@ app.put('/', async (c) => {
             )
         }
 
-        const existing = await prisma.wahana.findUnique({
-            where: { name, NOT: { id: Number(id) } }
+        const existing = await prisma.wahana.findFirst({
+            where: {
+                name,
+                NOT: { id: idNum },
+            },
+            select: { id: true },
         })
         if (existing) {
             return c.json(
@@ -128,30 +255,57 @@ app.put('/', async (c) => {
             )
         }
 
-        // To update gallery: we delete existing gallery and recreate them
-        // Alternatively, we can use set/create/delete in Prisma if we have ids, but recreating is simpler for arrays of strings
+        const normalizedMapIds = normalizeMapIds(mapIds)
 
         await prisma.wahanaGallery.deleteMany({
-            where: { wahanaId: Number(id) }
+            where: { wahanaId: idNum }
+        })
+        await prisma.mapsWahana.deleteMany({
+            where: { wahanaId: idNum }
         })
 
         const data = await prisma.wahana.update({
-            where: { id: Number(id) },
+            where: { id: idNum },
             data: {
                 name,
                 price: Number(price),
                 description,
                 imageBanner,
                 WahanaGallery: {
-                    create: Array.isArray(gallery) ? gallery.map((g: any) => ({
+                    create: Array.isArray(gallery) ? gallery.map((g: { image: string }) => ({
                         image: g.image
                     })) : []
-                }
+                },
+                maps: {
+                    create: normalizedMapIds.map((mapId, index) => ({
+                        map: { connect: { id: mapId } },
+                        order: index,
+                    })),
+                },
             },
-            include: { WahanaGallery: true }
+            include: {
+                WahanaGallery: true,
+                maps: {
+                    orderBy: { order: 'asc' },
+                    include: {
+                        map: {
+                            select: {
+                                id: true,
+                                title: true,
+                                content: true,
+                                image: true,
+                                icon: true,
+                                lat: true,
+                                lng: true,
+                                fasilitas: true,
+                            },
+                        },
+                    },
+                },
+            },
         })
 
-        return c.json({ data, status: 'success', message: 'Wahana berhasil diperbarui' })
+        return c.json({ data: serializeWahana(data), status: 'success', message: 'Wahana berhasil diperbarui' })
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
         return c.json(

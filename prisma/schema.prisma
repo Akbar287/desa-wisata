@@ -131,6 +131,7 @@ model Destination {
   destinationFacilities      DestinationFacilityDestination[]
   destinationLabels          DestinationLabelDestination[]
   bookings                   Booking[]
+  maps                       MapsDestination[]
 
   @@map("destinations")
 }
@@ -221,6 +222,7 @@ model Tour {
   specialPkg   SpecialPackage?
   privatePkg   PrivatePackage?
   TourWahana   TourWahana[]
+  maps         MapsTours[]
 
   @@map("tours")
 }
@@ -785,6 +787,7 @@ model Wahana {
   TourWahana    TourWahana[]
   WahanaGallery WahanaGallery[]
   bookings      Booking[]
+  maps          MapsWahana[]
 
   @@map("wahanas")
 }
@@ -834,4 +837,64 @@ model LandingPageWithUs {
   updatedAt DateTime @updatedAt
 
   @@map("landing_page_with_us")
+}
+
+model Maps {
+    id        Int      @id @default(autoincrement())
+    title     String
+    content   String
+    image     String
+    icon      String
+    lat       Float
+    lng       Float
+    fasilitas Boolean
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    wahana    MapsWahana[]
+    destination MapsDestination[]
+    tour      MapsTours[]
+
+    @@map("maps")
+}
+
+model MapsWahana {
+    id        Int      @id @default(autoincrement())
+    mapId     Int
+    wahanaId  Int
+    order     Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    map     Maps     @relation(fields: [mapId], references: [id], onDelete: Cascade)
+    wahana  Wahana   @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
+
+    @@map("maps_wahanas")
+}
+
+model MapsDestination {
+    id        Int      @id @default(autoincrement())
+    mapId     Int
+    destinationId Int
+    order     Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    map         Maps         @relation(fields: [mapId], references: [id], onDelete: Cascade)
+    destination Destination  @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+    @@map("maps_destinations")
+}
+
+model MapsTours {
+    id        Int      @id @default(autoincrement())
+    mapId     Int
+    tourId    Int
+    order     Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    map  Maps  @relation(fields: [mapId], references: [id], onDelete: Cascade)
+    tour Tour  @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+    @@map("maps_tours")
 }

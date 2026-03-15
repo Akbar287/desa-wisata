@@ -8,8 +8,23 @@ import { SiteHeader } from "./layouts/site-header";
 import {
   DestinationListItem,
   DestinationDetail,
-  RefOption,
 } from "@/types/DestinationType";
+import {
+  AdminDestinasiMapMasterDeleteDialogState,
+  AdminDestinasiMapMasterDialogState,
+  AdminDestinasiMasterDeleteDialogState,
+  AdminDestinasiMasterDialogState,
+  AdminDestinasiPaginationProps,
+  AdminDestinasiRefData,
+  AdminDestinasiSubDeleteDialogState,
+  AdminDestinasiSubDialogState,
+  AdminDestinasiViewMode,
+  AdminMasterKind,
+  ImageUploadFieldProps,
+  MapPointPickerProps,
+  MapRefOption,
+  RefOptionFull,
+} from "@/types/AdminDestinasiTypes";
 import {
   PaginationMeta,
   PAGE_SIZE_OPTIONS,
@@ -22,6 +37,29 @@ import {
   mapMasterSchema,
   masterItemSchema,
 } from "@/validation/destinationSchema";
+import { fmtCurrencyIDR, fmtDateShort, getPageNumbers } from "@/lib/utils";
+import {
+  createAdminDestinasi,
+  createAdminDestinasiMapMaster,
+  createAdminDestinasiMaster,
+  createAdminDestinasiSubResource,
+  deleteAdminDestinasi,
+  deleteAdminDestinasiMapMaster,
+  deleteAdminDestinasiMaster,
+  deleteAdminDestinasiSubResource,
+  getAdminDestinasiDetail,
+  getAdminDestinasiList,
+  getAdminDestinasiRefs,
+  saveAdminDestinasiAccessibilities,
+  saveAdminDestinasiFacilities,
+  saveAdminDestinasiLabels,
+  saveAdminDestinasiMaps,
+  updateAdminDestinasi,
+  updateAdminDestinasiMapMaster,
+  updateAdminDestinasiMaster,
+  updateAdminDestinasiSubResource,
+  uploadAdminDestinasiImage,
+} from "@/services/AdminDestinasiServices";
 import { toast } from "sonner";
 import {
   Table,
@@ -81,8 +119,6 @@ import {
   IconUpload,
 } from "@tabler/icons-react";
 
-const API = "/api/destinations/admin";
-const IMG_API = "/api/img";
 const GOOGLE_MAPS_LOADER_ID = "discover-desa-wisata-gmaps-loader";
 const GOOGLE_MAPS_LIBRARIES: "marker"[] = ["marker"];
 const DEFAULT_MAP_CENTER = { lat: -7.7956, lng: 110.3695 };
@@ -93,92 +129,16 @@ declare global {
   }
 }
 
-// ─── Helpers ────────────────────────────────────────────────
-async function api(path: string, opts?: RequestInit) {
-  const res = await fetch(`${API}${path}`, opts);
-  return res.json();
-}
-async function apiJson(path: string, method: string, body: unknown) {
-  return api(path, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-async function uploadImage(file: File): Promise<string | null> {
-  const fd = new FormData();
-  fd.append("files", file);
-  const res = await fetch(IMG_API, { method: "POST", body: fd });
-  const json = await res.json();
-  if (json.status === "success") return `${IMG_API}?_id=${json.data.id}`;
-  toast.error(json.message || "Upload gagal");
-  return null;
-}
-const fmt = (n: number) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(n);
-const fmtDate = (s: string) =>
-  new Date(s).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-
-function getPageNumbers(page: number, totalPages: number): (number | "e")[] {
-  if (totalPages <= 7)
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  const p: (number | "e")[] = [1];
-  if (page > 3) p.push("e");
-  for (
-    let i = Math.max(2, page - 1);
-    i <= Math.min(totalPages - 1, page + 1);
-    i++
-  )
-    p.push(i);
-  if (page < totalPages - 2) p.push("e");
-  p.push(totalPages);
-  return p;
-}
-
-// Extended ref option with description and icon
-interface RefOptionFull extends RefOption {
-  description: string;
-  icon: string;
-}
-
-interface MapRefOption {
-  id: number;
-  title: string;
-  content: string;
-  image: string;
-  icon: string;
-  lat: number;
-  lng: number;
-  fasilitas: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // ─── Image Upload Button Component ─────────────────────────
-function ImageUploadField({
-  value,
-  onChange,
-  label,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  label: string;
-}) {
+function ImageUploadField({ value, onChange, label }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false);
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const url = await uploadImage(file);
+    const { url, message } = await uploadAdminDestinasiImage(file);
     if (url) onChange(url);
+    else toast.error(message || "Upload gagal");
     setUploading(false);
   };
   return (
@@ -224,13 +184,7 @@ function MapPointPicker({
   lat,
   lng,
   onPick,
-}: {
-  apiKey: string;
-  mapId: string;
-  lat: number;
-  lng: number;
-  onPick: (lat: number, lng: number) => void;
-}) {
+}: MapPointPickerProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<
     google.maps.Marker | google.maps.marker.AdvancedMarkerElement | null
@@ -369,12 +323,7 @@ function PaginationBar({
   page,
   limit,
   setPage,
-}: {
-  pagination: PaginationMeta;
-  page: number;
-  limit: number;
-  setPage: (p: number) => void;
-}) {
+}: AdminDestinasiPaginationProps) {
   const offset = (pagination.page - 1) * pagination.limit;
   if (pagination.totalPages <= 0) return null;
   return (
@@ -455,13 +404,13 @@ export default function AdminDestinasiComponents({
   const [selectedDest, setSelectedDest] = useState<DestinationDetail | null>(
     null,
   );
-  const [viewMode, setViewMode] = useState<"list" | "manage">("list");
-  const [refData, setRefData] = useState<{
-    labels: RefOptionFull[];
-    accessibilities: RefOptionFull[];
-    facilities: RefOptionFull[];
-    maps: MapRefOption[];
-  }>({ labels: [], accessibilities: [], facilities: [], maps: [] });
+  const [viewMode, setViewMode] = useState<AdminDestinasiViewMode>("list");
+  const [refData, setRefData] = useState<AdminDestinasiRefData>({
+    labels: [],
+    accessibilities: [],
+    facilities: [],
+    maps: [],
+  });
 
   // ─── Dialog States ──────────────────────────────────────
   const [destFormOpen, setDestFormOpen] = useState(false);
@@ -471,37 +420,21 @@ export default function AdminDestinasiComponents({
   const [submitting, setSubmitting] = useState(false);
 
   // Sub-resource dialog states
-  const [subDialog, setSubDialog] = useState<{
-    type: string;
-    mode: "add" | "edit";
-    data?: Record<string, unknown>;
-  } | null>(null);
-  const [subDeleteDialog, setSubDeleteDialog] = useState<{
-    type: string;
-    id: number;
-    label: string;
-  } | null>(null);
+  const [subDialog, setSubDialog] =
+    useState<AdminDestinasiSubDialogState | null>(null);
+  const [subDeleteDialog, setSubDeleteDialog] =
+    useState<AdminDestinasiSubDeleteDialogState | null>(null);
 
   // Master data dialog states (for Label, Accessibility, Facility CRUD)
-  const [masterDialog, setMasterDialog] = useState<{
-    kind: "label" | "accessibility" | "facility";
-    mode: "add" | "edit";
-    data?: RefOptionFull;
-  } | null>(null);
-  const [masterDeleteDialog, setMasterDeleteDialog] = useState<{
-    kind: "label" | "accessibility" | "facility";
-    id: number;
-    name: string;
-  } | null>(null);
-  const [mapMasterDialog, setMapMasterDialog] = useState<{
-    mode: "add" | "edit";
-    data?: MapRefOption;
-  } | null>(null);
+  const [masterDialog, setMasterDialog] =
+    useState<AdminDestinasiMasterDialogState | null>(null);
+  const [masterDeleteDialog, setMasterDeleteDialog] =
+    useState<AdminDestinasiMasterDeleteDialogState | null>(null);
+  const [mapMasterDialog, setMapMasterDialog] =
+    useState<AdminDestinasiMapMasterDialogState | null>(null);
   const [mapMasterListOpen, setMapMasterListOpen] = useState(false);
-  const [mapMasterDeleteDialog, setMapMasterDeleteDialog] = useState<{
-    id: number;
-    title: string;
-  } | null>(null);
+  const [mapMasterDeleteDialog, setMapMasterDeleteDialog] =
+    useState<AdminDestinasiMapMasterDeleteDialogState | null>(null);
   const normalizedMapsApiKey = googleMapsApiKey.trim();
   const normalizedMapsMapId = googleMapsMapId.trim();
   const hasMapsApiKey = normalizedMapsApiKey.length > 0;
@@ -510,15 +443,10 @@ export default function AdminDestinasiComponents({
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(limit),
-      });
-      if (search) params.set("search", search);
-      const json = await api(`/?${params}`);
+      const json = await getAdminDestinasiList({ page, limit, search });
       if (json.status === "success") {
         setDestinations(json.data);
-        setPagination(json.pagination);
+        setPagination(json.pagination || null);
       } else toast.error(json.message);
     } catch {
       toast.error("Gagal terhubung ke server");
@@ -544,7 +472,7 @@ export default function AdminDestinasiComponents({
   const fetchDetail = useCallback(async (id: number) => {
     setLoading(true);
     try {
-      const json = await api(`/detail?_id=${id}`);
+      const json = await getAdminDestinasiDetail(id);
       if (json.status === "success") {
         setSelectedDest(json.data);
         setViewMode("manage");
@@ -562,7 +490,7 @@ export default function AdminDestinasiComponents({
 
   // ─── Fetch Ref Data ─────────────────────────────────────
   const fetchRefData = useCallback(async () => {
-    const json = await api("/ref");
+    const json = await getAdminDestinasiRefs();
     if (json.status === "success") {
       setRefData({
         labels: json.data?.labels ?? [],
@@ -645,8 +573,8 @@ export default function AdminDestinasiComponents({
     setSubmitting(true);
     try {
       const json = editingDestId
-        ? await apiJson(`/?_id=${editingDestId}`, "PUT", data)
-        : await apiJson("/", "POST", data);
+        ? await updateAdminDestinasi(editingDestId, data)
+        : await createAdminDestinasi(data);
       if (json.status === "success") {
         toast.success(json.message);
         setDestFormOpen(false);
@@ -665,7 +593,7 @@ export default function AdminDestinasiComponents({
     if (!deletingId) return;
     setSubmitting(true);
     try {
-      const json = await api(`/?_id=${deletingId}`, { method: "DELETE" });
+      const json = await deleteAdminDestinasi(deletingId);
       if (json.status === "success") {
         toast.success(json.message);
         setDeleteOpen(false);
@@ -714,8 +642,8 @@ export default function AdminDestinasiComponents({
       const editId = (subDialog?.data as any)?.id;
       const body = { ...formData, destinationId: selectedDest.id };
       const json = isEdit
-        ? await apiJson(`/${type}?_id=${editId}`, "PUT", body)
-        : await apiJson(`/${type}`, "POST", body);
+        ? await updateAdminDestinasiSubResource(type, editId, body)
+        : await createAdminDestinasiSubResource(type, body);
       if (json.status === "success") {
         toast.success(json.message);
         setSubDialog(null);
@@ -733,7 +661,7 @@ export default function AdminDestinasiComponents({
     setSubmitting(true);
     try {
       const { type, id } = subDeleteDialog;
-      const json = await api(`/${type}?_id=${id}`, { method: "DELETE" });
+      const json = await deleteAdminDestinasiSubResource(type, id);
       if (json.status === "success") {
         toast.success(json.message);
         setSubDeleteDialog(null);
@@ -749,12 +677,10 @@ export default function AdminDestinasiComponents({
   // ─── Junction Sync ──────────────────────────────────────
   const [savingJunction, setSavingJunction] = useState(false);
   const saveLabels = async (labelIds: number[]) => {
+    if (!selectedDest) return;
     setSavingJunction(true);
     try {
-      const json = await apiJson("/labels", "POST", {
-        destinationId: selectedDest?.id,
-        labelIds,
-      });
+      const json = await saveAdminDestinasiLabels(selectedDest.id, labelIds);
       if (json.status === "success") {
         toast.success(json.message);
         refreshDetail();
@@ -766,12 +692,13 @@ export default function AdminDestinasiComponents({
     }
   };
   const saveAccessibilities = async (accessibilityIds: number[]) => {
+    if (!selectedDest) return;
     setSavingJunction(true);
     try {
-      const json = await apiJson("/accessibilities", "POST", {
-        destinationId: selectedDest?.id,
+      const json = await saveAdminDestinasiAccessibilities(
+        selectedDest.id,
         accessibilityIds,
-      });
+      );
       if (json.status === "success") {
         toast.success(json.message);
         refreshDetail();
@@ -783,12 +710,13 @@ export default function AdminDestinasiComponents({
     }
   };
   const saveFacilities = async (facilityIds: number[]) => {
+    if (!selectedDest) return;
     setSavingJunction(true);
     try {
-      const json = await apiJson("/facilities", "POST", {
-        destinationId: selectedDest?.id,
+      const json = await saveAdminDestinasiFacilities(
+        selectedDest.id,
         facilityIds,
-      });
+      );
       if (json.status === "success") {
         toast.success(json.message);
         refreshDetail();
@@ -800,12 +728,10 @@ export default function AdminDestinasiComponents({
     }
   };
   const saveMaps = async (mapIds: number[]) => {
+    if (!selectedDest) return;
     setSavingJunction(true);
     try {
-      const json = await apiJson("/maps", "POST", {
-        destinationId: selectedDest?.id,
-        mapIds,
-      });
+      const json = await saveAdminDestinasiMaps(selectedDest.id, mapIds);
       if (json.status === "success") {
         toast.success(json.message);
         refreshDetail();
@@ -823,25 +749,17 @@ export default function AdminDestinasiComponents({
     defaultValues: { name: "", description: "", icon: "" },
   });
 
-  const masterEndpoints: Record<string, string> = {
-    label: "/label-master",
-    accessibility: "/accessibility-master",
-    facility: "/facility-master",
-  };
-  const masterLabels: Record<string, string> = {
+  const masterLabels: Record<AdminMasterKind, string> = {
     label: "Label",
     accessibility: "Aksesibilitas",
     facility: "Fasilitas",
   };
 
-  const openMasterAdd = (kind: "label" | "accessibility" | "facility") => {
+  const openMasterAdd = (kind: AdminMasterKind) => {
     masterForm.reset({ name: "", description: "", icon: "" });
     setMasterDialog({ kind, mode: "add" });
   };
-  const openMasterEdit = (
-    kind: "label" | "accessibility" | "facility",
-    data: RefOptionFull,
-  ) => {
+  const openMasterEdit = (kind: AdminMasterKind, data: RefOptionFull) => {
     masterForm.reset({
       name: data.name,
       description: data.description,
@@ -855,12 +773,11 @@ export default function AdminDestinasiComponents({
     if (!masterDialog) return;
     setSubmitting(true);
     try {
-      const endpoint = masterEndpoints[masterDialog.kind];
       const isEdit = masterDialog.mode === "edit";
       const editId = masterDialog.data?.id;
       const json = isEdit
-        ? await apiJson(`${endpoint}?_id=${editId}`, "PUT", formData)
-        : await apiJson(endpoint, "POST", formData);
+        ? await updateAdminDestinasiMaster(masterDialog.kind, editId!, formData)
+        : await createAdminDestinasiMaster(masterDialog.kind, formData);
       if (json.status === "success") {
         toast.success(json.message);
         setMasterDialog(null);
@@ -878,10 +795,10 @@ export default function AdminDestinasiComponents({
     if (!masterDeleteDialog) return;
     setSubmitting(true);
     try {
-      const endpoint = masterEndpoints[masterDeleteDialog.kind];
-      const json = await api(`${endpoint}?_id=${masterDeleteDialog.id}`, {
-        method: "DELETE",
-      });
+      const json = await deleteAdminDestinasiMaster(
+        masterDeleteDialog.kind,
+        masterDeleteDialog.id,
+      );
       if (json.status === "success") {
         toast.success(json.message);
         setMasterDeleteDialog(null);
@@ -950,8 +867,8 @@ export default function AdminDestinasiComponents({
         fasilitas: Boolean(formData.fasilitas),
       };
       const json = isEdit
-        ? await apiJson(`/map-master?_id=${editId}`, "PUT", payload)
-        : await apiJson("/map-master", "POST", payload);
+        ? await updateAdminDestinasiMapMaster(editId!, payload)
+        : await createAdminDestinasiMapMaster(payload);
       if (json.status === "success") {
         toast.success(json.message);
         setMapMasterDialog(null);
@@ -969,9 +886,9 @@ export default function AdminDestinasiComponents({
     if (!mapMasterDeleteDialog) return;
     setSubmitting(true);
     try {
-      const json = await api(`/map-master?_id=${mapMasterDeleteDialog.id}`, {
-        method: "DELETE",
-      });
+      const json = await deleteAdminDestinasiMapMaster(
+        mapMasterDeleteDialog.id,
+      );
       if (json.status === "success") {
         toast.success(json.message);
         setMapMasterDeleteDialog(null);
@@ -986,15 +903,14 @@ export default function AdminDestinasiComponents({
   };
 
   // ─── RENDER: Gallery section helper ─────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderSection = (
+  const renderSection = <T extends { id?: unknown }>(
     title: string,
     type: string,
-    items: any[],
+    items: T[],
     columns: {
       key: string;
       label: string;
-      render?: (v: any, item: any) => React.ReactNode;
+      render?: (value: unknown, item: T) => React.ReactNode;
     }[],
   ) => (
     <div className="rounded-lg border p-4 space-y-3">
@@ -1019,12 +935,15 @@ export default function AdminDestinasiComponents({
           </TableHeader>
           <TableBody>
             {items.map((item, idx) => (
-              <TableRow key={item.id || idx}>
+              <TableRow key={String(item.id ?? idx)}>
                 {columns.map((c) => (
                   <TableCell key={c.key}>
-                    {c.render
-                      ? c.render(item[c.key], item)
-                      : String(item[c.key] ?? "")}
+                    {(() => {
+                      const value = (item as Record<string, unknown>)[c.key];
+                      return c.render
+                        ? c.render(value, item)
+                        : String(value ?? "");
+                    })()}
                   </TableCell>
                 ))}
                 <TableCell className="text-right">
@@ -1040,13 +959,20 @@ export default function AdminDestinasiComponents({
                       variant="ghost"
                       size="icon"
                       className="text-destructive"
-                      onClick={() =>
+                      onClick={() => {
+                        const rawId = item.id;
+                        const itemId =
+                          typeof rawId === "number" ? rawId : Number(rawId);
+                        if (!Number.isFinite(itemId)) {
+                          toast.error("ID data tidak valid");
+                          return;
+                        }
                         setSubDeleteDialog({
                           type,
-                          id: item.id,
-                          label: `Gambar #${item.id}`,
-                        })
-                      }
+                          id: itemId,
+                          label: `Gambar #${itemId}`,
+                        });
+                      }}
                     >
                       <IconTrash className="size-4" />
                     </Button>
@@ -1065,96 +991,99 @@ export default function AdminDestinasiComponents({
     title: string,
     kind: "label" | "accessibility" | "facility",
     refItems: RefOptionFull[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    linkedItems: any[],
+    linkedItems: Array<Record<string, unknown>>,
     linkedKey: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSave: (ids: number[]) => void,
-  ) => (
-    <div className="rounded-lg border p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-sm">
-          {title} ({linkedItems.length})
-        </h4>
-        <Button size="sm" variant="outline" onClick={() => openMasterAdd(kind)}>
-          <IconPlus className="size-3 mr-1" />
-          Tambah {masterLabels[kind]}
-        </Button>
-      </div>
-      {refItems.length > 0 ? (
-        <div className="space-y-2">
-          {refItems.map((item) => {
-            const checked = linkedItems.some(
-              (x: Record<string, number>) => x[linkedKey] === item.id,
-            );
-            return (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-2 group"
-              >
-                <label className="flex items-center gap-2 text-sm cursor-pointer flex-1 min-w-0">
-                  <Checkbox
-                    checked={checked}
-                    disabled={savingJunction}
-                    onCheckedChange={() => {
-                      const ids = checked
-                        ? linkedItems
-                            .filter(
-                              (x: Record<string, number>) =>
-                                x[linkedKey] !== item.id,
-                            )
-                            .map((x: Record<string, number>) => x[linkedKey])
-                        : [
-                            ...linkedItems.map(
-                              (x: Record<string, number>) => x[linkedKey],
-                            ),
-                            item.id,
-                          ];
-                      onSave(ids);
-                    }}
-                  />
-                  <span className="truncate">{item.name}</span>
-                  {item.description && (
-                    <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-                      — {item.description}
-                    </span>
-                  )}
-                </label>
-                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => openMasterEdit(kind, item)}
-                  >
-                    <IconEdit className="size-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 text-destructive"
-                    onClick={() =>
-                      setMasterDeleteDialog({
-                        kind,
-                        id: item.id,
-                        name: item.name,
-                      })
-                    }
-                  >
-                    <IconTrash className="size-3" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
+  ) => {
+    const extractLinkedId = (row: Record<string, unknown>): number | null => {
+      const raw = row[linkedKey];
+      const parsed = typeof raw === "number" ? raw : Number(raw);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    return (
+      <div className="rounded-lg border p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="font-semibold text-sm">
+            {title} ({linkedItems.length})
+          </h4>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => openMasterAdd(kind)}
+          >
+            <IconPlus className="size-3 mr-1" />
+            Tambah {masterLabels[kind]}
+          </Button>
         </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          Belum ada data. Klik tombol &quot;Tambah&quot; untuk menambahkan.
-        </p>
-      )}
-    </div>
-  );
+        {refItems.length > 0 ? (
+          <div className="space-y-2">
+            {refItems.map((item) => {
+              const checked = linkedItems.some(
+                (row) => extractLinkedId(row) === item.id,
+              );
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-2 group"
+                >
+                  <label className="flex items-center gap-2 text-sm cursor-pointer flex-1 min-w-0">
+                    <Checkbox
+                      checked={checked}
+                      disabled={savingJunction}
+                      onCheckedChange={() => {
+                        const existingIds = linkedItems
+                          .map(extractLinkedId)
+                          .filter((id): id is number => id !== null);
+                        const ids = checked
+                          ? existingIds.filter((id) => id !== item.id)
+                          : [...existingIds, item.id];
+                        onSave(ids);
+                      }}
+                    />
+                    <span className="truncate">{item.name}</span>
+                    {item.description && (
+                      <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                        — {item.description}
+                      </span>
+                    )}
+                  </label>
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      onClick={() => openMasterEdit(kind, item)}
+                    >
+                      <IconEdit className="size-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 text-destructive"
+                      onClick={() =>
+                        setMasterDeleteDialog({
+                          kind,
+                          id: item.id,
+                          name: item.name,
+                        })
+                      }
+                    >
+                      <IconTrash className="size-3" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Belum ada data. Klik tombol &quot;Tambah&quot; untuk menambahkan.
+          </p>
+        )}
+      </div>
+    );
+  };
 
   const renderMapSection = () => {
     const linkedMapIds = new Set(
@@ -1279,7 +1208,7 @@ export default function AdminDestinasiComponents({
                   <h2 className="text-xl font-semibold">{d.name}</h2>
                   <p className="text-sm text-muted-foreground">
                     {d.isAktif ? "🟢 Aktif" : "🔴 Nonaktif"} · {d.jamBuka}–
-                    {d.jamTutup} · {fmt(d.priceWeekday)}/weekday
+                    {d.jamTutup} · {fmtCurrencyIDR(d.priceWeekday)}/weekday
                   </p>
                 </div>
                 <Button
@@ -1347,21 +1276,24 @@ export default function AdminDestinasiComponents({
                     {
                       key: "image",
                       label: "Gambar",
-                      render: (v: string) =>
-                        v ? (
+                      render: (v: unknown) => {
+                        const imageUrl = typeof v === "string" ? v : "";
+                        return imageUrl ? (
                           <img
-                            src={v}
+                            src={imageUrl}
                             alt=""
                             className="h-10 rounded object-cover"
                           />
                         ) : (
                           "-"
-                        ),
+                        );
+                      },
                     },
                     {
                       key: "createdAt",
                       label: "Tanggal",
-                      render: (v: string) => fmtDate(v),
+                      render: (v: unknown) =>
+                        fmtDateShort(typeof v === "string" ? v : ""),
                     },
                   ])}
                 </div>
@@ -2105,7 +2037,9 @@ export default function AdminDestinasiComponents({
                               {d.isAktif ? "Aktif" : "Nonaktif"}
                             </span>
                           </TableCell>
-                          <TableCell>{fmt(d.priceWeekday)}</TableCell>
+                          <TableCell>
+                            {fmtCurrencyIDR(d.priceWeekday)}
+                          </TableCell>
                           <TableCell className="hidden sm:table-cell">
                             ⭐ {d.rating}
                           </TableCell>

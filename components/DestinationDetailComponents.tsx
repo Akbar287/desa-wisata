@@ -6,6 +6,8 @@ import Link from "next/link";
 import { fmt } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleMap, InfoWindowF, useJsApiLoader } from "@react-google-maps/api";
+import { Button } from "./ui/button";
+import { toast } from "sonner";
 
 /* ─── Types ───────────────────────────────────────────── */
 
@@ -1413,12 +1415,20 @@ export default function DestinationDetailComponents({
                 per orang (weekday)
               </div>
 
-              <Link
+              {/*<Link
                 href={`/booking?id=${d.id}&jenis=destinasi`}
                 className="btn-primary w-full justify-center py-3.5 px-6 mb-3 text-sm no-underline flex items-center gap-2"
               >
                 Booking
-              </Link>
+              </Link>*/}
+              <Button
+                type="button"
+                onClick={() => toast("Fitur akan tersedia di sprint 3")}
+                style={{ height: "45px" }}
+                className="btn-primary w-full justify-center py-3 px-6 mb-3 text-sm no-underline flex items-center gap-2"
+              >
+                Booking
+              </Button>
               <button
                 className="btn-outline w-full justify-center py-3 px-6 mb-6 text-sm"
                 onClick={() => scrollTo("pricing")}

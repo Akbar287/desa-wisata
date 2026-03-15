@@ -455,7 +455,7 @@ export default async function Home() {
         <WhyWithUsSection reasons={landingPageWithUs} />
         <TravelGuideSection posts={blogPosts} />
         <GallerySection items={galleryPreview} />
-        <TestimonialsSection testimonials={testimonials} />
+        {/*<TestimonialsSection testimonials={testimonials} />*/}
       </NatureOverlay>
     </>
   );

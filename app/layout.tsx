@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import 'nprogress/nprogress.css'
+import "nprogress/nprogress.css";
 import Navbar from "@/components/layouts/Navbar";
 import Footer from "@/components/layouts/Footer";
 import LeafChatbot from "@/components/LeafChatbot";
-import { Playfair } from "next/font/google"
+import { Playfair } from "next/font/google";
 import { ThemeProvider } from "@/provider/theme-provider";
 import Providers from "@/provider/auth-providers";
 import { getSession } from "@/provider/api";
-import { Toaster } from '@/components/ui/sonner'
-import { RouteProgress } from '@/lib/router-progress'
+import { Toaster } from "@/components/ui/sonner";
+import { RouteProgress } from "@/lib/router-progress";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layouts/app-sidebar";
 import SessionTimeout from "@/components/SessionTimeout";
@@ -17,7 +17,7 @@ import SessionTimeout from "@/components/SessionTimeout";
 const playfair = Playfair({
   subsets: ["latin"],
   variable: "--font-playfair",
-})
+});
 
 const siteUrl = "https://desa-wisata-ui.vercel.app";
 const siteName = "Discover Desa Wisata";
@@ -62,11 +62,23 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon_io/favicon.ico", sizes: "any" },
-      { url: "/favicon_io/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon_io/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      {
+        url: "/favicon_io/favicon-16x16.png",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        url: "/favicon_io/favicon-32x32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
     ],
     apple: [
-      { url: "/favicon_io/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      {
+        url: "/favicon_io/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
     ],
   },
   manifest: "/favicon_io/site.webmanifest",
@@ -104,16 +116,16 @@ export const metadata: Metadata = {
     noimageindex: false,
     notranslate: false,
     nosnippet: false,
-    'max-image-preview': 'large',
-    'max-video-preview': -1,
-    'max-snippet': -1,
+    "max-image-preview": "large",
+    "max-video-preview": -1,
+    "max-snippet": -1,
   },
 
   category: "travel",
   other: {
     "geo.region": "ID",
     "geo.placename": "Indonesia",
-    "rating": "general",
+    rating: "general",
   },
 };
 
@@ -122,9 +134,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession()
+  const session = await getSession();
   return (
-    <html lang="id" className={`${playfair.variable} ${playfair.className} antialiased`} suppressHydrationWarning>
+    <html
+      lang="id"
+      className={`${playfair.variable} ${playfair.className} antialiased`}
+      suppressHydrationWarning
+    >
       <body>
         <RouteProgress />
         <SessionTimeout />
@@ -135,7 +151,7 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {session ?
+            {session ? (
               <SidebarProvider
                 style={
                   {
@@ -145,17 +161,16 @@ export default async function RootLayout({
                 }
               >
                 <AppSidebar variant="inset" />
-                <SidebarInset>
-                  {children}
-                </SidebarInset>
-              </SidebarProvider> :
+                <SidebarInset>{children}</SidebarInset>
+              </SidebarProvider>
+            ) : (
               <>
                 <Navbar />
                 {children}
                 <Footer />
-                <LeafChatbot />
+                {/*<LeafChatbot />*/}
               </>
-            }
+            )}
             <Toaster
               position="bottom-center"
               toastOptions={{

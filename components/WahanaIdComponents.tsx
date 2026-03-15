@@ -189,10 +189,13 @@ export default function WahanaIdComponents({
       Boolean(normalizedMapsMapId);
 
     mapPoints.forEach((point) => {
+      const markerFillColor = point.fasilitas ? "#6B7280" : "#16A34A";
+      const markerBorderColor = point.fasilitas ? "#4B5563" : "#15803D";
+
       if (hasAdvancedMarker) {
         const pin = new google.maps.marker.PinElement({
-          background: "#EA4335",
-          borderColor: "#B31412",
+          background: markerFillColor,
+          borderColor: markerBorderColor,
           glyphColor: "#FFFFFF",
         });
         const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -214,6 +217,15 @@ export default function WahanaIdComponents({
         map: mapInstance,
         position: { lat: point.lat, lng: point.lng },
         title: point.title,
+        icon: {
+          path: "M12 2C8.134 2 5 5.134 5 9c0 5.523 7 13 7 13s7-7.477 7-13c0-3.866-3.134-7-7-7zm0 10.5c-1.933 0-3.5-1.567-3.5-3.5S10.067 5.5 12 5.5s3.5 1.567 3.5 3.5-1.567 3.5-3.5 3.5z",
+          fillColor: markerFillColor,
+          fillOpacity: 1,
+          strokeColor: markerBorderColor,
+          strokeWeight: 1.2,
+          scale: 1.4,
+          anchor: new google.maps.Point(12, 24),
+        },
       });
 
       marker.addListener("click", () => {

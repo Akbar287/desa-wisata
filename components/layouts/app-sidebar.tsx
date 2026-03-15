@@ -1,147 +1,226 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { NavDocuments } from "@/components/layouts/nav-documents"
-import { NavMain } from "@/components/layouts/nav-main"
-import { NavSecondary } from "@/components/layouts/nav-secondary"
-import { NavUser } from "@/components/layouts/nav-user"
+import * as React from "react";
+import { NavDocuments } from "@/components/layouts/nav-documents";
+import { NavMain } from "@/components/layouts/nav-main";
+import { NavSecondary } from "@/components/layouts/nav-secondary";
+import { NavUser } from "@/components/layouts/nav-user";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { signOut, useSession } from "next-auth/react"
-import { toast } from "sonner"
-import { AppWindow, Binoculars, Building, CreditCardIcon, Frame, HatGlasses, Landmark, LayoutDashboard, LucideSquirrel, Map, Mountain, Newspaper, PieChart, PlaySquare, Quote, User, UserRoundSearch, Users } from "lucide-react"
-import Link from "next/link"
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { signOut, useSession } from "next-auth/react";
+import { toast } from "sonner";
+import {
+  AppWindow,
+  Binoculars,
+  Building,
+  CreditCardIcon,
+  Frame,
+  HatGlasses,
+  Landmark,
+  LayoutDashboard,
+  LucideSquirrel,
+  Map,
+  Mountain,
+  Newspaper,
+  PieChart,
+  PlaySquare,
+  Quote,
+  User,
+  UserRoundSearch,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-    const { data: session } = useSession()
+  const { data: session } = useSession();
+  const roleUser = session
+    ? session.user.roles.length > 0
+      ? session?.user.roles[0].name
+      : "AdminBlog"
+    : "AdminBlog";
 
-    const data = {
-        navMain: [
+  const data =
+    roleUser === "AdminBlog"
+      ? {
+          navMain: [
             {
-                title: "Dashboard",
-                url: "/",
-                icon: LayoutDashboard,
+              title: "Dashboard",
+              url: "/",
+              icon: LayoutDashboard,
             },
             {
-                title: "Wahana",
-                url: "/admin-wahana",
-                icon: PlaySquare,
+              title: "Blog & Artikel",
+              url: "/admin-blog",
+              icon: Newspaper,
+            },
+          ],
+          documents: [
+            {
+              name: "Profil Desa",
+              url: "/admin-profile",
+              icon: Landmark,
             },
             {
-                title: "Tema Tour",
-                url: "/admin-theme-tour",
-                icon: Mountain,
+              name: "Tim Kami",
+              url: "/admin-team",
+              icon: Users,
             },
             {
-                title: "Destinasi",
-                url: "/admin-destinasi",
-                icon: Map,
+              name: "Lowongan Kerja",
+              url: "/admin-career",
+              icon: UserRoundSearch,
             },
             {
-                title: "Tour",
-                url: "/admin-tour",
-                icon: Binoculars,
+              name: "Yayasan Kami",
+              url: "/admin-yayasan",
+              icon: Building,
             },
             {
-                title: "Blog & Artikel",
-                url: "/admin-blog",
-                icon: Newspaper,
+              name: "Landing Page",
+              url: "/admin-landing-page",
+              icon: AppWindow,
+            },
+          ],
+          navSecondary: [
+            {
+              title: "Buku Petunjuk",
+              url: "/buku-petunjuk",
+              icon: Frame,
             },
             {
-                title: "Testimoni",
-                url: "/admin-testimoni",
-                icon: Quote,
+              title: "Proses Bisnis",
+              url: "/proses-bisnis",
+              icon: PieChart,
+            },
+          ],
+        }
+      : {
+          navMain: [
+            {
+              title: "Dashboard",
+              url: "/",
+              icon: LayoutDashboard,
             },
             {
-                title: "User",
-                url: "/admin-user",
-                icon: User,
+              title: "Wahana",
+              url: "/admin-wahana",
+              icon: PlaySquare,
             },
             {
-                title: "Pembayaran",
-                url: "/admin-payment-available",
-                icon: CreditCardIcon,
-            },
-        ],
-        documents: [
-            {
-                name: 'Profil Desa',
-                url: '/admin-profile',
-                icon: Landmark,
+              title: "Tema Tour",
+              url: "/admin-theme-tour",
+              icon: Mountain,
             },
             {
-                name: 'Tim Kami',
-                url: '/admin-team',
-                icon: Users,
+              title: "Destinasi",
+              url: "/admin-destinasi",
+              icon: Map,
             },
             {
-                name: 'Lowongan Kerja',
-                url: '/admin-career',
-                icon: UserRoundSearch,
+              title: "Tour",
+              url: "/admin-tour",
+              icon: Binoculars,
             },
             {
-                name: 'Yayasan Kami',
-                url: '/admin-yayasan',
-                icon: Building,
+              title: "Blog & Artikel",
+              url: "/admin-blog",
+              icon: Newspaper,
             },
             {
-                name: 'Landing Page',
-                url: '/admin-landing-page',
-                icon: AppWindow,
-            },
-        ],
-        navSecondary: [
-            {
-                title: 'Buku Petunjuk',
-                url: '/buku-petunjuk',
-                icon: Frame,
+              title: "Testimoni",
+              url: "/admin-testimoni",
+              icon: Quote,
             },
             {
-                title: 'Proses Bisnis',
-                url: '/proses-bisnis',
-                icon: PieChart,
+              title: "User",
+              url: "/admin-user",
+              icon: User,
             },
-        ],
-    }
+            {
+              title: "Pembayaran",
+              url: "/admin-payment-available",
+              icon: CreditCardIcon,
+            },
+          ],
+          documents: [
+            {
+              name: "Profil Desa",
+              url: "/admin-profile",
+              icon: Landmark,
+            },
+            {
+              name: "Tim Kami",
+              url: "/admin-team",
+              icon: Users,
+            },
+            {
+              name: "Lowongan Kerja",
+              url: "/admin-career",
+              icon: UserRoundSearch,
+            },
+            {
+              name: "Yayasan Kami",
+              url: "/admin-yayasan",
+              icon: Building,
+            },
+            {
+              name: "Landing Page",
+              url: "/admin-landing-page",
+              icon: AppWindow,
+            },
+          ],
+          navSecondary: [
+            {
+              title: "Buku Petunjuk",
+              url: "/buku-petunjuk",
+              icon: Frame,
+            },
+            {
+              title: "Proses Bisnis",
+              url: "/proses-bisnis",
+              icon: PieChart,
+            },
+          ],
+        };
 
-    const logout = () => {
-        localStorage.removeItem('pmb.iti.role')
-        toast('Sedang Mengeluarkan Anda')
-        signOut({ callbackUrl: '/' })
-    }
+  const logout = () => {
+    localStorage.removeItem("pmb.iti.role");
+    toast("Sedang Mengeluarkan Anda");
+    signOut({ callbackUrl: "/" });
+  };
 
-    return (
-        <Sidebar collapsible="offcanvas" {...props}>
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            asChild
-                            className="data-[slot=sidebar-menu-button]:p-1.5!"
-                        >
-                            <Link href="/">
-                                <LucideSquirrel className="size-5!" />
-                                <span className="text-base font-semibold">Desa Wisata</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarHeader>
-            <SidebarContent>
-                <NavMain items={data.navMain} />
-                <NavDocuments items={data.documents} />
-                <NavSecondary items={data.navSecondary} className="mt-auto" />
-            </SidebarContent>
-            <SidebarFooter>
-                <NavUser user={session} logout={logout} />
-            </SidebarFooter>
-        </Sidebar>
-    )
+  return (
+    <Sidebar collapsible="offcanvas" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
+            >
+              <Link href="/">
+                <LucideSquirrel className="size-5!" />
+                <span className="text-base font-semibold">Desa Wisata</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <NavMain items={data.navMain} />
+        <NavDocuments items={data.documents} />
+        <NavSecondary items={data.navSecondary} className="mt-auto" />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={session} logout={logout} />
+      </SidebarFooter>
+    </Sidebar>
+  );
 }

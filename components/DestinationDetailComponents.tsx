@@ -665,7 +665,7 @@ export default function DestinationDetailComponents({
                     className="font-serif text-base font-bold mb-4"
                     style={{ color: "var(--color-text)" }}
                   >
-                    Label Destinasi
+                    Kategori Aktivitas
                   </h4>
                   <ul
                     className="list-none p-0 m-0 grid gap-2.5"

@@ -188,6 +188,19 @@ export default function PaymentComponents({
   }, [midtransClientKey]);
 
   const router = useRouter();
+  const redirectToCongratulations = React.useCallback(() => {
+    const href = `/congratulations?id=${bookingData.id}`;
+    if (typeof window !== "undefined") {
+      window.location.replace(href);
+      return;
+    }
+    router.replace(href);
+  }, [bookingData.id, router]);
+
+  React.useEffect(() => {
+    if (!paidPayment) return;
+    redirectToCongratulations();
+  }, [paidPayment, redirectToCongratulations]);
 
   const handleSyncMidtransStatus = async (paymentId: number) => {
     const res = await fetch("/api/bookings/midtrans-status", {
@@ -207,8 +220,7 @@ export default function PaymentComponents({
       if (typeof window !== "undefined") {
         window.sessionStorage.removeItem(`midtrans-payment-${payment.id}`);
       }
-      setStep("done");
-      router.refresh();
+      redirectToCongratulations();
     }
 
     return payment;
@@ -222,10 +234,7 @@ export default function PaymentComponents({
     window.snap.pay(snapToken, {
       onSuccess: async () => {
         try {
-          const payment = await handleSyncMidtransStatus(paymentId);
-          if (payment.status === "PAID") {
-            router.push(`/congratulations?id=${bookingData.id}`);
-          }
+          await handleSyncMidtransStatus(paymentId);
         } catch (err) {
           console.error(err);
           toast(
@@ -404,7 +413,6 @@ export default function PaymentComponents({
     try {
       const payment = await handleSyncMidtransStatus(currentPayment.id);
       if (payment.status === "PAID") {
-        router.push(`/congratulations?id=${bookingData.id}`);
         return;
       }
       toast("Status pembayaran belum selesai. Silakan lanjutkan pembayaran.");
@@ -448,7 +456,7 @@ export default function PaymentComponents({
       });
       const json = await res.json();
       if (json.status === "success") {
-        router.push(`/congratulations?id=${bookingData.id}`);
+        redirectToCongratulations();
       } else alert(json.message);
     } catch {
       alert("Gagal terhubung");

@@ -581,6 +581,14 @@ app.post("/midtrans-status", async (c) => {
   }
 });
 
+app.get("/midtrans-notification", async (c) => {
+  return c.json({
+    status: "success",
+    message:
+      "Midtrans notification endpoint is active. Use POST for callbacks.",
+  });
+});
+
 app.post("/midtrans-notification", async (c) => {
   try {
     if (!MIDTRANS_ENABLED) {

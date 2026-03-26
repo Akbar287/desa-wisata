@@ -111,7 +111,9 @@ export default function PaymentComponents({
       ? "done"
       : bookingData.payments.some((p) => p.status === "PENDING")
         ? "pay"
-        : "select",
+        : midtransClientKey
+          ? "pay"
+          : "select",
   );
   const [selectedType, setSelectedType] = React.useState<string | null>(null);
   const [selectedMethodId, setSelectedMethodId] = React.useState<number | null>(
@@ -135,6 +137,7 @@ export default function PaymentComponents({
     string | null
   >(null);
   const [midtransReady, setMidtransReady] = React.useState(false);
+  const [midtransAutoInitDone, setMidtransAutoInitDone] = React.useState(false);
 
   const paidPayment = bookingData.payments.find((p) => p.status === "PAID");
   const isMidtransFlow = paymentFlowMode === "midtrans";
@@ -371,6 +374,28 @@ export default function PaymentComponents({
     midtransClientKey,
     midtransRedirectUrl,
     midtransSnapToken,
+  ]);
+
+  React.useEffect(() => {
+    if (!midtransClientKey) return;
+    if (step === "done") return;
+
+    if (step === "select") {
+      setStep("pay");
+      return;
+    }
+
+    if (step !== "pay") return;
+    if (currentPayment || submitting || midtransAutoInitDone) return;
+
+    setMidtransAutoInitDone(true);
+    void handleCreatePayment();
+  }, [
+    currentPayment,
+    midtransAutoInitDone,
+    midtransClientKey,
+    step,
+    submitting,
   ]);
 
   const handleCheckMidtransStatus = async () => {
@@ -764,7 +789,7 @@ export default function PaymentComponents({
               </div>
             )}
 
-            {step === "select" && (
+            {step === "select" && !midtransClientKey && (
               <div className="pay-section">
                 <div
                   style={{
@@ -1106,12 +1131,785 @@ export default function PaymentComponents({
               </div>
             )}
 
-            {step === "pay" && currentPayment && (
-              <div
-                className="pay-section"
-                style={{ display: "flex", flexDirection: "column", gap: 24 }}
-              >
+            {step === "pay" &&
+              (currentPayment ? (
                 <div
+                  className="pay-section"
+                  style={{ display: "flex", flexDirection: "column", gap: 24 }}
+                >
+                  <div
+                    style={{
+                      background: "white",
+                      borderRadius: "var(--radius-lg)",
+                      border: "1px solid rgba(0,0,0,0.06)",
+                      padding: "28px 26px",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                        marginBottom: 24,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          background:
+                            "linear-gradient(135deg, #EAB308, #F59E0B)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h2
+                          style={{
+                            fontFamily: "var(--font-heading)",
+                            fontSize: 20,
+                            fontWeight: 700,
+                            color: "var(--color-text)",
+                            margin: 0,
+                          }}
+                        >
+                          {isMidtransFlow
+                            ? "Selesaikan Pembayaran"
+                            : "Lakukan Pembayaran"}
+                        </h2>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            color: "var(--color-text-muted)",
+                            fontFamily: "var(--font-body)",
+                            margin: 0,
+                          }}
+                        >
+                          {isMidtransFlow
+                            ? "Lanjutkan transaksi melalui Midtrans dan cek status setelah pembayaran selesai"
+                            : "Transfer ke rekening di bawah lalu upload bukti pembayaran"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(26,92,56,0.04), rgba(45,143,94,0.08))",
+                        borderRadius: "var(--radius-md)",
+                        padding: "20px 22px",
+                        border: "1px solid rgba(26,92,56,0.12)",
+                        marginBottom: 20,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 14,
+                          marginBottom: 16,
+                        }}
+                      >
+                        {currentPayment.paymentAvailable?.image && (
+                          <div
+                            style={{
+                              width: 60,
+                              height: 42,
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              position: "relative",
+                              background: "white",
+                              flexShrink: 0,
+                              border: "1px solid rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            <Image
+                              src={currentPayment.paymentAvailable.image}
+                              alt=""
+                              fill
+                              style={{ objectFit: "contain", padding: 4 }}
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 16,
+                              fontWeight: 700,
+                              color: "var(--color-text)",
+                              fontFamily: "var(--font-body)",
+                            }}
+                          >
+                            {isMidtransFlow
+                              ? "Midtrans Checkout"
+                              : currentPayment.paymentAvailable?.name}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: "var(--color-text-muted)",
+                            }}
+                          >
+                            {isMidtransFlow
+                              ? "Pilih bank / e-wallet di Midtrans"
+                              : typeLabels[
+                                  currentPayment.paymentAvailable?.type ??
+                                    "BANK"
+                                ]}
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 10,
+                        }}
+                      >
+                        {[
+                          {
+                            l: isMidtransFlow ? "Metode" : "Nomor Rekening",
+                            v: isMidtransFlow
+                              ? "Midtrans"
+                              : currentPayment.paymentAvailable?.accountNumber,
+                            bold: true,
+                          },
+                          ...(isMidtransFlow
+                            ? []
+                            : [
+                                {
+                                  l: "Atas Nama",
+                                  v: currentPayment.paymentAvailable
+                                    ?.accountName,
+                                  bold: false,
+                                },
+                              ]),
+                          {
+                            l: "Jumlah Pembayaran",
+                            v: fmt(currentPayment.amount),
+                            bold: true,
+                          },
+                          {
+                            l: "Kode Referensi",
+                            v: currentPayment.referenceCode,
+                            bold: true,
+                          },
+                        ].map((r) => (
+                          <div
+                            key={r.l}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              fontSize: 14,
+                              fontFamily: "var(--font-body)",
+                              paddingBottom: 8,
+                              borderBottom: "1px solid rgba(0,0,0,0.05)",
+                            }}
+                          >
+                            <span style={{ color: "var(--color-text-muted)" }}>
+                              {r.l}
+                            </span>
+                            <span
+                              style={{
+                                color: r.bold
+                                  ? "var(--color-primary)"
+                                  : "var(--color-text)",
+                                fontWeight: r.bold ? 700 : 500,
+                                fontFamily: r.bold
+                                  ? "monospace"
+                                  : "var(--font-body)",
+                                letterSpacing: r.bold ? 0.5 : 0,
+                              }}
+                            >
+                              {r.v}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        background: "var(--color-cream)",
+                        borderRadius: "var(--radius-sm)",
+                        padding: "12px 16px",
+                        fontSize: 13,
+                        color: "var(--color-text-muted)",
+                        fontFamily: "var(--font-body)",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {isMidtransFlow ? (
+                        <>
+                          ⚠️ Klik tombol bayar untuk membuka Midtrans. Jika
+                          status belum berubah setelah pembayaran, gunakan
+                          tombol <strong>Cek Status Pembayaran</strong>.
+                        </>
+                      ) : (
+                        <>
+                          ⚠️ Pastikan jumlah transfer{" "}
+                          <strong>sesuai persis</strong> dengan nominal di atas.
+                          Sertakan kode referensi di catatan transfer jika
+                          memungkinkan.
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {isMidtransFlow ? (
+                    <div
+                      style={{
+                        background: "white",
+                        borderRadius: "var(--radius-lg)",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                        padding: "28px 26px",
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 14,
+                          marginBottom: 20,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: "50%",
+                            background:
+                              "linear-gradient(135deg, var(--color-primary), #2d8f5e)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          >
+                            <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h2
+                            style={{
+                              fontFamily: "var(--font-heading)",
+                              fontSize: 20,
+                              fontWeight: 700,
+                              color: "var(--color-text)",
+                              margin: 0,
+                            }}
+                          >
+                            Bayar via Midtrans
+                          </h2>
+                          <p
+                            style={{
+                              fontSize: 13,
+                              color: "var(--color-text-muted)",
+                              fontFamily: "var(--font-body)",
+                              margin: 0,
+                            }}
+                          >
+                            Gunakan popup Midtrans untuk menyelesaikan transaksi
+                            Anda.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={launchMidtransPayment}
+                        disabled={!midtransSnapToken && !midtransRedirectUrl}
+                        className="btn-primary"
+                        style={{
+                          width: "100%",
+                          justifyContent: "center",
+                          padding: "17px 32px",
+                          fontSize: 16,
+                          background:
+                            !midtransSnapToken && !midtransRedirectUrl
+                              ? "#ccc"
+                              : "linear-gradient(135deg, var(--color-primary-dark), var(--color-primary), #2d8f5e)",
+                          borderRadius: "var(--radius-md)",
+                          boxShadow:
+                            !midtransSnapToken && !midtransRedirectUrl
+                              ? "none"
+                              : "0 4px 14px rgba(26,92,56,0.3)",
+                          transition: "all 0.3s",
+                          cursor:
+                            !midtransSnapToken && !midtransRedirectUrl
+                              ? "not-allowed"
+                              : "pointer",
+                          opacity:
+                            !midtransSnapToken && !midtransRedirectUrl
+                              ? 0.7
+                              : 1,
+                        }}
+                      >
+                        <>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          </svg>
+                          {midtransReady
+                            ? "Bayar Sekarang"
+                            : "Buka Pembayaran Midtrans"}
+                        </>
+                      </button>
+
+                      <button
+                        onClick={handleCheckMidtransStatus}
+                        disabled={syncingStatus}
+                        style={{
+                          width: "100%",
+                          padding: "14px 24px",
+                          marginTop: 12,
+                          fontSize: 14,
+                          fontFamily: "var(--font-body)",
+                          fontWeight: 600,
+                          background: "transparent",
+                          border: "1.5px solid rgba(0,0,0,0.1)",
+                          borderRadius: "var(--radius-md)",
+                          cursor: syncingStatus ? "not-allowed" : "pointer",
+                          color: "var(--color-text-muted)",
+                          transition: "all 0.2s",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          opacity: syncingStatus ? 0.7 : 1,
+                        }}
+                      >
+                        {syncingStatus ? (
+                          <>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 18,
+                                height: 18,
+                                border: "2px solid rgba(0,0,0,0.2)",
+                                borderTopColor: "var(--color-primary)",
+                                borderRadius: "50%",
+                                animation: "spin 0.6s linear infinite",
+                              }}
+                            />
+                            Mengecek status...
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M20 12a8 8 0 10-2.34 5.66M20 12V4M20 12h-8" />
+                            </svg>
+                            Cek Status Pembayaran
+                          </>
+                        )}
+                      </button>
+
+                      {!midtransSnapToken && !midtransRedirectUrl && (
+                        <p
+                          style={{
+                            marginTop: 14,
+                            marginBottom: 0,
+                            fontSize: 12,
+                            color: "var(--color-text-muted)",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          Sesi Midtrans belum ditemukan. Buat ulang sesi
+                          pembayaran untuk melanjutkan.
+                        </p>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setCurrentPayment(null);
+                          setMidtransSnapToken(null);
+                          setMidtransRedirectUrl(null);
+                          setPaymentFlowMode("midtrans");
+                          setMidtransAutoInitDone(true);
+                          void handleCreatePayment();
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "14px 24px",
+                          marginTop: 12,
+                          fontSize: 14,
+                          fontFamily: "var(--font-body)",
+                          fontWeight: 600,
+                          background: "transparent",
+                          border: "1.5px solid rgba(0,0,0,0.1)",
+                          borderRadius: "var(--radius-md)",
+                          cursor: "pointer",
+                          color: "var(--color-text-muted)",
+                          transition: "all 0.2s",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                        Buat Sesi Pembayaran Baru
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        background: "white",
+                        borderRadius: "var(--radius-lg)",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                        padding: "28px 26px",
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 14,
+                          marginBottom: 20,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: "50%",
+                            background:
+                              "linear-gradient(135deg, var(--color-primary), #2d8f5e)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          >
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h2
+                            style={{
+                              fontFamily: "var(--font-heading)",
+                              fontSize: 20,
+                              fontWeight: 700,
+                              color: "var(--color-text)",
+                              margin: 0,
+                            }}
+                          >
+                            Upload Bukti Pembayaran
+                          </h2>
+                          <p
+                            style={{
+                              fontSize: 13,
+                              color: "var(--color-text-muted)",
+                              fontFamily: "var(--font-body)",
+                              margin: 0,
+                            }}
+                          >
+                            Unggah tangkapan layar atau foto bukti transfer
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          border: `2px dashed ${proofUrl ? "var(--color-primary)" : "rgba(0,0,0,0.15)"}`,
+                          borderRadius: "var(--radius-md)",
+                          padding: proofUrl ? "16px" : "40px 20px",
+                          textAlign: "center",
+                          background: proofUrl
+                            ? "rgba(26,92,56,0.04)"
+                            : "var(--color-bg-light)",
+                          transition: "all 0.3s",
+                          cursor: "pointer",
+                          position: "relative",
+                          marginBottom: 20,
+                        }}
+                      >
+                        {proofUrl ? (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 16,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 80,
+                                height: 80,
+                                borderRadius: 8,
+                                overflow: "hidden",
+                                position: "relative",
+                                flexShrink: 0,
+                                border: "1px solid rgba(0,0,0,0.1)",
+                              }}
+                            >
+                              <Image
+                                src={proofUrl}
+                                alt="Bukti"
+                                fill
+                                style={{ objectFit: "cover" }}
+                              />
+                            </div>
+                            <div style={{ flex: 1, textAlign: "left" }}>
+                              <div
+                                style={{
+                                  fontSize: 14,
+                                  fontWeight: 600,
+                                  color: "var(--color-primary)",
+                                  fontFamily: "var(--font-body)",
+                                  marginBottom: 4,
+                                }}
+                              >
+                                ✅ Bukti telah diupload
+                              </div>
+                              <label
+                                style={{
+                                  fontSize: 12,
+                                  color: "var(--color-text-muted)",
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                }}
+                              >
+                                Ganti foto
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleUploadProof(f);
+                                  }}
+                                  style={{ display: "none" }}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        ) : (
+                          <label
+                            style={{ cursor: "pointer", display: "block" }}
+                          >
+                            <div
+                              style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: "50%",
+                                background: "rgba(26,92,56,0.1)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                margin: "0 auto 14px",
+                              }}
+                            >
+                              {uploadingProof ? (
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    width: 24,
+                                    height: 24,
+                                    border: "3px solid rgba(26,92,56,0.2)",
+                                    borderTopColor: "var(--color-primary)",
+                                    borderRadius: "50%",
+                                    animation: "spin 0.6s linear infinite",
+                                  }}
+                                />
+                              ) : (
+                                <svg
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="var(--color-primary)"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                >
+                                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                                </svg>
+                              )}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 14,
+                                fontWeight: 600,
+                                color: "var(--color-text)",
+                                fontFamily: "var(--font-body)",
+                                marginBottom: 4,
+                              }}
+                            >
+                              {uploadingProof
+                                ? "Mengupload..."
+                                : "Klik untuk upload bukti pembayaran"}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: "var(--color-text-muted)",
+                              }}
+                            >
+                              JPG, PNG — maks 5MB
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleUploadProof(f);
+                              }}
+                              style={{ display: "none" }}
+                              disabled={uploadingProof}
+                            />
+                          </label>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleConfirmPaid}
+                        disabled={!proofUrl || submitting}
+                        className="btn-primary"
+                        style={{
+                          width: "100%",
+                          justifyContent: "center",
+                          padding: "17px 32px",
+                          fontSize: 16,
+                          background: !proofUrl
+                            ? "#ccc"
+                            : "linear-gradient(135deg, var(--color-primary-dark), var(--color-primary), #2d8f5e)",
+                          borderRadius: "var(--radius-md)",
+                          boxShadow: proofUrl
+                            ? "0 4px 14px rgba(26,92,56,0.3)"
+                            : "none",
+                          transition: "all 0.3s",
+                          cursor: !proofUrl ? "not-allowed" : "pointer",
+                          opacity: submitting ? 0.7 : 1,
+                        }}
+                      >
+                        {submitting ? (
+                          <>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 18,
+                                height: 18,
+                                border: "2px solid rgba(255,255,255,0.3)",
+                                borderTopColor: "white",
+                                borderRadius: "50%",
+                                animation: "spin 0.6s linear infinite",
+                              }}
+                            />{" "}
+                            Memproses...
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                            >
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Saya Sudah Bayar
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => setStep("select")}
+                        style={{
+                          width: "100%",
+                          padding: "14px 24px",
+                          marginTop: 12,
+                          fontSize: 14,
+                          fontFamily: "var(--font-body)",
+                          fontWeight: 600,
+                          background: "transparent",
+                          border: "1.5px solid rgba(0,0,0,0.1)",
+                          borderRadius: "var(--radius-md)",
+                          cursor: "pointer",
+                          color: "var(--color-text-muted)",
+                          transition: "all 0.2s",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                        Ganti Metode Pembayaran
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : isMidtransFlow ? (
+                <div
+                  className="pay-section"
                   style={{
                     background: "white",
                     borderRadius: "var(--radius-lg)",
@@ -1120,762 +1918,63 @@ export default function PaymentComponents({
                     boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                   }}
                 >
-                  <div
+                  <h2
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                      marginBottom: 24,
+                      fontFamily: "var(--font-heading)",
+                      fontSize: 20,
+                      fontWeight: 700,
+                      color: "var(--color-text)",
+                      margin: "0 0 8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        background: "linear-gradient(135deg, #EAB308, #F59E0B)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2
-                        style={{
-                          fontFamily: "var(--font-heading)",
-                          fontSize: 20,
-                          fontWeight: 700,
-                          color: "var(--color-text)",
-                          margin: 0,
-                        }}
-                      >
-                        {isMidtransFlow
-                          ? "Selesaikan Pembayaran"
-                          : "Lakukan Pembayaran"}
-                      </h2>
-                      <p
-                        style={{
-                          fontSize: 13,
-                          color: "var(--color-text-muted)",
-                          fontFamily: "var(--font-body)",
-                          margin: 0,
-                        }}
-                      >
-                        {isMidtransFlow
-                          ? "Lanjutkan transaksi melalui Midtrans dan cek status setelah pembayaran selesai"
-                          : "Transfer ke rekening di bawah lalu upload bukti pembayaran"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
+                    Menyiapkan Pembayaran Midtrans
+                  </h2>
+                  <p
                     style={{
-                      background:
-                        "linear-gradient(135deg, rgba(26,92,56,0.04), rgba(45,143,94,0.08))",
-                      borderRadius: "var(--radius-md)",
-                      padding: "20px 22px",
-                      border: "1px solid rgba(26,92,56,0.12)",
-                      marginBottom: 20,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 14,
-                        marginBottom: 16,
-                      }}
-                    >
-                      {currentPayment.paymentAvailable?.image && (
-                        <div
-                          style={{
-                            width: 60,
-                            height: 42,
-                            borderRadius: 8,
-                            overflow: "hidden",
-                            position: "relative",
-                            background: "white",
-                            flexShrink: 0,
-                            border: "1px solid rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          <Image
-                            src={currentPayment.paymentAvailable.image}
-                            alt=""
-                            fill
-                            style={{ objectFit: "contain", padding: 4 }}
-                          />
-                        </div>
-                      )}
-                      <div>
-                        <div
-                          style={{
-                            fontSize: 16,
-                            fontWeight: 700,
-                            color: "var(--color-text)",
-                            fontFamily: "var(--font-body)",
-                          }}
-                        >
-                          {isMidtransFlow
-                            ? "Midtrans Checkout"
-                            : currentPayment.paymentAvailable?.name}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 12,
-                            color: "var(--color-text-muted)",
-                          }}
-                        >
-                          {isMidtransFlow
-                            ? "Pilih bank / e-wallet di Midtrans"
-                            : typeLabels[
-                                currentPayment.paymentAvailable?.type ?? "BANK"
-                              ]}
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                      }}
-                    >
-                      {[
-                        {
-                          l: isMidtransFlow ? "Metode" : "Nomor Rekening",
-                          v: isMidtransFlow
-                            ? "Midtrans"
-                            : currentPayment.paymentAvailable?.accountNumber,
-                          bold: true,
-                        },
-                        ...(isMidtransFlow
-                          ? []
-                          : [
-                              {
-                                l: "Atas Nama",
-                                v: currentPayment.paymentAvailable?.accountName,
-                                bold: false,
-                              },
-                            ]),
-                        {
-                          l: "Jumlah Pembayaran",
-                          v: fmt(currentPayment.amount),
-                          bold: true,
-                        },
-                        {
-                          l: "Kode Referensi",
-                          v: currentPayment.referenceCode,
-                          bold: true,
-                        },
-                      ].map((r) => (
-                        <div
-                          key={r.l}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            fontSize: 14,
-                            fontFamily: "var(--font-body)",
-                            paddingBottom: 8,
-                            borderBottom: "1px solid rgba(0,0,0,0.05)",
-                          }}
-                        >
-                          <span style={{ color: "var(--color-text-muted)" }}>
-                            {r.l}
-                          </span>
-                          <span
-                            style={{
-                              color: r.bold
-                                ? "var(--color-primary)"
-                                : "var(--color-text)",
-                              fontWeight: r.bold ? 700 : 500,
-                              fontFamily: r.bold
-                                ? "monospace"
-                                : "var(--font-body)",
-                              letterSpacing: r.bold ? 0.5 : 0,
-                            }}
-                          >
-                            {r.v}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "var(--color-cream)",
-                      borderRadius: "var(--radius-sm)",
-                      padding: "12px 16px",
+                      margin: 0,
                       fontSize: 13,
                       color: "var(--color-text-muted)",
-                      fontFamily: "var(--font-body)",
-                      lineHeight: 1.6,
+                      lineHeight: 1.7,
                     }}
                   >
-                    {isMidtransFlow ? (
-                      <>
-                        ⚠️ Klik tombol bayar untuk membuka Midtrans. Jika status
-                        belum berubah setelah pembayaran, gunakan tombol{" "}
-                        <strong>Cek Status Pembayaran</strong>.
-                      </>
-                    ) : (
-                      <>
-                        ⚠️ Pastikan jumlah transfer{" "}
-                        <strong>sesuai persis</strong> dengan nominal di atas.
-                        Sertakan kode referensi di catatan transfer jika
-                        memungkinkan.
-                      </>
-                    )}
-                  </div>
-                </div>
+                    {submitting
+                      ? "Mohon tunggu, kami sedang membuat sesi pembayaran Anda."
+                      : "Sesi pembayaran belum tersedia. Klik tombol di bawah untuk membuat sesi baru."}
+                  </p>
 
-                {isMidtransFlow ? (
-                  <div
-                    style={{
-                      background: "white",
-                      borderRadius: "var(--radius-lg)",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      padding: "28px 26px",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-                    }}
-                  >
+                  {submitting ? (
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 14,
-                        marginBottom: 20,
+                        marginTop: 16,
+                        display: "inline-block",
+                        width: 20,
+                        height: 20,
+                        border: "2px solid rgba(0,0,0,0.2)",
+                        borderTopColor: "var(--color-primary)",
+                        borderRadius: "50%",
+                        animation: "spin 0.6s linear infinite",
                       }}
-                    >
-                      <div
-                        style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: "50%",
-                          background:
-                            "linear-gradient(135deg, var(--color-primary), #2d8f5e)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        >
-                          <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2
-                          style={{
-                            fontFamily: "var(--font-heading)",
-                            fontSize: 20,
-                            fontWeight: 700,
-                            color: "var(--color-text)",
-                            margin: 0,
-                          }}
-                        >
-                          Bayar via Midtrans
-                        </h2>
-                        <p
-                          style={{
-                            fontSize: 13,
-                            color: "var(--color-text-muted)",
-                            fontFamily: "var(--font-body)",
-                            margin: 0,
-                          }}
-                        >
-                          Gunakan popup Midtrans untuk menyelesaikan transaksi
-                          Anda.
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={launchMidtransPayment}
-                      disabled={!midtransSnapToken && !midtransRedirectUrl}
-                      className="btn-primary"
-                      style={{
-                        width: "100%",
-                        justifyContent: "center",
-                        padding: "17px 32px",
-                        fontSize: 16,
-                        background:
-                          !midtransSnapToken && !midtransRedirectUrl
-                            ? "#ccc"
-                            : "linear-gradient(135deg, var(--color-primary-dark), var(--color-primary), #2d8f5e)",
-                        borderRadius: "var(--radius-md)",
-                        boxShadow:
-                          !midtransSnapToken && !midtransRedirectUrl
-                            ? "none"
-                            : "0 4px 14px rgba(26,92,56,0.3)",
-                        transition: "all 0.3s",
-                        cursor:
-                          !midtransSnapToken && !midtransRedirectUrl
-                            ? "not-allowed"
-                            : "pointer",
-                        opacity:
-                          !midtransSnapToken && !midtransRedirectUrl ? 0.7 : 1,
-                      }}
-                    >
-                      <>
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        {midtransReady
-                          ? "Bayar Sekarang"
-                          : "Buka Pembayaran Midtrans"}
-                      </>
-                    </button>
-
-                    <button
-                      onClick={handleCheckMidtransStatus}
-                      disabled={syncingStatus}
-                      style={{
-                        width: "100%",
-                        padding: "14px 24px",
-                        marginTop: 12,
-                        fontSize: 14,
-                        fontFamily: "var(--font-body)",
-                        fontWeight: 600,
-                        background: "transparent",
-                        border: "1.5px solid rgba(0,0,0,0.1)",
-                        borderRadius: "var(--radius-md)",
-                        cursor: syncingStatus ? "not-allowed" : "pointer",
-                        color: "var(--color-text-muted)",
-                        transition: "all 0.2s",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                        opacity: syncingStatus ? 0.7 : 1,
-                      }}
-                    >
-                      {syncingStatus ? (
-                        <>
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 18,
-                              height: 18,
-                              border: "2px solid rgba(0,0,0,0.2)",
-                              borderTopColor: "var(--color-primary)",
-                              borderRadius: "50%",
-                              animation: "spin 0.6s linear infinite",
-                            }}
-                          />
-                          Mengecek status...
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path d="M20 12a8 8 0 10-2.34 5.66M20 12V4M20 12h-8" />
-                          </svg>
-                          Cek Status Pembayaran
-                        </>
-                      )}
-                    </button>
-
-                    {!midtransSnapToken && !midtransRedirectUrl && (
-                      <p
-                        style={{
-                          marginTop: 14,
-                          marginBottom: 0,
-                          fontSize: 12,
-                          color: "var(--color-text-muted)",
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        Sesi Midtrans belum ditemukan. Pilih ulang metode
-                        pembayaran untuk membuat sesi baru.
-                      </p>
-                    )}
-
+                    />
+                  ) : (
                     <button
                       onClick={() => {
-                        setStep("select");
-                        setCurrentPayment(null);
-                        setMidtransSnapToken(null);
-                        setMidtransRedirectUrl(null);
-                        setPaymentFlowMode(
-                          midtransClientKey ? "midtrans" : "manual",
-                        );
+                        setMidtransAutoInitDone(true);
+                        void handleCreatePayment();
                       }}
-                      style={{
-                        width: "100%",
-                        padding: "14px 24px",
-                        marginTop: 12,
-                        fontSize: 14,
-                        fontFamily: "var(--font-body)",
-                        fontWeight: 600,
-                        background: "transparent",
-                        border: "1.5px solid rgba(0,0,0,0.1)",
-                        borderRadius: "var(--radius-md)",
-                        cursor: "pointer",
-                        color: "var(--color-text-muted)",
-                        transition: "all 0.2s",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                      }}
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <polyline points="15 18 9 12 15 6" />
-                      </svg>
-                      Ganti Metode Pembayaran
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      background: "white",
-                      borderRadius: "var(--radius-lg)",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      padding: "28px 26px",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 14,
-                        marginBottom: 20,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: "50%",
-                          background:
-                            "linear-gradient(135deg, var(--color-primary), #2d8f5e)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        >
-                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2
-                          style={{
-                            fontFamily: "var(--font-heading)",
-                            fontSize: 20,
-                            fontWeight: 700,
-                            color: "var(--color-text)",
-                            margin: 0,
-                          }}
-                        >
-                          Upload Bukti Pembayaran
-                        </h2>
-                        <p
-                          style={{
-                            fontSize: 13,
-                            color: "var(--color-text-muted)",
-                            fontFamily: "var(--font-body)",
-                            margin: 0,
-                          }}
-                        >
-                          Unggah tangkapan layar atau foto bukti transfer
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        border: `2px dashed ${proofUrl ? "var(--color-primary)" : "rgba(0,0,0,0.15)"}`,
-                        borderRadius: "var(--radius-md)",
-                        padding: proofUrl ? "16px" : "40px 20px",
-                        textAlign: "center",
-                        background: proofUrl
-                          ? "rgba(26,92,56,0.04)"
-                          : "var(--color-bg-light)",
-                        transition: "all 0.3s",
-                        cursor: "pointer",
-                        position: "relative",
-                        marginBottom: 20,
-                      }}
-                    >
-                      {proofUrl ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 16,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 80,
-                              height: 80,
-                              borderRadius: 8,
-                              overflow: "hidden",
-                              position: "relative",
-                              flexShrink: 0,
-                              border: "1px solid rgba(0,0,0,0.1)",
-                            }}
-                          >
-                            <Image
-                              src={proofUrl}
-                              alt="Bukti"
-                              fill
-                              style={{ objectFit: "cover" }}
-                            />
-                          </div>
-                          <div style={{ flex: 1, textAlign: "left" }}>
-                            <div
-                              style={{
-                                fontSize: 14,
-                                fontWeight: 600,
-                                color: "var(--color-primary)",
-                                fontFamily: "var(--font-body)",
-                                marginBottom: 4,
-                              }}
-                            >
-                              ✅ Bukti telah diupload
-                            </div>
-                            <label
-                              style={{
-                                fontSize: 12,
-                                color: "var(--color-text-muted)",
-                                cursor: "pointer",
-                                textDecoration: "underline",
-                              }}
-                            >
-                              Ganti foto
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const f = e.target.files?.[0];
-                                  if (f) handleUploadProof(f);
-                                }}
-                                style={{ display: "none" }}
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      ) : (
-                        <label style={{ cursor: "pointer", display: "block" }}>
-                          <div
-                            style={{
-                              width: 56,
-                              height: 56,
-                              borderRadius: "50%",
-                              background: "rgba(26,92,56,0.1)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              margin: "0 auto 14px",
-                            }}
-                          >
-                            {uploadingProof ? (
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  width: 24,
-                                  height: 24,
-                                  border: "3px solid rgba(26,92,56,0.2)",
-                                  borderTopColor: "var(--color-primary)",
-                                  borderRadius: "50%",
-                                  animation: "spin 0.6s linear infinite",
-                                }}
-                              />
-                            ) : (
-                              <svg
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="var(--color-primary)"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              >
-                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-                              </svg>
-                            )}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: 14,
-                              fontWeight: 600,
-                              color: "var(--color-text)",
-                              fontFamily: "var(--font-body)",
-                              marginBottom: 4,
-                            }}
-                          >
-                            {uploadingProof
-                              ? "Mengupload..."
-                              : "Klik untuk upload bukti pembayaran"}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: 12,
-                              color: "var(--color-text-muted)",
-                            }}
-                          >
-                            JPG, PNG — maks 5MB
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) handleUploadProof(f);
-                            }}
-                            style={{ display: "none" }}
-                            disabled={uploadingProof}
-                          />
-                        </label>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={handleConfirmPaid}
-                      disabled={!proofUrl || submitting}
                       className="btn-primary"
                       style={{
                         width: "100%",
                         justifyContent: "center",
-                        padding: "17px 32px",
-                        fontSize: 16,
-                        background: !proofUrl
-                          ? "#ccc"
-                          : "linear-gradient(135deg, var(--color-primary-dark), var(--color-primary), #2d8f5e)",
-                        borderRadius: "var(--radius-md)",
-                        boxShadow: proofUrl
-                          ? "0 4px 14px rgba(26,92,56,0.3)"
-                          : "none",
-                        transition: "all 0.3s",
-                        cursor: !proofUrl ? "not-allowed" : "pointer",
-                        opacity: submitting ? 0.7 : 1,
-                      }}
-                    >
-                      {submitting ? (
-                        <>
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 18,
-                              height: 18,
-                              border: "2px solid rgba(255,255,255,0.3)",
-                              borderTopColor: "white",
-                              borderRadius: "50%",
-                              animation: "spin 0.6s linear infinite",
-                            }}
-                          />{" "}
-                          Memproses...
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          Saya Sudah Bayar
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => setStep("select")}
-                      style={{
-                        width: "100%",
+                        marginTop: 16,
                         padding: "14px 24px",
-                        marginTop: 12,
                         fontSize: 14,
-                        fontFamily: "var(--font-body)",
-                        fontWeight: 600,
-                        background: "transparent",
-                        border: "1.5px solid rgba(0,0,0,0.1)",
-                        borderRadius: "var(--radius-md)",
-                        cursor: "pointer",
-                        color: "var(--color-text-muted)",
-                        transition: "all 0.2s",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
                       }}
                     >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <polyline points="15 18 9 12 15 6" />
-                      </svg>
-                      Ganti Metode Pembayaran
+                      Buat Sesi Pembayaran
                     </button>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              ) : null)}
           </div>
 
           <aside

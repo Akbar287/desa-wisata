@@ -596,18 +596,13 @@ export default function ToursDetailComponent({
                             {fmt(d.price)}
                           </td>
                           <td className="py-3.5 px-5 text-right">
-                            {/*<Link href={`/booking?id=${tour.id}&start=${d.start}&end=${d.end}`}>
-                                                            <button className="btn-primary py-2 px-5 text-xs transition-transform duration-200 hover:scale-105">Pesan</button>
-                                                        </Link>*/}
-                            <Button
-                              type="button"
-                              onClick={() =>
-                                toast("Fitur akan tersedia di sprint 3")
-                              }
-                              className="btn-primary w-full justify-center py-2 px-5 mb-3 text-xs no-underline flex items-center gap-2"
+                            <Link
+                              href={`/booking?id=${tour.id}&start=${d.start}&end=${d.end}`}
                             >
-                              Pesan
-                            </Button>
+                              <button className="btn-primary py-2 px-5 text-xs transition-transform duration-200 hover:scale-105">
+                                Pesan
+                              </button>
+                            </Link>
                           </td>
                         </tr>
                       );

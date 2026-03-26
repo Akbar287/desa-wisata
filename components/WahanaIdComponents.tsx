@@ -852,20 +852,12 @@ export default function WahanaIdComponents({
                 / tiket masuk
               </div>
 
-              {/*<Link
+              <Link
                 className="btn-primary w-full justify-center py-3.5 px-6 mb-3 text-sm"
                 href={`/booking?id=${wahana.id}&jenis=wahana`}
               >
                 Pesan Sekarang
-              </Link>*/}
-              <Button
-                type="button"
-                onClick={() => toast("Fitur akan tersedia di sprint 3")}
-                style={{ height: "45px" }}
-                className="btn-primary w-full justify-center py-3 px-6 mb-3 text-sm no-underline flex items-center gap-2"
-              >
-                Pesan Sekarang
-              </Button>
+              </Link>
               <Link href="/contact" className="block">
                 <button className="btn-outline w-full justify-center py-3 px-6 mb-2 text-sm">
                   Hubungi Kami

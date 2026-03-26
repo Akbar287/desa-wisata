@@ -31,6 +31,11 @@ const MIDTRANS_API_BASE = MIDTRANS_IS_PRODUCTION
   ? "https://api.midtrans.com/v2"
   : "https://api.sandbox.midtrans.com/v2";
 
+const MIDTRANS_ENABLED_PAYMENTS = (process.env.MIDTRANS_ENABLED_PAYMENTS ?? "")
+  .split(",")
+  .map((v) => v.trim())
+  .filter(Boolean);
+
 const toMidtransBasicAuth = () =>
   `Basic ${Buffer.from(`${MIDTRANS_SERVER_KEY}:`).toString("base64")}`;
 
@@ -452,8 +457,6 @@ app.post("/create-payment", async (c) => {
       booking.wahana?.name ??
       "Paket Wisata Desa Manud Jaya";
 
-    const enabledPaymentsForMidtrans = ["bank_transfer", "qris"];
-
     const origin = c.req.header("origin");
     const callbacks = origin
       ? {
@@ -482,7 +485,10 @@ app.post("/create-payment", async (c) => {
           name: itemName.slice(0, 50),
         },
       ],
-      enabled_payments: enabledPaymentsForMidtrans,
+      enabled_payments:
+        MIDTRANS_ENABLED_PAYMENTS.length > 0
+          ? MIDTRANS_ENABLED_PAYMENTS
+          : undefined,
       callbacks,
     };
 

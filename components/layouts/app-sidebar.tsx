@@ -18,6 +18,7 @@ import { signOut, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
   AppWindow,
+  Banknote,
   Binoculars,
   Building,
   CreditCardIcon,
@@ -143,10 +144,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               url: "/admin-user",
               icon: User,
             },
+            // {
+            //   title: "Pembayaran",
+            //   url: "/admin-payment-available",
+            //   icon: CreditCardIcon,
+            // },
             {
-              title: "Pembayaran",
-              url: "/admin-payment-available",
-              icon: CreditCardIcon,
+              title: "Transaksi",
+              url: "/admin-transaksi",
+              icon: Banknote,
             },
           ],
           documents: [

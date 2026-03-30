@@ -621,7 +621,7 @@ model Booking {
   tour         Tour?         @relation(fields: [tourId], references: [id], onDelete: Cascade)
   destination  Destination?  @relation(fields: [destinationId], references: [id], onDelete: Cascade)
   wahana       Wahana?       @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
-  payments     Payment[]
+  bookingPayments     BookingPayment[]
   testimonials Testimonial[]
 
   @@map("bookings")
@@ -725,53 +725,35 @@ model File {
   @@map("files")
 }
 
-enum PaymentType {
-  BANK
-  WALLET
-  QRIS
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  CANCELLED
-}
-
-model PaymentAvailable {
-  id            Int         @id @default(autoincrement())
-  name          String
-  accountNumber String
-  accountName   String
-  image         String
-  description   String
-  type          PaymentType
-  isActive      Boolean
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  payments Payment[]
-
-  @@map("payment_available")
-}
-
-model Payment {
-  id                 Int           @id @default(autoincrement())
-  paymentAvailableId Int
+model BookingPayment {
+  id                Int       @id @default(autoincrement())
   bookingId          Int
-  amount             Int
-  status             PaymentStatus
-  referenceCode      String
-  proofOfPayment     String?
-  paidAt             DateTime?
-  cancelledAt        DateTime?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  bookingCode       String    @unique @map("booking_code")
+  orderId           String    @unique @map("order_id")
+  transactionId     String?   @map("transaction_id")
 
-  paymentAvailable PaymentAvailable @relation(fields: [paymentAvailableId], references: [id], onDelete: Cascade)
+  grossAmount       Decimal?  @db.Decimal(12, 2) @map("gross_amount")
+  currency          String?   @default("IDR")
+
+  paymentType       String?   @map("payment_type")
+  transactionStatus String    @default("pending") @map("transaction_status")
+  fraudStatus       String?   @map("fraud_status")
+
+  transactionTime   DateTime? @map("transaction_time")
+  settlementTime    DateTime? @map("settlement_time")
+  expiryTime        DateTime? @map("expiry_time")
+
+  snapToken         String?   @map("snap_token")
+  redirectUrl       String?   @map("redirect_url")
+
+  midtransResponse  Json?     @map("midtrans_response")
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
   booking          Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  @@map("payments")
+  @@map("booking_payments")
 }
 
 model Wahana {

@@ -5,11 +5,22 @@ import { prisma } from "@/lib/prisma";
 
 type MidtransStatusPayload = {
   order_id?: string;
+  transaction_id?: string;
   transaction_status?: string;
   fraud_status?: string;
+  payment_type?: string;
+  transaction_time?: string;
+  settlement_time?: string;
+  expiry_time?: string;
+  currency?: string;
   status_code?: string;
   gross_amount?: string;
   signature_key?: string;
+  va_numbers?: Array<{ bank?: string; va_number?: string }>;
+  permata_va_number?: string;
+  biller_code?: string;
+  bill_key?: string;
+  store?: string;
 };
 
 const app = new Hono().basePath("/api/bookings");
@@ -39,9 +50,9 @@ const MIDTRANS_ENABLED_PAYMENTS = (process.env.MIDTRANS_ENABLED_PAYMENTS ?? "")
 const toMidtransBasicAuth = () =>
   `Basic ${Buffer.from(`${MIDTRANS_SERVER_KEY}:`).toString("base64")}`;
 
-const mapMidtransToPaymentStatus = (
-  transactionStatus?: string,
-  fraudStatus?: string,
+const mapMidtransToLegacyPaymentStatus = (
+  transactionStatus?: string | null,
+  fraudStatus?: string | null,
 ): "PENDING" | "PAID" | "FAILED" | "CANCELLED" => {
   const tx = (transactionStatus ?? "").toLowerCase();
   const fraud = (fraudStatus ?? "").toLowerCase();
@@ -52,8 +63,10 @@ const mapMidtransToPaymentStatus = (
 
   if (tx === "settlement") return "PAID";
   if (tx === "pending") return "PENDING";
-  if (tx === "deny") return "FAILED";
-  if (tx === "cancel" || tx === "expire") return "CANCELLED";
+  if (tx === "deny" || tx === "failure") return "FAILED";
+  if (tx === "cancel" || tx === "expire" || tx === "refund") {
+    return "CANCELLED";
+  }
   return "PENDING";
 };
 
@@ -70,46 +83,178 @@ const verifyMidtransSignature = (
   return expected === signatureKey;
 };
 
-async function persistPaymentStatus(
-  paymentId: number,
+const parseMidtransDate = (value?: string | null): Date | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+};
+
+const toReadablePaymentType = (paymentType?: string | null) => {
+  if (!paymentType) return "Midtrans";
+  return paymentType
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join(" ");
+};
+
+const mapPaymentTypeToLegacyCategory = (
+  paymentType?: string | null,
+): "BANK" | "WALLET" | "QRIS" => {
+  const type = (paymentType ?? "").toLowerCase();
+  if (type === "qris") return "QRIS";
+  if (
+    type.includes("bank") ||
+    type.includes("va") ||
+    type === "echannel" ||
+    type === "cstore"
+  ) {
+    return "BANK";
+  }
+  return "WALLET";
+};
+
+const inferPaymentMethodName = (
+  paymentType?: string | null,
+  response?: MidtransStatusPayload | null,
+) => {
+  const type = (paymentType ?? "").toLowerCase();
+  if (type === "bank_transfer") {
+    const bank = response?.va_numbers?.[0]?.bank;
+    if (bank) return `VA ${bank.toUpperCase()}`;
+    if (response?.permata_va_number) return "VA Permata";
+    return "Virtual Account";
+  }
+  if (type === "echannel") return "Mandiri Bill Payment";
+  if (type === "qris") return "QRIS";
+  if (type === "cstore" && response?.store) {
+    return `Convenience Store ${response.store.toUpperCase()}`;
+  }
+  return toReadablePaymentType(paymentType);
+};
+
+function normalizeBookingPaymentForClient(payment: {
+  id: number;
+  bookingId: number;
+  orderId: string;
+  grossAmount: unknown;
+  transactionStatus: string;
+  fraudStatus: string | null;
+  settlementTime: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  paymentType: string | null;
+  midtransResponse: unknown;
+}) {
+  const status = mapMidtransToLegacyPaymentStatus(
+    payment.transactionStatus,
+    payment.fraudStatus,
+  );
+  const amount = Number(payment.grossAmount ?? 0);
+  const parsedResponse =
+    payment.midtransResponse && typeof payment.midtransResponse === "object"
+      ? (payment.midtransResponse as MidtransStatusPayload)
+      : null;
+
+  return {
+    id: payment.id,
+    paymentAvailableId: 0,
+    bookingId: payment.bookingId,
+    amount,
+    status,
+    referenceCode: payment.orderId,
+    proofOfPayment: null,
+    paidAt: payment.settlementTime,
+    cancelledAt:
+      status === "FAILED" || status === "CANCELLED" ? payment.updatedAt : null,
+    createdAt: payment.createdAt,
+    updatedAt: payment.updatedAt,
+    paymentAvailable: {
+      id: 0,
+      name: inferPaymentMethodName(payment.paymentType, parsedResponse),
+      accountNumber: payment.orderId,
+      accountName: "Midtrans",
+      image: "",
+      description: "Pembayaran melalui Midtrans",
+      type: mapPaymentTypeToLegacyCategory(payment.paymentType),
+      isActive: true,
+    },
+    transactionStatus: payment.transactionStatus,
+    paymentType: payment.paymentType,
+  };
+}
+
+async function persistBookingPaymentStatus(
+  bookingPaymentId: number,
   bookingId: number,
-  nextStatus: "PENDING" | "PAID" | "FAILED" | "CANCELLED",
+  payload: MidtransStatusPayload,
 ) {
-  const paymentData: {
-    status: "PENDING" | "PAID" | "FAILED" | "CANCELLED";
-    paidAt?: Date | null;
-    cancelledAt?: Date | null;
-  } = { status: nextStatus };
-
-  if (nextStatus === "PAID") {
-    paymentData.paidAt = new Date();
-    paymentData.cancelledAt = null;
-  }
-
-  if (nextStatus === "FAILED" || nextStatus === "CANCELLED") {
-    paymentData.cancelledAt = new Date();
-  }
-
-  const payment = await prisma.payment.update({
-    where: { id: paymentId },
-    data: paymentData,
-    include: { paymentAvailable: true },
+  const updatedBookingPayment = await prisma.bookingPayment.update({
+    where: { id: bookingPaymentId },
+    data: {
+      transactionId: payload.transaction_id ?? undefined,
+      paymentType: payload.payment_type ?? undefined,
+      transactionStatus: payload.transaction_status?.toLowerCase() ?? "pending",
+      fraudStatus: payload.fraud_status ?? undefined,
+      transactionTime: parseMidtransDate(payload.transaction_time),
+      settlementTime: parseMidtransDate(payload.settlement_time),
+      expiryTime: parseMidtransDate(payload.expiry_time),
+      grossAmount: payload.gross_amount
+        ? Number(payload.gross_amount)
+        : undefined,
+      currency: payload.currency ?? "IDR",
+      midtransResponse: payload as unknown as object,
+    },
   });
 
-  if (nextStatus === "PAID") {
-    await prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: "CONFIRMED" },
-    });
-  } else if (nextStatus === "FAILED" || nextStatus === "CANCELLED") {
-    await prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: "PENDING" },
-    });
+  const currentBooking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { status: true },
+  });
+  const paymentStatus = mapMidtransToLegacyPaymentStatus(
+    payload.transaction_status,
+    payload.fraud_status,
+  );
+
+  if (currentBooking?.status !== "COMPLETED") {
+    if (paymentStatus === "PAID") {
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: "CONFIRMED" },
+      });
+    } else if (paymentStatus === "FAILED" || paymentStatus === "CANCELLED") {
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: "CANCELLED" },
+      });
+    } else {
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: "PENDING" },
+      });
+    }
   }
 
-  return payment;
+  return updatedBookingPayment;
 }
+
+function normalizeAdminOrderStatus(
+  bookingStatus: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED",
+  latestPaymentStatus?: "PENDING" | "PAID" | "FAILED" | "CANCELLED" | null,
+): "PENDING" | "PAID" | "CANCELLED" | "COMPLETED" {
+  if (bookingStatus === "COMPLETED") return "COMPLETED";
+  if (latestPaymentStatus === "PAID") return "PAID";
+  if (latestPaymentStatus === "FAILED" || latestPaymentStatus === "CANCELLED") {
+    return "CANCELLED";
+  }
+  if (bookingStatus === "CANCELLED") return "CANCELLED";
+  return "PENDING";
+}
+
+const PENDING_TRANSACTION_STATUSES = ["pending", "authorize", "challenge"];
+const PAID_TRANSACTION_STATUSES = ["settlement", "capture"];
+const CANCELLED_TRANSACTION_STATUSES = ["deny", "cancel", "expire", "failure"];
 
 async function getMidtransStatus(orderId: string) {
   const statusRes = await fetch(`${MIDTRANS_API_BASE}/${orderId}/status`, {
@@ -128,6 +273,340 @@ async function getMidtransStatus(orderId: string) {
   const statusPayload = (await statusRes.json()) as MidtransStatusPayload;
   return statusPayload;
 }
+
+app.get("/admin/filter-options", async (c) => {
+  try {
+    const [tours, destinations, wahanas] = await Promise.all([
+      prisma.tour.findMany({
+        orderBy: { title: "asc" },
+        select: { id: true, title: true },
+      }),
+      prisma.destination.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.wahana.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+    ]);
+
+    return c.json({
+      status: "success",
+      data: {
+        tours,
+        destinations,
+        wahanas,
+      },
+    });
+  } catch (err) {
+    console.error("Booking admin filter options error:", err);
+    return c.json(
+      { status: "error", message: "Gagal memuat opsi filter transaksi" },
+      500,
+    );
+  }
+});
+
+app.get("/admin", async (c) => {
+  try {
+    const page = Math.max(1, Number(c.req.query("page")) || 1);
+    const limit = Math.min(
+      100,
+      Math.max(1, Number(c.req.query("limit")) || 10),
+    );
+    const search = c.req.query("search")?.trim() || "";
+    const visitDate = c.req.query("visitDate")?.trim() || "";
+    const entityType = (c.req.query("entityType") || "all").toLowerCase();
+    const entityId = Number(c.req.query("entityId")) || 0;
+    const statusFilter = (c.req.query("status") || "ALL").toUpperCase();
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+    const andClauses: Array<Record<string, unknown>> = [];
+
+    if (search) {
+      andClauses.push({
+        OR: [
+          { firstName: { contains: search, mode: "insensitive" } },
+          { lastName: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+          { phoneNumber: { contains: search, mode: "insensitive" } },
+        ],
+      });
+    }
+
+    if (visitDate) {
+      const start = new Date(visitDate);
+      if (!Number.isNaN(start.getTime())) {
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+        andClauses.push({
+          startDate: { gte: start, lt: end },
+        });
+      }
+    }
+
+    if (entityType === "tour") {
+      andClauses.push({
+        tourId: entityId > 0 ? entityId : { not: null },
+      });
+    } else if (entityType === "destination") {
+      andClauses.push({
+        destinationId: entityId > 0 ? entityId : { not: null },
+      });
+    } else if (entityType === "wahana") {
+      andClauses.push({
+        wahanaId: entityId > 0 ? entityId : { not: null },
+      });
+    }
+
+    if (statusFilter === "PAID") {
+      andClauses.push({
+        bookingPayments: {
+          some: {
+            transactionStatus: { in: PAID_TRANSACTION_STATUSES },
+          },
+        },
+      });
+    } else if (statusFilter === "PENDING") {
+      andClauses.push({
+        OR: [
+          { bookingPayments: { none: {} } },
+          {
+            bookingPayments: {
+              some: {
+                transactionStatus: { in: PENDING_TRANSACTION_STATUSES },
+              },
+            },
+          },
+        ],
+      });
+    } else if (statusFilter === "CANCELLED") {
+      andClauses.push({
+        OR: [
+          {
+            bookingPayments: {
+              some: {
+                transactionStatus: { in: CANCELLED_TRANSACTION_STATUSES },
+              },
+            },
+          },
+          { status: "CANCELLED" },
+        ],
+      });
+    } else if (statusFilter === "COMPLETED") {
+      andClauses.push({ status: "COMPLETED" });
+    }
+
+    if (andClauses.length === 1) {
+      Object.assign(where, andClauses[0]);
+    } else if (andClauses.length > 1) {
+      where.AND = andClauses;
+    }
+
+    const [rows, total] = await Promise.all([
+      prisma.booking.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phoneCode: true,
+          phoneNumber: true,
+          startDate: true,
+          endDate: true,
+          adults: true,
+          children: true,
+          totalPrice: true,
+          status: true,
+          createdAt: true,
+          tourId: true,
+          destinationId: true,
+          wahanaId: true,
+          tour: { select: { id: true, title: true } },
+          destination: { select: { id: true, name: true } },
+          wahana: { select: { id: true, name: true } },
+          bookingPayments: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: {
+              id: true,
+              transactionStatus: true,
+              fraudStatus: true,
+              orderId: true,
+              createdAt: true,
+              settlementTime: true,
+            },
+          },
+        },
+      }),
+      prisma.booking.count({ where }),
+    ]);
+
+    const data = rows.map((row) => {
+      const latestPayment = row.bookingPayments[0] ?? null;
+      const latestPaymentStatus = latestPayment
+        ? mapMidtransToLegacyPaymentStatus(
+            latestPayment.transactionStatus,
+            latestPayment.fraudStatus,
+          )
+        : null;
+      const itemType = row.tour
+        ? "TOUR"
+        : row.destination
+          ? "DESTINATION"
+          : row.wahana
+            ? "WAHANA"
+            : "UNKNOWN";
+      const itemName =
+        row.tour?.title ??
+        row.destination?.name ??
+        row.wahana?.name ??
+        "Tidak diketahui";
+      const normalizedStatus = normalizeAdminOrderStatus(
+        row.status,
+        latestPaymentStatus,
+      );
+
+      return {
+        id: row.id,
+        name: `${row.firstName} ${row.lastName}`.trim(),
+        email: row.email,
+        phone: `${row.phoneCode}${row.phoneNumber}`,
+        itemType,
+        itemName,
+        itemId: row.tour?.id ?? row.destination?.id ?? row.wahana?.id ?? null,
+        visitDate: row.startDate,
+        visitEndDate: row.endDate,
+        adults: row.adults,
+        children: row.children,
+        totalPeople: row.adults + row.children,
+        totalPrice: row.totalPrice,
+        bookingStatus: row.status,
+        latestPaymentStatus,
+        latestPaymentRefCode: latestPayment?.orderId ?? null,
+        latestPaymentAt: latestPayment?.createdAt ?? null,
+        latestPaidAt: latestPayment?.settlementTime ?? null,
+        status: normalizedStatus,
+        createdAt: row.createdAt,
+      };
+    });
+
+    const totalPages = Math.ceil(total / limit);
+    return c.json({
+      status: "success",
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPrevPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    });
+  } catch (err) {
+    console.error("Booking admin list error:", err);
+    return c.json(
+      { status: "error", message: "Gagal memuat daftar transaksi" },
+      500,
+    );
+  }
+});
+
+app.get("/admin/:id", async (c) => {
+  try {
+    const bookingId = Number(c.req.param("id"));
+    if (!bookingId) {
+      return c.json(
+        { status: "error", message: "ID booking tidak valid" },
+        400,
+      );
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        tour: { select: { id: true, title: true } },
+        destination: { select: { id: true, name: true } },
+        wahana: { select: { id: true, name: true } },
+        bookingPayments: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            bookingId: true,
+            orderId: true,
+            grossAmount: true,
+            transactionStatus: true,
+            fraudStatus: true,
+            settlementTime: true,
+            createdAt: true,
+            updatedAt: true,
+            paymentType: true,
+            midtransResponse: true,
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      return c.json(
+        { status: "error", message: "Booking tidak ditemukan" },
+        404,
+      );
+    }
+
+    const latestPayment = booking.bookingPayments[0] ?? null;
+    const latestPaymentStatus = latestPayment
+      ? mapMidtransToLegacyPaymentStatus(
+          latestPayment.transactionStatus,
+          latestPayment.fraudStatus,
+        )
+      : null;
+    const normalizedStatus = normalizeAdminOrderStatus(
+      booking.status,
+      latestPaymentStatus,
+    );
+    const itemType = booking.tour
+      ? "TOUR"
+      : booking.destination
+        ? "DESTINATION"
+        : booking.wahana
+          ? "WAHANA"
+          : "UNKNOWN";
+    const itemName =
+      booking.tour?.title ??
+      booking.destination?.name ??
+      booking.wahana?.name ??
+      "Tidak diketahui";
+    const { bookingPayments, ...bookingRest } = booking;
+
+    return c.json({
+      status: "success",
+      data: {
+        ...bookingRest,
+        payments: bookingPayments.map((payment) =>
+          normalizeBookingPaymentForClient(payment),
+        ),
+        itemType,
+        itemName,
+        totalPeople: booking.adults + booking.children,
+        status: normalizedStatus,
+      },
+    });
+  } catch (err) {
+    console.error("Booking admin detail error:", err);
+    return c.json(
+      { status: "error", message: "Gagal memuat detail transaksi" },
+      500,
+    );
+  }
+});
 
 app.get("/", async (c) => {
   try {
@@ -390,14 +869,15 @@ app.post("/", async (c) => {
 app.post("/create-payment", async (c) => {
   try {
     const body = await c.req.json();
-    const { bookingId, paymentAvailableId, amount } = body;
+    const bookingId = Number(body.bookingId);
+    const amount = Number(body.amount);
 
-    if (!bookingId || !paymentAvailableId || !amount) {
+    if (!bookingId || Number.isNaN(bookingId)) {
       return c.json({ status: "error", message: "Data tidak lengkap" }, 400);
     }
 
     const booking = await prisma.booking.findUnique({
-      where: { id: Number(bookingId) },
+      where: { id: bookingId },
       include: {
         tour: { select: { title: true } },
         destination: { select: { name: true } },
@@ -412,42 +892,25 @@ app.post("/create-payment", async (c) => {
       );
     }
 
-    const check = await prisma.payment.findFirst({
-      where: {
-        bookingId: Number(bookingId),
-        status: "PENDING",
-        amount: Number(amount),
-      },
-    });
-
-    if (check) {
-      await prisma.payment.deleteMany({
-        where: {
-          bookingId: Number(bookingId),
-          status: "PENDING",
-          amount: Number(amount),
-        },
-      });
+    const grossAmount =
+      Number.isFinite(amount) && amount > 0
+        ? amount
+        : Number(booking.totalPrice);
+    if (!grossAmount || Number.isNaN(grossAmount)) {
+      return c.json(
+        { status: "error", message: "Nominal pembayaran tidak valid" },
+        400,
+      );
     }
 
-    const refCode = `PAY-${booking.id}-${Date.now()}`;
-
-    const payment = await prisma.payment.create({
-      data: {
-        bookingId: Number(bookingId),
-        paymentAvailableId: Number(paymentAvailableId),
-        amount: Number(amount),
-        status: "PENDING",
-        referenceCode: refCode,
-      },
-      include: { paymentAvailable: true },
-    });
+    const uniqueSuffix = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const bookingCode = `BK-${booking.id}-${uniqueSuffix}`;
+    const orderId = `ORD-${booking.id}-${uniqueSuffix}`;
 
     if (!MIDTRANS_ENABLED) {
       return c.json({
-        status: "success",
-        message: "Pembayaran dibuat (manual)",
-        data: { payment },
+        status: "error",
+        message: "Konfigurasi Midtrans belum tersedia",
       });
     }
 
@@ -468,8 +931,8 @@ app.post("/create-payment", async (c) => {
 
     const midtransPayload = {
       transaction_details: {
-        order_id: refCode,
-        gross_amount: Number(amount),
+        order_id: orderId,
+        gross_amount: grossAmount,
       },
       customer_details: {
         first_name: booking.firstName,
@@ -480,7 +943,7 @@ app.post("/create-payment", async (c) => {
       item_details: [
         {
           id: `booking-${booking.id}`,
-          price: Number(amount),
+          price: grossAmount,
           quantity: 1,
           name: itemName.slice(0, 50),
         },
@@ -516,11 +979,48 @@ app.post("/create-payment", async (c) => {
       redirect_url?: string;
     };
 
+    const existingPayment = await prisma.bookingPayment.findFirst({
+      where: { bookingId: booking.id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+
+    const paymentData = {
+      bookingCode,
+      orderId,
+      transactionId: null,
+      grossAmount,
+      currency: "IDR",
+      paymentType: null,
+      transactionStatus: "pending",
+      fraudStatus: null,
+      transactionTime: null,
+      settlementTime: null,
+      expiryTime: null,
+      snapToken: midtransData.token ?? null,
+      redirectUrl: midtransData.redirect_url ?? null,
+      midtransResponse: (midtransData as unknown as object) ?? {},
+    };
+
+    const bookingPayment = existingPayment
+      ? await prisma.bookingPayment.update({
+          where: { id: existingPayment.id },
+          data: paymentData,
+        })
+      : await prisma.bookingPayment.create({
+          data: {
+            bookingId: booking.id,
+            ...paymentData,
+          },
+        });
+
+    const normalizedPayment = normalizeBookingPaymentForClient(bookingPayment);
+
     return c.json({
       status: "success",
       message: "Pembayaran dibuat",
       data: {
-        payment,
+        payment: normalizedPayment,
         snapToken: midtransData.token ?? null,
         redirectUrl: midtransData.redirect_url ?? null,
       },
@@ -549,9 +1049,8 @@ app.post("/midtrans-status", async (c) => {
       return c.json({ status: "error", message: "paymentId wajib diisi" }, 400);
     }
 
-    const payment = await prisma.payment.findUnique({
+    const payment = await prisma.bookingPayment.findUnique({
       where: { id: paymentId },
-      include: { paymentAvailable: true },
     });
 
     if (!payment) {
@@ -561,22 +1060,17 @@ app.post("/midtrans-status", async (c) => {
       );
     }
 
-    const midStatus = await getMidtransStatus(payment.referenceCode);
-    const nextStatus = mapMidtransToPaymentStatus(
-      midStatus.transaction_status,
-      midStatus.fraud_status,
-    );
-
-    const updatedPayment = await persistPaymentStatus(
+    const midStatus = await getMidtransStatus(payment.orderId);
+    const updatedPayment = await persistBookingPaymentStatus(
       payment.id,
       payment.bookingId,
-      nextStatus,
+      midStatus,
     );
 
     return c.json({
       status: "success",
       message: "Status pembayaran diperbarui",
-      data: updatedPayment,
+      data: normalizeBookingPaymentForClient(updatedPayment),
     });
   } catch (err) {
     console.error("Midtrans status sync error:", err);
@@ -628,8 +1122,8 @@ app.post("/midtrans-notification", async (c) => {
       return c.json({ status: "error", message: "Signature tidak valid" }, 401);
     }
 
-    const payment = await prisma.payment.findFirst({
-      where: { referenceCode: orderId },
+    const payment = await prisma.bookingPayment.findFirst({
+      where: { orderId },
     });
 
     if (!payment) {
@@ -639,21 +1133,16 @@ app.post("/midtrans-notification", async (c) => {
       );
     }
 
-    const nextStatus = mapMidtransToPaymentStatus(
-      payload.transaction_status,
-      payload.fraud_status,
-    );
-
-    const updatedPayment = await persistPaymentStatus(
+    const updatedPayment = await persistBookingPaymentStatus(
       payment.id,
       payment.bookingId,
-      nextStatus,
+      payload,
     );
 
     return c.json({
       status: "success",
       message: "Notifikasi Midtrans diproses",
-      data: updatedPayment,
+      data: normalizeBookingPaymentForClient(updatedPayment),
     });
   } catch (err) {
     console.error("Midtrans notification error:", err);
@@ -665,41 +1154,14 @@ app.post("/midtrans-notification", async (c) => {
 });
 
 app.post("/confirm-payment", async (c) => {
-  try {
-    const body = await c.req.json();
-    const { paymentId, proofOfPayment } = body;
-
-    if (!paymentId || !proofOfPayment) {
-      return c.json({ status: "error", message: "Data tidak lengkap" }, 400);
-    }
-
-    const payment = await prisma.payment.update({
-      where: { id: Number(paymentId) },
-      data: {
-        proofOfPayment,
-        status: "PAID",
-        paidAt: new Date(),
-      },
-      include: { paymentAvailable: true },
-    });
-
-    await prisma.booking.update({
-      where: { id: payment.bookingId },
-      data: { status: "CONFIRMED" },
-    });
-
-    return c.json({
-      status: "success",
-      message: "Bukti pembayaran berhasil diupload",
-      data: payment,
-    });
-  } catch (err) {
-    console.error("Confirm payment error:", err);
-    return c.json(
-      { status: "error", message: "Gagal mengkonfirmasi pembayaran" },
-      500,
-    );
-  }
+  return c.json(
+    {
+      status: "error",
+      message:
+        "Metode pembayaran manual sudah dinonaktifkan. Gunakan Midtrans.",
+    },
+    410,
+  );
 });
 
 const handler = handle(app);

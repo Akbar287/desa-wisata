@@ -30,7 +30,7 @@ export const config = {
     "/admin-blog/:path*",
     "/admin-testimoni/:path*",
     "/admin-user/:path*",
-    "/admin-payment-available/:path*",
+    "/admin-transaksi/:path*",
     "/admin-profile/:path*",
     "/admin-team/:path*",
     "/admin-career/:path*",

@@ -151,26 +151,28 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {session ? (
-              <SidebarProvider
-                style={
-                  {
-                    "--sidebar-width": "calc(var(--spacing) * 72)",
-                    "--header-height": "calc(var(--spacing) * 12)",
-                  } as React.CSSProperties
-                }
-              >
-                <AppSidebar variant="inset" />
-                <SidebarInset>{children}</SidebarInset>
-              </SidebarProvider>
-            ) : (
-              <>
-                <Navbar />
-                {children}
-                <Footer />
-                {/*<LeafChatbot />*/}
-              </>
-            )}
+            <SidebarProvider
+              style={
+                {
+                  "--sidebar-width": "calc(var(--spacing) * 72)",
+                  "--header-height": "calc(var(--spacing) * 12)",
+                } as React.CSSProperties
+              }
+            >
+              {session ? (
+                <>
+                  <AppSidebar variant="inset" />
+                  <SidebarInset>{children}</SidebarInset>
+                </>
+              ) : (
+                <div className="flex w-full flex-col">
+                  <Navbar />
+                  {children}
+                  <Footer />
+                  {/*<LeafChatbot />*/}
+                </div>
+              )}
+            </SidebarProvider>
             <Toaster
               position="bottom-center"
               toastOptions={{

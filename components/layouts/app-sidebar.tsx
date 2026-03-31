@@ -33,6 +33,7 @@ import {
   PieChart,
   PlaySquare,
   Quote,
+  RotateCcw,
   User,
   UserRoundSearch,
   Users,
@@ -153,6 +154,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               title: "Transaksi",
               url: "/admin-transaksi",
               icon: Banknote,
+            },
+            {
+              title: "Refund",
+              url: "/admin-refund",
+              icon: RotateCcw,
             },
           ],
           documents: [

@@ -50,6 +50,14 @@ enum BookingStatus {
   COMPLETED
 }
 
+enum RefundStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PAID
+  CANCELLED
+}
+
 enum InquiryStatus {
   NEW
   IN_PROGRESS
@@ -622,6 +630,7 @@ model Booking {
   destination  Destination?  @relation(fields: [destinationId], references: [id], onDelete: Cascade)
   wahana       Wahana?       @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
   bookingPayments     BookingPayment[]
+  refunds      Refund[]
   testimonials Testimonial[]
 
   @@map("bookings")
@@ -752,6 +761,7 @@ model BookingPayment {
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
   booking          Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  refund           Refund?
 
   @@map("booking_payments")
 }
@@ -879,4 +889,29 @@ model MapsTours {
     tour Tour  @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
     @@map("maps_tours")
+}
+
+model Refund {
+  id               Int          @id @default(autoincrement())
+  bookingId        Int          @map("booking_id")
+  bookingPaymentId Int          @unique @map("booking_payment_id")
+  bookingCode      String       @map("booking_code")
+  reason           String?      @db.Text
+  termsAccepted    Boolean      @default(false) @map("terms_accepted")
+  refundPercent    Int          @default(75) @map("refund_percent")
+  paidAmount       Decimal      @db.Decimal(12, 2) @map("paid_amount")
+  refundAmount     Decimal      @db.Decimal(12, 2) @map("refund_amount")
+  status           RefundStatus @default(REQUESTED)
+  requestedAt      DateTime     @default(now()) @map("requested_at")
+  processedAt      DateTime?    @map("processed_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  booking        Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingPayment BookingPayment @relation(fields: [bookingPaymentId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([bookingCode])
+  @@index([status])
+  @@map("refunds")
 }

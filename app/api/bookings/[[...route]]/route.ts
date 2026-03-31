@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { prisma } from "@/lib/prisma";
+import { sendBookingPaidEmailByPaymentId } from "@/lib/email/BookingPaidEmailService";
 
 type MidtransStatusPayload = {
   order_id?: string;
@@ -46,6 +47,9 @@ const MIDTRANS_ENABLED_PAYMENTS = (process.env.MIDTRANS_ENABLED_PAYMENTS ?? "")
   .split(",")
   .map((v) => v.trim())
   .filter(Boolean);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
 const toMidtransBasicAuth = () =>
   `Basic ${Buffer.from(`${MIDTRANS_SERVER_KEY}:`).toString("base64")}`;
@@ -190,6 +194,17 @@ async function persistBookingPaymentStatus(
   bookingId: number,
   payload: MidtransStatusPayload,
 ) {
+  const existingPayment = await prisma.bookingPayment.findUnique({
+    where: { id: bookingPaymentId },
+    select: { midtransResponse: true },
+  });
+  const existingAppMeta =
+    existingPayment &&
+    isRecord(existingPayment.midtransResponse) &&
+    isRecord(existingPayment.midtransResponse.__appMeta)
+      ? existingPayment.midtransResponse.__appMeta
+      : {};
+
   const updatedBookingPayment = await prisma.bookingPayment.update({
     where: { id: bookingPaymentId },
     data: {
@@ -204,7 +219,10 @@ async function persistBookingPaymentStatus(
         ? Number(payload.gross_amount)
         : undefined,
       currency: payload.currency ?? "IDR",
-      midtransResponse: payload as unknown as object,
+      midtransResponse: {
+        ...(payload as unknown as object),
+        __appMeta: existingAppMeta,
+      },
     },
   });
 
@@ -233,6 +251,14 @@ async function persistBookingPaymentStatus(
         where: { id: bookingId },
         data: { status: "PENDING" },
       });
+    }
+  }
+
+  if (paymentStatus === "PAID") {
+    try {
+      await sendBookingPaidEmailByPaymentId(updatedBookingPayment.id);
+    } catch (mailErr) {
+      console.error("Booking paid email send error:", mailErr);
     }
   }
 

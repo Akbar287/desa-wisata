@@ -69,6 +69,7 @@ const STATUS_OPTIONS: Array<{
   { value: "PAID", label: "Lunas" },
   { value: "CANCELLED", label: "Batal" },
   { value: "COMPLETED", label: "Selesai" },
+  { value: "REFUND", label: "Refund" },
 ];
 
 const ENTITY_TYPE_OPTIONS: Array<{
@@ -397,7 +398,7 @@ export default function AdminTransaksiComponents() {
               </div>
 
               <div className="space-y-1">
-                <Label>Status Midtrans</Label>
+                <Label>Status</Label>
                 <Select
                   value={status}
                   onValueChange={(value) => {

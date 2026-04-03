@@ -33,6 +33,8 @@ function normalizeRefund(refund: {
   bookingPaymentId: number;
   bookingCode: string;
   reason: string | null;
+  namaBank: string | null;
+  nomorRekening: string | null;
   termsAccepted: boolean;
   refundPercent: number;
   paidAmount: unknown;
@@ -49,6 +51,8 @@ function normalizeRefund(refund: {
     bookingPaymentId: refund.bookingPaymentId,
     bookingCode: refund.bookingCode,
     reason: refund.reason,
+    namaBank: refund.namaBank,
+    nomorRekening: refund.nomorRekening,
     termsAccepted: refund.termsAccepted,
     refundPercent: refund.refundPercent,
     paidAmount: Number(refund.paidAmount ?? 0),
@@ -236,6 +240,8 @@ app.get("/admin/:id", async (c) => {
         refundAmount: Number(refund.refundAmount ?? 0),
         refundPercent: refund.refundPercent,
         status: refund.status,
+        namaBank: refund.namaBank,
+        nomorRekening: refund.nomorRekening,
         termsAccepted: refund.termsAccepted,
         reason: refund.reason,
         requestedAt: refund.requestedAt,
@@ -390,6 +396,8 @@ app.put("/admin/:id", async (c) => {
         refundAmount: Number(updated.refundAmount ?? 0),
         refundPercent: updated.refundPercent,
         status: updated.status,
+        namaBank: updated.namaBank,
+        nomorRekening: updated.nomorRekening,
         termsAccepted: updated.termsAccepted,
         reason: updated.reason,
         requestedAt: updated.requestedAt,
@@ -503,6 +511,10 @@ app.post("/", async (c) => {
       typeof body.reason === "string" && body.reason.trim().length > 0
         ? body.reason.trim()
         : null;
+    const namaBank =
+      typeof body.namaBank === "string" ? body.namaBank.trim() : "";
+    const nomorRekening =
+      typeof body.nomorRekening === "string" ? body.nomorRekening.trim() : "";
     const termsAccepted = Boolean(body.termsAccepted);
 
     if (!bookingCode) {
@@ -518,6 +530,20 @@ app.post("/", async (c) => {
           status: "error",
           message: "Anda wajib menyetujui syarat dan ketentuan refund.",
         },
+        400,
+      );
+    }
+
+    if (!namaBank) {
+      return c.json(
+        { status: "error", message: "Nama bank wajib diisi." },
+        400,
+      );
+    }
+
+    if (!nomorRekening) {
+      return c.json(
+        { status: "error", message: "Nomor rekening wajib diisi." },
         400,
       );
     }
@@ -585,6 +611,8 @@ app.post("/", async (c) => {
         bookingPaymentId: bookingPayment.id,
         bookingCode,
         reason,
+        namaBank,
+        nomorRekening,
         termsAccepted: true,
         refundPercent: REFUND_PERCENTAGE,
         paidAmount,

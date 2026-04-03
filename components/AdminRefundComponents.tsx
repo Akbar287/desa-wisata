@@ -86,7 +86,6 @@ export default function AdminRefundComponents() {
   const [detailItem, setDetailItem] = useState<AdminRefundDetailItem | null>(
     null,
   );
-  const [statusForm, setStatusForm] = useState<RefundStatus>("REQUESTED");
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const rowOffset = pagination ? (pagination.page - 1) * pagination.limit : 0;
@@ -145,7 +144,6 @@ export default function AdminRefundComponents() {
       const json = await getAdminRefundDetail(id);
       if (json.status === "success" && json.data) {
         setDetailItem(json.data);
-        setStatusForm(json.data.status);
       } else {
         toast.error(json.message || "Gagal memuat detail refund.");
         setDetailOpen(false);
@@ -158,13 +156,14 @@ export default function AdminRefundComponents() {
     }
   };
 
-  const handleUpdateStatus = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateStatus = async (nextStatus: RefundStatus) => {
     if (!detailItem) return;
+    if (detailItem.status === nextStatus) return;
+
     setUpdatingStatus(true);
     try {
       const json = await updateAdminRefundStatus(detailItem.id, {
-        status: statusForm,
+        status: nextStatus,
       });
       if (json.status === "success" && json.data) {
         setDetailItem(json.data);
@@ -470,43 +469,69 @@ export default function AdminRefundComponents() {
                   </p>
                   <p className="text-sm">{detailItem.reason || "-"}</p>
                 </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Nama Bank
+                  </p>
+                  <p className="font-medium">{detailItem.namaBank || "-"}</p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Nomor Rekening
+                  </p>
+                  <p className="font-medium">
+                    {detailItem.nomorRekening || "-"}
+                  </p>
+                </div>
               </div>
 
-              <form
-                onSubmit={handleUpdateStatus}
-                className="space-y-3 border rounded-lg p-4"
-              >
+              <div className="space-y-3 border rounded-lg p-4">
                 <h4 className="text-sm font-semibold">
                   Form Konfirmasi Refund
                 </h4>
-                <div className="space-y-1">
-                  <Label>Status Refund</Label>
-                  <Select
-                    value={statusForm}
-                    onValueChange={(value) =>
-                      setStatusForm(value as RefundStatus)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {REFUND_STATUS_OPTIONS.filter(
-                        (option) => option.value !== "ALL",
-                      ).map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={updatingStatus}>
-                    {updatingStatus ? "Menyimpan..." : "Simpan Konfirmasi"}
-                  </Button>
-                </div>
-              </form>
+                {detailItem.status === "REQUESTED" ? (
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={updatingStatus}
+                      onClick={() => handleUpdateStatus("REJECTED")}
+                    >
+                      {updatingStatus ? "Menyimpan..." : "Ditolak"}
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={updatingStatus}
+                      onClick={() => handleUpdateStatus("APPROVED")}
+                    >
+                      {updatingStatus ? "Menyimpan..." : "Disetujui"}
+                    </Button>
+                  </div>
+                ) : detailItem.status === "APPROVED" ? (
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={updatingStatus}
+                      onClick={() => handleUpdateStatus("CANCELLED")}
+                    >
+                      {updatingStatus ? "Menyimpan..." : "Dibatalkan"}
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={updatingStatus}
+                      onClick={() => handleUpdateStatus("PAID")}
+                    >
+                      {updatingStatus ? "Menyimpan..." : "Sudah Dibayar"}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Refund sudah di status akhir (
+                    {STATUS_BADGES[detailItem.status].label}).
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>

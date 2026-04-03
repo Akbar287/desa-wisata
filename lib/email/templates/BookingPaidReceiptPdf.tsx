@@ -16,6 +16,7 @@ type BookingPaidReceiptPdfInput = {
   itemName: string;
   totalAmount: number;
   paidAt: Date | string | null;
+  refundUrl?: string;
 };
 
 const styles = StyleSheet.create({
@@ -88,6 +89,22 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     lineHeight: 1.5,
   },
+  refundWrap: {
+    marginTop: 12,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  refundLabel: {
+    fontSize: 9,
+    color: "#374151",
+    marginBottom: 2,
+    fontWeight: 700,
+  },
+  refundUrl: {
+    fontSize: 9,
+    color: "#1d4ed8",
+  },
 });
 
 function fmtCurrency(amount: number): string {
@@ -116,6 +133,7 @@ function BookingPaidReceiptPdfDocument({
   itemName,
   totalAmount,
   paidAt,
+  refundUrl,
 }: BookingPaidReceiptPdfInput) {
   return (
     <Document>
@@ -162,6 +180,12 @@ function BookingPaidReceiptPdfDocument({
           Dokumen ini dibuat otomatis oleh sistem. Simpan dokumen ini sebagai
           bukti pembayaran resmi Anda.
         </Text>
+        {!!refundUrl && (
+          <View style={styles.refundWrap}>
+            <Text style={styles.refundLabel}>Link Refund:</Text>
+            <Text style={styles.refundUrl}>{refundUrl}</Text>
+          </View>
+        )}
       </Page>
     </Document>
   );

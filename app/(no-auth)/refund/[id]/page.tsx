@@ -89,6 +89,8 @@ export default async function DestinationDetailPage({
               bookingPaymentId: booking.refund.bookingPaymentId,
               bookingCode: booking.refund.bookingCode,
               reason: booking.refund.reason,
+              namaBank: booking.refund.namaBank,
+              nomorRekening: booking.refund.nomorRekening,
               termsAccepted: booking.refund.termsAccepted,
               refundPercent: booking.refund.refundPercent,
               paidAmount: Number(booking.refund.paidAmount ?? 0),

@@ -358,6 +358,17 @@ app.get("/admin", async (c) => {
 
     const where: Record<string, unknown> = {};
     const andClauses: Array<Record<string, unknown>> = [];
+    const refundPaidClause = {
+      bookingPayments: {
+        some: {
+          refund: {
+            is: {
+              status: "PAID" as const,
+            },
+          },
+        },
+      },
+    };
 
     if (search) {
       andClauses.push({
@@ -395,7 +406,9 @@ app.get("/admin", async (c) => {
       });
     }
 
-    if (statusFilter === "PAID") {
+    if (statusFilter === "REFUND") {
+      andClauses.push(refundPaidClause);
+    } else if (statusFilter === "PAID") {
       andClauses.push({
         bookingPayments: {
           some: {
@@ -403,6 +416,7 @@ app.get("/admin", async (c) => {
           },
         },
       });
+      andClauses.push({ NOT: refundPaidClause });
     } else if (statusFilter === "PENDING") {
       andClauses.push({
         OR: [
@@ -416,6 +430,7 @@ app.get("/admin", async (c) => {
           },
         ],
       });
+      andClauses.push({ NOT: refundPaidClause });
     } else if (statusFilter === "CANCELLED") {
       andClauses.push({
         OR: [
@@ -429,8 +444,10 @@ app.get("/admin", async (c) => {
           { status: "CANCELLED" },
         ],
       });
+      andClauses.push({ NOT: refundPaidClause });
     } else if (statusFilter === "COMPLETED") {
       andClauses.push({ status: "COMPLETED" });
+      andClauses.push({ NOT: refundPaidClause });
     }
 
     if (andClauses.length === 1) {

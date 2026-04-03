@@ -27,6 +27,8 @@ export default function RefundComponents({
   initialData: RefundPageData;
 }) {
   const [data, setData] = useState<RefundPageData>(initialData);
+  const [namaBank, setNamaBank] = useState("");
+  const [nomorRekening, setNomorRekening] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -41,6 +43,16 @@ export default function RefundComponents({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!namaBank.trim()) {
+      toast.error("Nama bank wajib diisi.");
+      return;
+    }
+    if (!nomorRekening.trim()) {
+      toast.error("Nomor rekening wajib diisi.");
+      return;
+    }
+
     if (!termsAccepted) {
       toast.error("Anda wajib menyetujui syarat dan ketentuan refund.");
       return;
@@ -50,6 +62,8 @@ export default function RefundComponents({
     try {
       const json = await createRefundRequest({
         bookingCode: data.bookingCode,
+        namaBank: namaBank.trim(),
+        nomorRekening: nomorRekening.trim(),
         reason,
         termsAccepted,
       });
@@ -156,6 +170,12 @@ export default function RefundComponents({
           <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
             Nilai refund: {fmt(existingRefund.refundAmount)}
           </p>
+          <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+            Bank Tujuan: {existingRefund.namaBank || "-"}
+          </p>
+          <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+            Nomor Rekening: {existingRefund.nomorRekening || "-"}
+          </p>
           {existingRefund.reason ? (
             <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
               Alasan: {existingRefund.reason}
@@ -177,6 +197,28 @@ export default function RefundComponents({
           >
             Form Pengajuan Refund
           </h3>
+          <div>
+            <label className="text-sm font-medium block mb-2">
+              Nama bank tujuan
+            </label>
+            <input
+              value={namaBank}
+              onChange={(e) => setNamaBank(e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              placeholder="Contoh: BCA"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium block mb-2">
+              Nomor rekening tujuan
+            </label>
+            <input
+              value={nomorRekening}
+              onChange={(e) => setNomorRekening(e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              placeholder="Contoh: 1234567890"
+            />
+          </div>
           <div>
             <label className="text-sm font-medium block mb-2">
               Alasan refund (opsional)

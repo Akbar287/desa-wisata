@@ -906,6 +906,8 @@ model Refund {
   processedAt      DateTime?    @map("processed_at")
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
+  namaBank String?       @map("nama_bank")
+  nomorRekening String?       @map("nomor_rekening")
 
   booking        Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   bookingPayment BookingPayment @relation(fields: [bookingPaymentId], references: [id], onDelete: Cascade)

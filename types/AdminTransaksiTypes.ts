@@ -31,7 +31,10 @@ export type AdminTransaksiStatusDisplay =
   | "COMPLETED"
   | "REFUND";
 
-export type AdminTransaksiStatusFilter = "ALL" | AdminTransaksiStatus;
+export type AdminTransaksiStatusFilter =
+  | "ALL"
+  | AdminTransaksiStatus
+  | "REFUND";
 
 export interface AdminTransaksiListParams {
   page: number;

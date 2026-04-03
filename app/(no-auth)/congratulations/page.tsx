@@ -124,6 +124,7 @@ export default async function page({
       amount: Number(payment.grossAmount ?? 0),
       status: mapStatus(payment.transactionStatus, payment.fraudStatus),
       referenceCode: payment.orderId,
+      bookingCode: payment.bookingCode,
       proofOfPayment: null,
       paidAt: toIso(payment.settlementTime),
       createdAt: toIso(payment.createdAt),

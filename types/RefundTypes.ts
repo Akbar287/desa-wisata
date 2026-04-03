@@ -13,6 +13,8 @@ export interface RefundItem {
   bookingPaymentId: number;
   bookingCode: string;
   reason: string | null;
+  namaBank: string | null;
+  nomorRekening: string | null;
   termsAccepted: boolean;
   refundPercent: number;
   paidAmount: number;
@@ -50,6 +52,8 @@ export interface RefundApiResponse<T = unknown> {
 
 export interface CreateRefundPayload {
   bookingCode: string;
+  namaBank: string;
+  nomorRekening: string;
   reason?: string;
   termsAccepted: boolean;
 }
@@ -80,6 +84,8 @@ export interface AdminRefundListItem {
 export interface AdminRefundDetailItem extends AdminRefundListItem {
   orderId: string;
   bookingPaymentId: number;
+  namaBank: string | null;
+  nomorRekening: string | null;
   termsAccepted: boolean;
   createdAt: string;
   updatedAt: string;

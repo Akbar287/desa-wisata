@@ -9,6 +9,15 @@ import {
 import * as yup from "yup";
 import { fmt } from "@/lib/utils";
 
+type BookingLookupItem = {
+  id: number;
+  title: string;
+  duration: string;
+  price: number;
+  priceWeekday?: number;
+  priceWeekend?: number;
+};
+
 export default function BookingComponents({
   nationalities,
   findUsOptions,
@@ -22,10 +31,7 @@ export default function BookingComponents({
   nationalities: string[];
   findUsOptions: string[];
   phoneCodes: { code: string; flag: string; country: string }[];
-  tourLookup: Record<
-    string,
-    { id: number; title: string; duration: string; price: number }
-  >;
+  tourLookup: Record<string, BookingLookupItem>;
   steps: { num: number; label: string; icon: string }[];
   bookingType?: string;
   dailyQuota?: number;
@@ -467,17 +473,19 @@ function ConfirmModal({
   tour,
   startDate,
   endDate,
+  pricePerPax,
   onConfirm,
   onCancel,
 }: {
   data: BookingFormData;
-  tour: { title: string; duration: string; price: number };
+  tour: BookingLookupItem;
   startDate: string;
   endDate: string;
+  pricePerPax: number;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const totalPrice = tour.price * (data.adults + (data.children ?? 0));
+  const totalPrice = pricePerPax * (data.adults + (data.children ?? 0));
   return (
     <div
       onClick={onCancel}
@@ -584,6 +592,7 @@ function ConfirmModal({
                 l: "Dewasa / Anak",
                 v: `${data.adults} dewasa, ${data.children ?? 0} anak`,
               },
+              { l: "Harga / pax", v: fmt(pricePerPax) },
               { l: "Estimasi Total", v: fmt(totalPrice) },
             ].map((r) => (
               <div
@@ -785,10 +794,7 @@ function BookingContent({
   nationalities: string[];
   findUsOptions: string[];
   phoneCodes: { code: string; flag: string; country: string }[];
-  tourLookup: Record<
-    string,
-    { id: number; title: string; duration: string; price: number }
-  >;
+  tourLookup: Record<string, BookingLookupItem>;
   steps: { num: number; label: string; icon: string }[];
   bookingType: string;
   dailyQuota: number;
@@ -1183,7 +1189,7 @@ function BookingForm({
   dailyQuota,
   bookingCounts,
 }: {
-  tour: { id: number; title: string; duration: string; price: number };
+  tour: BookingLookupItem;
   startDate: string;
   endDate: string;
   nationalities: string[];
@@ -1247,9 +1253,32 @@ function BookingForm({
     });
   }, []);
 
+  const pricePerPax = useMemo(() => {
+    const supportsWeekdayWeekendPricing =
+      bookingType === "destinasi" || bookingType === "wahana";
+    if (!supportsWeekdayWeekendPricing || !selectedDate) {
+      return tour.price;
+    }
+
+    const [year, month, day] = selectedDate.split("-").map(Number);
+    if (!year || !month || !day) return tour.price;
+
+    const dayOfWeek = new Date(year, month - 1, day).getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    if (isWeekend) return tour.priceWeekend ?? tour.price;
+    return tour.priceWeekday ?? tour.price;
+  }, [
+    bookingType,
+    selectedDate,
+    tour.price,
+    tour.priceWeekday,
+    tour.priceWeekend,
+  ]);
+
   const totalPrice = useMemo(
-    () => tour.price * (form.adults + form.children),
-    [tour.price, form.adults, form.children],
+    () => pricePerPax * (form.adults + form.children),
+    [pricePerPax, form.adults, form.children],
   );
 
   // Years for DOB
@@ -2289,7 +2318,7 @@ function BookingForm({
                     : []),
                   { l: "Dewasa", v: `${form.adults} orang` },
                   { l: "Anak", v: `${form.children} orang` },
-                  { l: "Harga / pax", v: fmt(tour.price) },
+                  { l: "Harga / pax", v: fmt(pricePerPax) },
                 ].map((r) => (
                   <div
                     key={r.l}
@@ -2369,6 +2398,7 @@ function BookingForm({
           tour={tour}
           startDate={effectiveStartDate}
           endDate={effectiveEndDate}
+          pricePerPax={pricePerPax}
           onCancel={() => setShowConfirm(false)}
           onConfirm={handleConfirm}
         />

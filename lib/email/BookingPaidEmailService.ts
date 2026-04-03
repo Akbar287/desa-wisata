@@ -1,11 +1,7 @@
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
-import {
-  buildBookingPaidEmailTemplate,
-} from "@/lib/email/templates/BookingPaidTemplate";
-import {
-  renderBookingPaidReceiptPdf,
-} from "@/lib/email/templates/BookingPaidReceiptPdf";
+import { buildBookingPaidEmailTemplate } from "@/lib/email/templates/BookingPaidTemplate";
+import { renderBookingPaidReceiptPdf } from "@/lib/email/templates/BookingPaidReceiptPdf";
 import type { SendBookingPaidEmailResult } from "@/types/EmailTypes";
 
 const DEFAULT_REFUND_BASE_URL = "http://desa-wisata-ui.vercel.app/refund";
@@ -29,11 +25,7 @@ function getTransportConfig() {
   const host = (process.env.SMTP_HOST ?? process.env.MAIL_HOST ?? "").trim();
   const user = (process.env.SMTP_USER ?? process.env.MAIL_USER ?? "").trim();
   const pass = (process.env.SMTP_PASS ?? process.env.MAIL_PASS ?? "").trim();
-  const from = (
-    process.env.SMTP_FROM ??
-    process.env.MAIL_FROM ??
-    user
-  ).trim();
+  const from = (process.env.SMTP_FROM ?? process.env.MAIL_FROM ?? user).trim();
   const portValue = (
     process.env.SMTP_PORT ??
     process.env.MAIL_PORT ??
@@ -132,7 +124,8 @@ async function sendBookingPaidEmailByPayment(
     };
   }
 
-  const customerName = `${payment.booking.firstName} ${payment.booking.lastName}`.trim();
+  const customerName =
+    `${payment.booking.firstName} ${payment.booking.lastName}`.trim();
   const itemName =
     payment.booking.tour?.title ??
     payment.booking.destination?.name ??
@@ -160,6 +153,7 @@ async function sendBookingPaidEmailByPayment(
     itemName,
     totalAmount: amount,
     paidAt,
+    refundUrl,
   });
 
   const config = getTransportConfig();

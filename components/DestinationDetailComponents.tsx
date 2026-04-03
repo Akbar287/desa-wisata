@@ -6,8 +6,6 @@ import Link from "next/link";
 import { fmt } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleMap, InfoWindowF, useJsApiLoader } from "@react-google-maps/api";
-import { Button } from "./ui/button";
-import { toast } from "sonner";
 
 /* ─── Types ───────────────────────────────────────────── */
 
@@ -1491,20 +1489,12 @@ export default function DestinationDetailComponents({
           </div>
         </div>
         <div className="flex gap-2">
-          <button
-            className="btn-outline py-2.5 px-4 text-[13px]"
-            onClick={() => scrollTo("pricing")}
+          <Link
+            href={`/booking?id=${d.id}&jenis=destinasi`}
+            className="btn-primary w-full justify-center py-3.5 px-6 mb-3 text-sm no-underline flex items-center gap-2"
           >
-            Harga
-          </button>
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(`Halo, saya ingin bertanya tentang destinasi "${d.name}"`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary py-2.5 px-5 text-[13px] no-underline"
-          >
-            Hubungi
-          </a>
+            Booking
+          </Link>
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import {
   isMidtransPaymentPaid,
   isRefundEligibleBeforeStartDate,
 } from "@/lib/refund/refund-utils";
+import { sendRefundStatusEmailByRefundId } from "@/lib/email/RefundStatusEmailService";
 
 const app = new Hono().basePath("/api/refunds");
 
@@ -352,6 +353,24 @@ app.put("/admin/:id", async (c) => {
         where: { id: updated.bookingId },
         data: { status: "CANCELLED" },
       });
+    }
+
+    const shouldSendStatusEmail =
+      nextStatus !== existing.status &&
+      (nextStatus === "APPROVED" ||
+        nextStatus === "REJECTED" ||
+        nextStatus === "PAID" ||
+        nextStatus === "CANCELLED");
+
+    if (shouldSendStatusEmail) {
+      try {
+        await sendRefundStatusEmailByRefundId(updated.id);
+      } catch (emailError) {
+        console.error(
+          "Refund status email error:",
+          emailError instanceof Error ? emailError.message : emailError,
+        );
+      }
     }
 
     return c.json({

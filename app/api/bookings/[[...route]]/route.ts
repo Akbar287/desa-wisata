@@ -268,7 +268,15 @@ async function persistBookingPaymentStatus(
 function normalizeAdminOrderStatus(
   bookingStatus: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED",
   latestPaymentStatus?: "PENDING" | "PAID" | "FAILED" | "CANCELLED" | null,
-): "PENDING" | "PAID" | "CANCELLED" | "COMPLETED" {
+  latestRefundStatus?:
+    | "REQUESTED"
+    | "APPROVED"
+    | "REJECTED"
+    | "PAID"
+    | "CANCELLED"
+    | null,
+): "PENDING" | "PAID" | "CANCELLED" | "COMPLETED" | "REFUND" {
+  if (latestRefundStatus === "PAID") return "REFUND";
   if (bookingStatus === "COMPLETED") return "COMPLETED";
   if (latestPaymentStatus === "PAID") return "PAID";
   if (latestPaymentStatus === "FAILED" || latestPaymentStatus === "CANCELLED") {
@@ -467,6 +475,11 @@ app.get("/admin", async (c) => {
               orderId: true,
               createdAt: true,
               settlementTime: true,
+              refund: {
+                select: {
+                  status: true,
+                },
+              },
             },
           },
         },
@@ -482,6 +495,7 @@ app.get("/admin", async (c) => {
             latestPayment.fraudStatus,
           )
         : null;
+      const latestRefundStatus = latestPayment?.refund?.status ?? null;
       const itemType = row.tour
         ? "TOUR"
         : row.destination
@@ -497,6 +511,7 @@ app.get("/admin", async (c) => {
       const normalizedStatus = normalizeAdminOrderStatus(
         row.status,
         latestPaymentStatus,
+        latestRefundStatus,
       );
 
       return {
@@ -515,6 +530,7 @@ app.get("/admin", async (c) => {
         totalPrice: row.totalPrice,
         bookingStatus: row.status,
         latestPaymentStatus,
+        refundStatus: latestRefundStatus,
         latestPaymentRefCode: latestPayment?.orderId ?? null,
         latestPaymentAt: latestPayment?.createdAt ?? null,
         latestPaidAt: latestPayment?.settlementTime ?? null,
@@ -575,6 +591,11 @@ app.get("/admin/:id", async (c) => {
             updatedAt: true,
             paymentType: true,
             midtransResponse: true,
+            refund: {
+              select: {
+                status: true,
+              },
+            },
           },
         },
       },
@@ -594,9 +615,11 @@ app.get("/admin/:id", async (c) => {
           latestPayment.fraudStatus,
         )
       : null;
+    const latestRefundStatus = latestPayment?.refund?.status ?? null;
     const normalizedStatus = normalizeAdminOrderStatus(
       booking.status,
       latestPaymentStatus,
+      latestRefundStatus,
     );
     const itemType = booking.tour
       ? "TOUR"
@@ -623,6 +646,7 @@ app.get("/admin/:id", async (c) => {
         itemName,
         totalPeople: booking.adults + booking.children,
         status: normalizedStatus,
+        refundStatus: latestRefundStatus,
       },
     });
   } catch (err) {

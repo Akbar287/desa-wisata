@@ -12,7 +12,7 @@ import type {
   AdminTransaksiEntityType,
   AdminTransaksiFilterOptionsResponse,
   AdminTransaksiListItem,
-  AdminTransaksiStatus,
+  AdminTransaksiStatusDisplay,
   AdminTransaksiStatusFilter,
 } from "@/types/AdminTransaksiTypes";
 import {
@@ -71,16 +71,18 @@ const STATUS_OPTIONS: Array<{
   { value: "COMPLETED", label: "Selesai" },
 ];
 
-const ENTITY_TYPE_OPTIONS: Array<{ value: AdminTransaksiEntityType; label: string }> =
-  [
-    { value: "all", label: "Semua Jenis" },
-    { value: "tour", label: "Tours" },
-    { value: "destination", label: "Destinasi" },
-    { value: "wahana", label: "Wahana" },
-  ];
+const ENTITY_TYPE_OPTIONS: Array<{
+  value: AdminTransaksiEntityType;
+  label: string;
+}> = [
+  { value: "all", label: "Semua Jenis" },
+  { value: "tour", label: "Tours" },
+  { value: "destination", label: "Destinasi" },
+  { value: "wahana", label: "Wahana" },
+];
 
 const STATUS_BADGE: Record<
-  AdminTransaksiStatus,
+  AdminTransaksiStatusDisplay,
   { label: string; className: string }
 > = {
   PENDING: {
@@ -98,6 +100,10 @@ const STATUS_BADGE: Record<
   COMPLETED: {
     label: "Selesai",
     className: "bg-blue-100 text-blue-700",
+  },
+  REFUND: {
+    label: "Refund",
+    className: "bg-violet-100 text-violet-700",
   },
 };
 
@@ -308,7 +314,11 @@ export default function AdminTransaksiComponents() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="sm" onClick={handleResetFilters}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFilters}
+                >
                   <IconX className="mr-1 size-4" />
                   Reset Filter
                 </Button>
@@ -345,7 +355,10 @@ export default function AdminTransaksiComponents() {
 
               <div className="space-y-1">
                 <Label>Jenis Produk</Label>
-                <Select value={entityType} onValueChange={handleEntityTypeChange}>
+                <Select
+                  value={entityType}
+                  onValueChange={handleEntityTypeChange}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -451,7 +464,9 @@ export default function AdminTransaksiComponents() {
                           <TableCell className="font-medium">
                             {rowOffset + index + 1}
                           </TableCell>
-                          <TableCell className="font-medium">#{item.id}</TableCell>
+                          <TableCell className="font-medium">
+                            #{item.id}
+                          </TableCell>
                           <TableCell>
                             <div className="font-medium">{item.name}</div>
                             <div className="text-xs text-muted-foreground">
@@ -465,7 +480,10 @@ export default function AdminTransaksiComponents() {
                             </div>
                           </TableCell>
                           <TableCell className="text-sm">
-                            {formatVisitDateRange(item.visitDate, item.visitEndDate)}
+                            {formatVisitDateRange(
+                              item.visitDate,
+                              item.visitEndDate,
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             {item.totalPeople}
@@ -510,7 +528,9 @@ export default function AdminTransaksiComponents() {
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious
-                          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                          onClick={() =>
+                            setPage((prev) => Math.max(1, prev - 1))
+                          }
                           aria-disabled={!pagination.hasPrevPage}
                           className={
                             !pagination.hasPrevPage
@@ -519,22 +539,23 @@ export default function AdminTransaksiComponents() {
                           }
                         />
                       </PaginationItem>
-                      {getPageNumbers(page, pagination.totalPages).map((p, idx) =>
-                        p === "e" ? (
-                          <PaginationItem key={`ellipsis-${idx}`}>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        ) : (
-                          <PaginationItem key={p}>
-                            <PaginationLink
-                              isActive={p === page}
-                              onClick={() => setPage(p)}
-                              className="cursor-pointer"
-                            >
-                              {p}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ),
+                      {getPageNumbers(page, pagination.totalPages).map(
+                        (p, idx) =>
+                          p === "e" ? (
+                            <PaginationItem key={`ellipsis-${idx}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={p}>
+                              <PaginationLink
+                                isActive={p === page}
+                                onClick={() => setPage(p)}
+                                className="cursor-pointer"
+                              >
+                                {p}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ),
                       )}
                       <PaginationItem>
                         <PaginationNext
@@ -626,7 +647,10 @@ export default function AdminTransaksiComponents() {
                     Tanggal Kunjungan
                   </p>
                   <p className="font-medium">
-                    {formatVisitDateRange(detailItem.startDate, detailItem.endDate)}
+                    {formatVisitDateRange(
+                      detailItem.startDate,
+                      detailItem.endDate,
+                    )}
                   </p>
                 </div>
                 <div className="rounded-lg border p-3">
@@ -634,12 +658,14 @@ export default function AdminTransaksiComponents() {
                     Jumlah Orang
                   </p>
                   <p className="font-medium">
-                    {detailItem.totalPeople} (
-                    {detailItem.adults} dewasa, {detailItem.children} anak)
+                    {detailItem.totalPeople} ({detailItem.adults} dewasa,{" "}
+                    {detailItem.children} anak)
                   </p>
                 </div>
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground mb-1">Total Harga</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Total Harga
+                  </p>
                   <p className="font-medium">{fmt(detailItem.totalPrice)}</p>
                 </div>
                 <div className="rounded-lg border p-3">

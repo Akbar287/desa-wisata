@@ -1,6 +1,10 @@
 import type { PaginationMeta } from "@/types/PaginationData";
 
-export type AdminTransaksiEntityType = "all" | "tour" | "destination" | "wahana";
+export type AdminTransaksiEntityType =
+  | "all"
+  | "tour"
+  | "destination"
+  | "wahana";
 
 export type AdminTransaksiItemType =
   | "TOUR"
@@ -8,7 +12,24 @@ export type AdminTransaksiItemType =
   | "WAHANA"
   | "UNKNOWN";
 
-export type AdminTransaksiStatus = "PENDING" | "PAID" | "CANCELLED" | "COMPLETED";
+export type AdminTransaksiStatus =
+  | "PENDING"
+  | "PAID"
+  | "CANCELLED"
+  | "COMPLETED";
+export type AdminTransaksiRefundStatus =
+  | "REQUESTED"
+  | "APPROVED"
+  | "REJECTED"
+  | "PAID"
+  | "CANCELLED";
+
+export type AdminTransaksiStatusDisplay =
+  | "PENDING"
+  | "PAID"
+  | "CANCELLED"
+  | "COMPLETED"
+  | "REFUND";
 
 export type AdminTransaksiStatusFilter = "ALL" | AdminTransaksiStatus;
 
@@ -50,10 +71,11 @@ export interface AdminTransaksiListItem {
   totalPrice: number;
   bookingStatus: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   latestPaymentStatus: "PENDING" | "PAID" | "FAILED" | "CANCELLED" | null;
+  refundStatus: AdminTransaksiRefundStatus | null;
   latestPaymentRefCode: string | null;
   latestPaymentAt: string | null;
   latestPaidAt: string | null;
-  status: AdminTransaksiStatus;
+  status: AdminTransaksiStatusDisplay;
   createdAt: string;
 }
 
@@ -95,7 +117,8 @@ export interface AdminTransaksiDetailItem {
   endDate: string;
   findUs: string;
   comments: string | null;
-  status: AdminTransaksiStatus;
+  status: AdminTransaksiStatusDisplay;
+  refundStatus: AdminTransaksiRefundStatus | null;
   totalPrice: number;
   createdAt: string;
   updatedAt: string;

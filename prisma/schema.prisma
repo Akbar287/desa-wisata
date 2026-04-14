@@ -410,18 +410,35 @@ model PrivatePackageInclusion {
 }
 
 model Testimonial {
-  id        Int      @id @default(autoincrement())
-  bookingId Int
-  name      String
-  avatar    String?
-  role      String
-  text      String   @db.Text
-  rating    Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  id          Int                @id @default(autoincrement())
+  isPublished Boolean            @default(false)
+  bookingId   Int
+  name        String
+  avatar      String?
+  role        String
+  text        String             @db.Text
+  rating      Float
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  Booking     Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  images      TestimonialImage[]
 
   @@map("testimonials")
+}
+
+model TestimonialImage {
+  id            Int         @id @default(autoincrement())
+  testimonialId Int         @map("testimonial_id")
+  fileName      String      @map("file_name")
+  mimeType      String      @map("mime_type")
+  size          Int
+  image         Bytes
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  testimonial   Testimonial @relation(fields: [testimonialId], references: [id], onDelete: Cascade)
+
+  @@index([testimonialId])
+  @@map("testimonial_images")
 }
 
 model BlogPost {

@@ -13,7 +13,7 @@ import { prisma } from "@/lib/prisma";
 import type { DashboardStats } from "@/components/layouts/section-cards";
 import type {
   MonthlyRevenue,
-  PopularTour,
+  PopularItem,
   BookingStatusData,
 } from "@/components/layouts/chart-area-interactive";
 import WahanaSection from "@/components/landing-page/WahanaSection";
@@ -42,6 +42,8 @@ async function getDashboardData() {
     thisMonthBookings,
     lastMonthBookings,
     bookingsByTour,
+    bookingsByDestination,
+    bookingsByWahana,
     bookingStatusCounts,
   ] = await Promise.all([
     prisma.tour.count(),
@@ -61,6 +63,21 @@ async function getDashboardData() {
     prisma.booking.groupBy({
       by: ["tourId"],
       _count: { id: true },
+      _sum: { adults: true, children: true, totalPrice: true },
+      orderBy: { _count: { id: "desc" } },
+      take: 5,
+    }),
+    prisma.booking.groupBy({
+      by: ["destinationId"],
+      _count: { id: true },
+      _sum: { adults: true, children: true, totalPrice: true },
+      orderBy: { _count: { id: "desc" } },
+      take: 5,
+    }),
+    prisma.booking.groupBy({
+      by: ["wahanaId"],
+      _count: { id: true },
+      _sum: { adults: true, children: true, totalPrice: true },
       orderBy: { _count: { id: "desc" } },
       take: 5,
     }),
@@ -122,20 +139,73 @@ async function getDashboardData() {
   // Popular tours (top 5)
   const validBookingsByTour = bookingsByTour.filter((b) => b.tourId !== null);
   const tourIds = validBookingsByTour.map((b) => b.tourId as number);
-  const tours =
+  const validBookingsByDestination = bookingsByDestination.filter(
+    (b) => b.destinationId !== null,
+  );
+  const destinationIds = validBookingsByDestination.map(
+    (b) => b.destinationId as number,
+  );
+
+  const validBookingsByWahana = bookingsByWahana.filter(
+    (b) => b.wahanaId !== null,
+  );
+  const wahanaIds = validBookingsByWahana.map((b) => b.wahanaId as number);
+
+  const [tours, destinations, wahanas] = await Promise.all([
     tourIds.length > 0
-      ? await prisma.tour.findMany({
+      ? prisma.tour.findMany({
           where: { id: { in: tourIds } },
           select: { id: true, title: true },
         })
-      : [];
+      : Promise.resolve([]),
+    destinationIds.length > 0
+      ? prisma.destination.findMany({
+          where: { id: { in: destinationIds } },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    wahanaIds.length > 0
+      ? prisma.wahana.findMany({
+          where: { id: { in: wahanaIds } },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
   const tourMap = new Map(tours.map((t) => [t.id, t.title]));
-  const popularTours: PopularTour[] = validBookingsByTour.map((b) => ({
+  const popularTours: PopularItem[] = validBookingsByTour.map((b) => ({
     name:
       (tourMap.get(b.tourId!) ?? "Paket Wisata").length > 25
         ? (tourMap.get(b.tourId!) ?? "Paket Wisata").slice(0, 22) + "..."
         : (tourMap.get(b.tourId!) ?? "Paket Wisata"),
     bookings: b._count.id,
+    totalPax: Number(b._sum.adults ?? 0) + Number(b._sum.children ?? 0),
+    totalRevenue: Number(b._sum.totalPrice ?? 0),
+  }));
+
+  const destinationMap = new Map(destinations.map((d) => [d.id, d.name]));
+  const popularDestinations: PopularItem[] = validBookingsByDestination.map(
+    (b) => ({
+      name:
+        (destinationMap.get(b.destinationId!) ?? "Destinasi").length > 25
+          ? (destinationMap.get(b.destinationId!) ?? "Destinasi").slice(0, 22) +
+            "..."
+          : (destinationMap.get(b.destinationId!) ?? "Destinasi"),
+      bookings: b._count.id,
+      totalPax: Number(b._sum.adults ?? 0) + Number(b._sum.children ?? 0),
+      totalRevenue: Number(b._sum.totalPrice ?? 0),
+    }),
+  );
+
+  const wahanaMap = new Map(wahanas.map((w) => [w.id, w.name]));
+  const popularWahanas: PopularItem[] = validBookingsByWahana.map((b) => ({
+    name:
+      (wahanaMap.get(b.wahanaId!) ?? "Wahana").length > 25
+        ? (wahanaMap.get(b.wahanaId!) ?? "Wahana").slice(0, 22) + "..."
+        : (wahanaMap.get(b.wahanaId!) ?? "Wahana"),
+    bookings: b._count.id,
+    totalPax: Number(b._sum.adults ?? 0) + Number(b._sum.children ?? 0),
+    totalRevenue: Number(b._sum.totalPrice ?? 0),
   }));
 
   // Booking status distribution
@@ -166,15 +236,28 @@ async function getDashboardData() {
     bookingGrowth,
   };
 
-  return { stats, monthlyRevenue, popularTours, bookingStatus };
+  return {
+    stats,
+    monthlyRevenue,
+    popularTours,
+    popularDestinations,
+    popularWahanas,
+    bookingStatus,
+  };
 }
 
 export default async function Home() {
   const session = await getSession();
 
   if (session) {
-    const { stats, monthlyRevenue, popularTours, bookingStatus } =
-      await getDashboardData();
+    const {
+      stats,
+      monthlyRevenue,
+      popularTours,
+      popularDestinations,
+      popularWahanas,
+      bookingStatus,
+    } = await getDashboardData();
     return (
       <>
         <SiteHeader title="Dashboard — Desa Manud Jaya" />
@@ -186,6 +269,8 @@ export default async function Home() {
                 <ChartAreaInteractive
                   monthlyRevenue={monthlyRevenue}
                   popularTours={popularTours}
+                  popularDestinations={popularDestinations}
+                  popularWahanas={popularWahanas}
                   bookingStatus={bookingStatus}
                 />
               </div>
@@ -233,7 +318,8 @@ export default async function Home() {
       },
     }),
     prisma.testimonial.findMany({
-      take: 6,
+      where: { isPublished: true },
+      take: 5,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -455,7 +541,7 @@ export default async function Home() {
         <WhyWithUsSection reasons={landingPageWithUs} />
         <TravelGuideSection posts={blogPosts} />
         <GallerySection items={galleryPreview} />
-        {/*<TestimonialsSection testimonials={testimonials} />*/}
+        <TestimonialsSection testimonials={testimonials} />
       </NatureOverlay>
     </>
   );

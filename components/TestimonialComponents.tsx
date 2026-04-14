@@ -1,8 +1,24 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getPageNumbers } from '@/lib/utils';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from '@/components/ui/carousel';
 
 interface TestimonialItem {
     id: number;
@@ -12,6 +28,15 @@ interface TestimonialItem {
     text: string;
     rating: number;
     date: string;
+    createdAt: string;
+    entityType?: 'destination' | 'wahana' | 'tour' | null;
+    entityName?: string | null;
+    entityHref?: string | null;
+    images?: Array<{
+        id: number;
+        fileName: string;
+        url: string;
+    }>;
 }
 
 export default function TestimonialComponents({
@@ -24,6 +49,8 @@ export default function TestimonialComponents({
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRating, setFilterRating] = useState(0);
+    const [sortBy, setSortBy] = useState<'rating_desc' | 'rating_asc' | 'newest' | 'oldest'>('rating_desc');
+    const [activeTestimonial, setActiveTestimonial] = useState<TestimonialItem | null>(null);
 
     const fadeUp = {
         hidden: { opacity: 0, y: 28 },
@@ -36,21 +63,31 @@ export default function TestimonialComponents({
     };
 
     const filtered = useMemo(() => {
-        let items = testimonials;
+        let items = [...testimonials];
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             items = items.filter(
                 (t) =>
                     t.name.toLowerCase().includes(q) ||
                     t.text.toLowerCase().includes(q) ||
-                    t.role.toLowerCase().includes(q)
+                    t.role.toLowerCase().includes(q) ||
+                    (t.entityName || '').toLowerCase().includes(q)
             );
         }
         if (filterRating > 0) {
-            items = items.filter((t) => Math.round(t.rating) >= filterRating);
+            items = items.filter((t) => t.rating >= filterRating);
+        }
+        if (sortBy === 'rating_desc') {
+            items.sort((a, b) => b.rating - a.rating);
+        } else if (sortBy === 'rating_asc') {
+            items.sort((a, b) => a.rating - b.rating);
+        } else if (sortBy === 'newest') {
+            items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        } else {
+            items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         }
         return items;
-    }, [testimonials, searchQuery, filterRating]);
+    }, [testimonials, searchQuery, filterRating, sortBy]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
     const safePage = Math.min(currentPage, totalPages);
@@ -68,14 +105,35 @@ export default function TestimonialComponents({
     const totalReviews = testimonials.length;
     const fiveStarCount = testimonials.filter((t) => Math.round(t.rating) === 5).length;
 
+    function formatRatingNumber(value: number): string {
+        return Number.isFinite(value) ? value.toFixed(2) : '0.00';
+    }
+
     function StarDisplay({ rating, size = 14 }: { rating: number; size?: number }) {
         return (
             <span className="inline-flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((s) => (
-                    <svg key={s} width={size} height={size} viewBox="0 0 24 24" fill={s <= Math.round(rating) ? '#FBBF24' : '#4B5563'}>
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                ))}
+                {[1, 2, 3, 4, 5].map((s) => {
+                    const fill = Math.max(0, Math.min(1, rating - (s - 1)));
+                    return (
+                        <span
+                            key={s}
+                            className="relative inline-block overflow-hidden"
+                            style={{ width: size, height: size }}
+                        >
+                            <svg width={size} height={size} viewBox="0 0 24 24" fill="#111111">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <span
+                                className="absolute inset-0 overflow-hidden"
+                                style={{ width: `${fill * 100}%` }}
+                            >
+                                <svg width={size} height={size} viewBox="0 0 24 24" fill="#FBBF24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            </span>
+                        </span>
+                    );
+                })}
             </span>
         );
     }
@@ -159,7 +217,7 @@ export default function TestimonialComponents({
                     transition={{ duration: 0.5, delay: 0.4 }}
                 >
                     <div
-                        className="rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-3 shadow-lg"
+                        className="rounded-2xl p-4 flex flex-col lg:flex-row items-start lg:items-center gap-3 shadow-lg"
                         style={{
                             background: 'var(--color-white)',
                             border: '1px solid var(--color-border-subtle)',
@@ -186,7 +244,7 @@ export default function TestimonialComponents({
                         </div>
 
                         {/* Rating filter */}
-                        <div className="flex gap-1.5">
+                        <div className="flex gap-1.5 w-full lg:w-auto">
                             <button
                                 onClick={() => { setFilterRating(0); setCurrentPage(1); }}
                                 className={`px-3 py-2.5 rounded-xl font-sans text-xs font-semibold border-none cursor-pointer transition-all duration-300 ${filterRating === 0 ? 'text-white shadow-md' : ''}`}
@@ -214,6 +272,27 @@ export default function TestimonialComponents({
                                     +
                                 </button>
                             ))}
+                        </div>
+
+                        {/* Sort */}
+                        <div className="w-full lg:w-[220px]">
+                            <select
+                                value={sortBy}
+                                onChange={(e) => {
+                                    setSortBy(e.target.value as 'rating_desc' | 'rating_asc' | 'newest' | 'oldest');
+                                    setCurrentPage(1);
+                                }}
+                                className="w-full px-3 py-2.5 rounded-xl font-sans text-xs font-semibold border-none outline-none"
+                                style={{
+                                    background: 'var(--color-cream)',
+                                    color: 'var(--color-text)',
+                                }}
+                            >
+                                <option value="rating_desc">Urutkan: Rating Tertinggi</option>
+                                <option value="rating_asc">Urutkan: Rating Terendah</option>
+                                <option value="newest">Urutkan: Terbaru</option>
+                                <option value="oldest">Urutkan: Terlama</option>
+                            </select>
                         </div>
                     </div>
                 </motion.div>
@@ -266,14 +345,44 @@ export default function TestimonialComponents({
                                             boxShadow: 'var(--shadow-sm)',
                                             border: '1px solid var(--color-border-subtle)',
                                         }}
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setActiveTestimonial(t)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                setActiveTestimonial(t);
+                                            }
+                                        }}
                                     >
                                         {/* Rating */}
                                         <div className="flex items-center justify-between mb-4">
-                                            <StarDisplay rating={t.rating} />
+                                            <div className="flex items-center gap-1.5">
+                                                <StarDisplay rating={t.rating} />
+                                                <span className="font-sans text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+                                                    ({formatRatingNumber(t.rating)})
+                                                </span>
+                                            </div>
                                             <span className="font-sans text-[11px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
                                                 {t.date}
                                             </span>
                                         </div>
+
+                                        {t.entityName && (
+                                            <div className="mb-3">
+                                                <span
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                                                    style={{
+                                                        background: 'var(--color-cream)',
+                                                        color: 'var(--color-primary-dark)',
+                                                    }}
+                                                >
+                                                    {t.entityType === 'destination' ? 'Destinasi' : t.entityType === 'wahana' ? 'Wahana' : 'Paket Tour'}
+                                                    <span style={{ opacity: 0.6 }}>•</span>
+                                                    {t.entityName}
+                                                </span>
+                                            </div>
+                                        )}
 
                                         {/* Quote */}
                                         <div className="relative mb-5">
@@ -299,6 +408,8 @@ export default function TestimonialComponents({
                                                     alt={t.name}
                                                     fill
                                                     className="object-cover"
+                                                    sizes="40px"
+                                                    unoptimized
                                                 />
                                             </div>
                                             <div>
@@ -310,6 +421,27 @@ export default function TestimonialComponents({
                                                 </span>
                                             </div>
                                         </div>
+
+                                        {t.entityHref && (
+                                            <div className="mt-4">
+                                                <Link
+                                                    href={t.entityHref}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl font-sans text-xs font-bold no-underline transition-all duration-300 hover:scale-[1.02]"
+                                                    style={{
+                                                        background: 'linear-gradient(135deg, var(--color-primary), var(--color-accent))',
+                                                        color: 'white',
+                                                    }}
+                                                >
+                                                    {t.entityType === 'destination'
+                                                        ? 'Lihat Destinasi'
+                                                        : t.entityType === 'wahana'
+                                                            ? 'Lihat Wahana'
+                                                            : 'Lihat Paket Tour'}
+                                                    <span aria-hidden>→</span>
+                                                </Link>
+                                            </div>
+                                        )}
                                     </motion.div>
                                 ))
                             ) : (
@@ -351,23 +483,33 @@ export default function TestimonialComponents({
                                 ‹
                             </button>
 
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                <button
-                                    key={page}
-                                    onClick={() => handlePageChange(page)}
-                                    className={`w-11 h-11 rounded-full flex items-center justify-center border-none cursor-pointer font-sans text-sm font-bold transition-all duration-300 hover:scale-110 ${page === safePage ? 'text-white shadow-lg' : ''}`}
-                                    style={{
-                                        background:
-                                            page === safePage
-                                                ? 'linear-gradient(135deg, var(--color-primary), var(--color-accent))'
-                                                : 'var(--color-white)',
-                                        color: page === safePage ? 'white' : 'var(--color-text)',
-                                        boxShadow: page === safePage ? '0 4px 15px rgba(45,106,79,0.3)' : 'var(--shadow-sm)',
-                                    }}
-                                >
-                                    {page}
-                                </button>
-                            ))}
+                            {getPageNumbers(safePage, totalPages).map((page, idx) =>
+                                page === 'e' ? (
+                                    <span
+                                        key={`e-${idx}`}
+                                        className="w-11 h-11 rounded-full inline-flex items-center justify-center font-sans text-sm"
+                                        style={{ color: 'var(--color-text-muted)' }}
+                                    >
+                                        ...
+                                    </span>
+                                ) : (
+                                    <button
+                                        key={page}
+                                        onClick={() => handlePageChange(page)}
+                                        className={`w-11 h-11 rounded-full flex items-center justify-center border-none cursor-pointer font-sans text-sm font-bold transition-all duration-300 hover:scale-110 ${page === safePage ? 'text-white shadow-lg' : ''}`}
+                                        style={{
+                                            background:
+                                                page === safePage
+                                                    ? 'linear-gradient(135deg, var(--color-primary), var(--color-accent))'
+                                                    : 'var(--color-white)',
+                                            color: page === safePage ? 'white' : 'var(--color-text)',
+                                            boxShadow: page === safePage ? '0 4px 15px rgba(45,106,79,0.3)' : 'var(--shadow-sm)',
+                                        }}
+                                    >
+                                        {page}
+                                    </button>
+                                ),
+                            )}
 
                             <button
                                 onClick={() => safePage < totalPages && handlePageChange(safePage + 1)}
@@ -385,6 +527,145 @@ export default function TestimonialComponents({
                     )}
                 </div>
             </section>
+
+            <Dialog
+                open={Boolean(activeTestimonial)}
+                onOpenChange={(open) => {
+                    if (!open) setActiveTestimonial(null);
+                }}
+            >
+                <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+                    {activeTestimonial && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="font-serif text-2xl">
+                                    Detail Testimoni
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Informasi lengkap testimoni dari pengunjung.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-5">
+                                <div className="flex items-start gap-3 pb-4" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+                                    <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                                        <Image
+                                            src={activeTestimonial.avatar}
+                                            alt={activeTestimonial.name}
+                                            fill
+                                            className="object-cover"
+                                            sizes="48px"
+                                            unoptimized
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                                            {activeTestimonial.name}
+                                        </p>
+                                        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                                            {activeTestimonial.role} • {activeTestimonial.date}
+                                        </p>
+                                        <div className="mt-1.5 flex items-center gap-1.5">
+                                            <StarDisplay rating={activeTestimonial.rating} size={16} />
+                                            <span
+                                                className="font-sans text-sm font-semibold"
+                                                style={{ color: 'var(--color-text-muted)' }}
+                                            >
+                                                ({formatRatingNumber(activeTestimonial.rating)})
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text)' }}>
+                                        {activeTestimonial.text}
+                                    </p>
+                                </div>
+
+                                {activeTestimonial.entityName ? (
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                                            style={{
+                                                background: 'var(--color-cream)',
+                                                color: 'var(--color-primary-dark)',
+                                            }}
+                                        >
+                                            {activeTestimonial.entityType === 'destination'
+                                                ? 'Destinasi'
+                                                : activeTestimonial.entityType === 'wahana'
+                                                    ? 'Wahana'
+                                                    : 'Paket Tour'}
+                                            <span style={{ opacity: 0.6 }}>•</span>
+                                            {activeTestimonial.entityName}
+                                        </span>
+                                        {activeTestimonial.entityHref && (
+                                            <Link
+                                                href={activeTestimonial.entityHref}
+                                                className="inline-flex items-center gap-1 text-sm font-semibold"
+                                                style={{ color: 'var(--color-primary)' }}
+                                            >
+                                                Buka Detail
+                                                <span aria-hidden>→</span>
+                                            </Link>
+                                        )}
+                                    </div>
+                                ) : null}
+
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                                        Foto Pengunjung
+                                    </h4>
+                                    {(activeTestimonial.images?.length ?? 0) === 0 ? (
+                                        <div
+                                            className="rounded-xl p-4 text-sm"
+                                            style={{
+                                                background: 'var(--color-cream)',
+                                                color: 'var(--color-text-muted)',
+                                            }}
+                                        >
+                                            Tidak ada foto yang diunggah.
+                                        </div>
+                                    ) : (activeTestimonial.images?.length ?? 0) === 1 ? (
+                                        <div className="relative h-[320px] w-full overflow-hidden rounded-xl border">
+                                            <Image
+                                                src={activeTestimonial.images![0].url}
+                                                alt={activeTestimonial.images![0].fileName}
+                                                fill
+                                                className="object-cover"
+                                                sizes="(max-width: 768px) 100vw, 768px"
+                                                unoptimized
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Carousel opts={{ loop: true }} className="w-full">
+                                            <CarouselContent>
+                                                {activeTestimonial.images!.map((img) => (
+                                                    <CarouselItem key={img.id}>
+                                                        <div className="relative h-[320px] w-full overflow-hidden rounded-xl border">
+                                                            <Image
+                                                                src={img.url}
+                                                                alt={img.fileName}
+                                                                fill
+                                                                className="object-cover"
+                                                                sizes="(max-width: 768px) 100vw, 768px"
+                                                                unoptimized
+                                                            />
+                                                        </div>
+                                                    </CarouselItem>
+                                                ))}
+                                            </CarouselContent>
+                                            <CarouselPrevious className="left-3 top-1/2 -translate-y-1/2" />
+                                            <CarouselNext className="right-3 top-1/2 -translate-y-1/2" />
+                                        </Carousel>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* ─── CTA ──────────────────────────────── */}
             <section className="py-16 px-6" style={{ background: 'var(--color-cream)' }}>

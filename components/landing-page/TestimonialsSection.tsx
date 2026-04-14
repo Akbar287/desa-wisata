@@ -26,6 +26,39 @@ const cardVariants = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
+function formatRatingNumber(value: number): string {
+    return Number.isFinite(value) ? value.toFixed(2) : "0.00";
+}
+
+function StarDisplay({ rating, size = 14 }: { rating: number; size?: number }) {
+    return (
+        <span className="inline-flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((s) => {
+                const fill = Math.max(0, Math.min(1, rating - (s - 1)));
+                return (
+                    <span
+                        key={s}
+                        className="relative inline-block overflow-hidden"
+                        style={{ width: size, height: size }}
+                    >
+                        <svg width={size} height={size} viewBox="0 0 24 24" fill="#111111">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        <span
+                            className="absolute inset-0 overflow-hidden"
+                            style={{ width: `${fill * 100}%` }}
+                        >
+                            <svg width={size} height={size} viewBox="0 0 24 24" fill="#FBBF24">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                        </span>
+                    </span>
+                );
+            })}
+        </span>
+    );
+}
+
 export default function TestimonialsSection({ testimonials }: { testimonials: TestimonialItem[] }) {
     if (!testimonials || testimonials.length === 0) return null;
 
@@ -89,14 +122,14 @@ export default function TestimonialsSection({ testimonials }: { testimonials: Te
 
                             {/* Rating */}
                             {t.rating > 0 && (
-                                <div className="flex gap-0.5 mb-3">
-                                    {Array.from({ length: 5 }).map((_, i) => (
-                                        <svg key={i} width="14" height="14" viewBox="0 0 24 24"
-                                            fill={i < Math.round(t.rating) ? "var(--color-accent)" : "none"}
-                                            stroke="var(--color-accent)" strokeWidth="2">
-                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                        </svg>
-                                    ))}
+                                <div className="flex items-center gap-1.5 mb-3">
+                                    <StarDisplay rating={t.rating} />
+                                    <span
+                                        className="font-sans text-xs font-semibold"
+                                        style={{ color: "var(--color-text-muted)" }}
+                                    >
+                                        ({formatRatingNumber(t.rating)})
+                                    </span>
                                 </div>
                             )}
 

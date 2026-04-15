@@ -18,11 +18,28 @@ type BookingLookupItem = {
   priceWeekend?: number;
 };
 
+type GuideAddOnItem = {
+  id: number;
+  name: string;
+  role: string;
+  avatar: string | null;
+  experience: string;
+  specialty: string;
+  bio: string;
+  languages: string[];
+  hargaLabel: string;
+  hargaValue: number;
+};
+
+const GUIDE_DAILY_CAPACITY = 20;
+
 export default function BookingComponents({
   nationalities,
   findUsOptions,
   phoneCodes,
   tourLookup,
+  guideAddons,
+  guideBookingCountsByDate,
   steps,
   bookingType = "paket-wisata",
   dailyQuota = 0,
@@ -32,6 +49,8 @@ export default function BookingComponents({
   findUsOptions: string[];
   phoneCodes: { code: string; flag: string; country: string }[];
   tourLookup: Record<string, BookingLookupItem>;
+  guideAddons: GuideAddOnItem[];
+  guideBookingCountsByDate: Record<string, Record<string, number>>;
   steps: { num: number; label: string; icon: string }[];
   bookingType?: string;
   dailyQuota?: number;
@@ -44,6 +63,8 @@ export default function BookingComponents({
         findUsOptions={findUsOptions}
         phoneCodes={phoneCodes}
         tourLookup={tourLookup}
+        guideAddons={guideAddons}
+        guideBookingCountsByDate={guideBookingCountsByDate}
         steps={steps}
         bookingType={bookingType}
         dailyQuota={dailyQuota}
@@ -474,6 +495,11 @@ function ConfirmModal({
   startDate,
   endDate,
   pricePerPax,
+  totalPrice,
+  addOnGuideName,
+  addOnGuidePrice = 0,
+  submitError,
+  submitting = false,
   onConfirm,
   onCancel,
 }: {
@@ -482,13 +508,19 @@ function ConfirmModal({
   startDate: string;
   endDate: string;
   pricePerPax: number;
+  totalPrice: number;
+  addOnGuideName?: string;
+  addOnGuidePrice?: number;
+  submitError?: string;
+  submitting?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const totalPrice = pricePerPax * (data.adults + (data.children ?? 0));
   return (
     <div
-      onClick={onCancel}
+      onClick={() => {
+        if (!submitting) onCancel();
+      }}
       style={{
         position: "fixed",
         inset: 0,
@@ -593,6 +625,12 @@ function ConfirmModal({
                 v: `${data.adults} dewasa, ${data.children ?? 0} anak`,
               },
               { l: "Harga / pax", v: fmt(pricePerPax) },
+              ...(addOnGuideName
+                ? [
+                    { l: "Add-on", v: `Pemandu: ${addOnGuideName}` },
+                    { l: "Biaya Add-on", v: fmt(addOnGuidePrice) },
+                  ]
+                : []),
               { l: "Estimasi Total", v: fmt(totalPrice) },
             ].map((r) => (
               <div
@@ -655,16 +693,29 @@ function ConfirmModal({
 
           <div style={{ display: "flex", gap: 12 }}>
             <button
-              onClick={onCancel}
+              onClick={() => {
+                if (!submitting) onCancel();
+              }}
               className="btn-outline"
-              style={{ flex: 1, justifyContent: "center" }}
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                opacity: submitting ? 0.65 : 1,
+                pointerEvents: submitting ? "none" : "auto",
+              }}
             >
               Kembali
             </button>
             <button
               onClick={onConfirm}
+              disabled={submitting}
               className="btn-primary"
-              style={{ flex: 1, justifyContent: "center" }}
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                opacity: submitting ? 0.7 : 1,
+                pointerEvents: submitting ? "none" : "auto",
+              }}
             >
               <svg
                 width="16"
@@ -676,9 +727,26 @@ function ConfirmModal({
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              Konfirmasi & Lanjutkan
+              {submitting ? "Memproses..." : "Konfirmasi & Lanjutkan"}
             </button>
           </div>
+          {submitError ? (
+            <div
+              style={{
+                marginTop: 12,
+                borderRadius: 10,
+                border: "1px solid #FECACA",
+                background: "#FEF2F2",
+                color: "#B91C1C",
+                fontSize: 12,
+                lineHeight: 1.5,
+                fontFamily: "var(--font-body)",
+                padding: "10px 12px",
+              }}
+            >
+              {submitError}
+            </div>
+          ) : null}
         </div>
         {/* end padding div */}
       </div>
@@ -786,6 +854,8 @@ function BookingContent({
   findUsOptions,
   phoneCodes,
   tourLookup,
+  guideAddons,
+  guideBookingCountsByDate,
   steps,
   bookingType,
   dailyQuota,
@@ -795,6 +865,8 @@ function BookingContent({
   findUsOptions: string[];
   phoneCodes: { code: string; flag: string; country: string }[];
   tourLookup: Record<string, BookingLookupItem>;
+  guideAddons: GuideAddOnItem[];
+  guideBookingCountsByDate: Record<string, Record<string, number>>;
   steps: { num: number; label: string; icon: string }[];
   bookingType: string;
   dailyQuota: number;
@@ -826,6 +898,8 @@ function BookingContent({
       steps={steps}
       findUsOptions={findUsOptions}
       phoneCodes={phoneCodes}
+      guideAddons={guideAddons}
+      guideBookingCountsByDate={guideBookingCountsByDate}
       bookingType={bookingType}
       dailyQuota={dailyQuota}
       bookingCounts={bookingCounts}
@@ -1184,6 +1258,8 @@ function BookingForm({
   nationalities,
   findUsOptions,
   phoneCodes,
+  guideAddons,
+  guideBookingCountsByDate,
   steps,
   bookingType,
   dailyQuota,
@@ -1195,6 +1271,8 @@ function BookingForm({
   nationalities: string[];
   findUsOptions: string[];
   phoneCodes: { code: string; flag: string; country: string }[];
+  guideAddons: GuideAddOnItem[];
+  guideBookingCountsByDate: Record<string, Record<string, number>>;
   steps: { num: number; label: string; icon: string }[];
   bookingType: string;
   dailyQuota: number;
@@ -1204,6 +1282,7 @@ function BookingForm({
   const needsCalendar = bookingType === "wahana" || bookingType === "destinasi";
 
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedGuideId, setSelectedGuideId] = useState<string>("");
 
   const fmtDateId = (d: Date) =>
     d.toLocaleDateString("id-ID", {
@@ -1239,12 +1318,35 @@ function BookingForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [legalModal, setLegalModal] = useState<"terms" | "privacy" | null>(
     null,
   );
   const [dateError, setDateError] = useState("");
 
+  const getFriendlySubmitError = useCallback(
+    (message?: string, statusCode?: number) => {
+      const cleanMessage = (message ?? "").trim();
+      if (cleanMessage) return cleanMessage;
+      if (statusCode === 400) {
+        return "Data pemesanan belum valid. Mohon periksa kembali isian formulir Anda.";
+      }
+      if (statusCode === 404) {
+        return "Data paket wisata tidak ditemukan. Silakan muat ulang halaman lalu coba lagi.";
+      }
+      if (statusCode === 429) {
+        return "Permintaan terlalu sering. Mohon tunggu sebentar lalu coba kembali.";
+      }
+      if (typeof statusCode === "number" && statusCode >= 500) {
+        return "Server sedang mengalami gangguan. Silakan coba lagi beberapa saat.";
+      }
+      return "Pemesanan belum berhasil diproses. Silakan coba lagi.";
+    },
+    [],
+  );
+
   const set = useCallback((field: string, value: string | number | boolean) => {
+    setSubmitError("");
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => {
       const n = { ...prev };
@@ -1276,9 +1378,30 @@ function BookingForm({
     tour.priceWeekend,
   ]);
 
+  const selectedGuide = useMemo(
+    () =>
+      guideAddons.find((guide) => guide.id === Number(selectedGuideId)) || null,
+    [guideAddons, selectedGuideId],
+  );
+  const selectedDateGuideCounts = useMemo(
+    () => (selectedDate ? guideBookingCountsByDate[selectedDate] || {} : {}),
+    [guideBookingCountsByDate, selectedDate],
+  );
+  const guidePrice = selectedGuide?.hargaValue ?? 0;
+
+  useEffect(() => {
+    if (!selectedGuideId) return;
+    const selectedCount = selectedDate
+      ? selectedDateGuideCounts[selectedGuideId] || 0
+      : 0;
+    if (selectedCount >= GUIDE_DAILY_CAPACITY) {
+      setSelectedGuideId("");
+    }
+  }, [selectedGuideId, selectedDate, selectedDateGuideCounts]);
+
   const totalPrice = useMemo(
-    () => pricePerPax * (form.adults + form.children),
-    [pricePerPax, form.adults, form.children],
+    () => pricePerPax * (form.adults + form.children) + guidePrice,
+    [pricePerPax, form.adults, form.children, guidePrice],
   );
 
   // Years for DOB
@@ -1301,6 +1424,7 @@ function BookingForm({
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   const handleSubmit = async () => {
+    setSubmitError("");
     if (needsCalendar && !selectedDate) {
       setDateError("Silakan pilih tanggal booking terlebih dahulu");
       return;
@@ -1329,6 +1453,7 @@ function BookingForm({
 
   const handleConfirm = async () => {
     setSubmitting(true);
+    setSubmitError("");
 
     try {
       const res = await fetch("/api/bookings", {
@@ -1353,18 +1478,31 @@ function BookingForm({
           findUs: form.findUs,
           comments: form.comments,
           totalPrice,
+          guideTeamMemberId: selectedGuide ? selectedGuide.id : null,
           type: bookingType === "paket-wisata" ? "tour" : bookingType,
         }),
       });
-      const json = await res.json();
-      if (json.status === "success") {
-        router.push(`/payments?id=${json.data.id}`);
-      } else {
-        alert(json.message || "Gagal membuat pemesanan");
-        setSubmitting(false);
+      let json:
+        | { status?: string; message?: string; data?: { id?: number } }
+        | null = null;
+
+      try {
+        json = await res.json();
+      } catch {
+        json = null;
       }
+
+      if (res.ok && json?.status === "success" && json?.data?.id) {
+        router.push(`/payments?id=${json.data.id}`);
+        return;
+      }
+
+      setSubmitError(getFriendlySubmitError(json?.message, res.status));
     } catch {
-      alert("Gagal terhubung ke server");
+      setSubmitError(
+        "Koneksi ke server terputus. Periksa internet Anda lalu coba lagi.",
+      );
+    } finally {
       setSubmitting(false);
     }
   };
@@ -2034,7 +2172,8 @@ function BookingForm({
                       fontFamily: "var(--font-body)",
                     }}
                   >
-                    Estimasi total ({form.adults + form.children} pax)
+                    Estimasi total ({form.adults + form.children} pax
+                    {selectedGuide ? " + add-on pemandu" : ""})
                   </span>
                 </div>
                 <span
@@ -2089,6 +2228,237 @@ function BookingForm({
                 />
                 <FieldError msg={errors.comments} />
               </div>
+            </div>
+
+            {/* Section: Add-on Guide */}
+            <div
+              className="booking-section"
+              style={{
+                marginBottom: 28,
+                background: "white",
+                borderRadius: "var(--radius-lg)",
+                border: "1px solid rgba(0,0,0,0.06)",
+                padding: "24px 22px",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 14,
+                }}
+              >
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    background:
+                      "linear-gradient(135deg, rgba(26,92,56,0.12), rgba(45,143,94,0.18))",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "var(--color-primary)",
+                    fontSize: 18,
+                  }}
+                >
+                  🧭
+                </div>
+                <div>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: 18,
+                      fontWeight: 700,
+                      fontFamily: "var(--font-heading)",
+                      color: "var(--color-text)",
+                    }}
+                  >
+                    Add-on Pemandu Wisata
+                  </h3>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 13,
+                      color: "var(--color-text-muted)",
+                      fontFamily: "var(--font-body)",
+                    }}
+                  >
+                    Opsional. Pilih pemandu aktif untuk mendampingi perjalanan
+                    Anda.
+                  </p>
+                </div>
+              </div>
+
+              {guideAddons.length === 0 ? (
+                <div
+                  style={{
+                    background: "var(--color-bg-light)",
+                    border: "1px dashed rgba(0,0,0,0.12)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "14px 16px",
+                    fontSize: 13,
+                    color: "var(--color-text-muted)",
+                    fontFamily: "var(--font-body)",
+                  }}
+                >
+                  Saat ini belum ada pemandu wisata yang tersedia.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {guideAddons.map((guide) => {
+                    const selected = String(guide.id) === selectedGuideId;
+                    const bookedCount = selectedDate
+                      ? selectedDateGuideCounts[String(guide.id)] || 0
+                      : 0;
+                    const isFull = bookedCount >= GUIDE_DAILY_CAPACITY;
+                    return (
+                      <button
+                        key={guide.id}
+                        type="button"
+                        disabled={isFull}
+                        onClick={() =>
+                          setSelectedGuideId(selected ? "" : String(guide.id))
+                        }
+                        style={{
+                          width: "100%",
+                          borderRadius: "var(--radius-md)",
+                          border: selected
+                            ? "1.5px solid var(--color-primary)"
+                            : isFull
+                              ? "1.5px solid rgba(220,38,38,0.45)"
+                              : "1.5px solid rgba(0,0,0,0.1)",
+                          background: selected
+                            ? "rgba(26,92,56,0.06)"
+                            : isFull
+                              ? "rgba(220,38,38,0.05)"
+                              : "var(--color-white)",
+                          padding: "12px 14px",
+                          textAlign: "left",
+                          cursor: isFull ? "not-allowed" : "pointer",
+                          transition: "all 0.2s ease",
+                          opacity: isFull ? 0.65 : 1,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 8,
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            {guide.avatar ? (
+                              <img
+                                src={guide.avatar}
+                                alt={guide.name}
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                  border: "1px solid rgba(0,0,0,0.08)",
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: "50%",
+                                  background: "rgba(26,92,56,0.12)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "var(--color-primary)",
+                                  fontWeight: 700,
+                                  fontSize: 14,
+                                }}
+                              >
+                                {guide.name.charAt(0)}
+                              </div>
+                            )}
+                            <div>
+                              <div
+                                style={{
+                                  fontSize: 14,
+                                  fontWeight: 700,
+                                  color: "var(--color-text)",
+                                  fontFamily: "var(--font-body)",
+                                }}
+                              >
+                                {guide.name}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  color: "var(--color-text-muted)",
+                                  fontFamily: "var(--font-body)",
+                                }}
+                              >
+                                {guide.role}
+                              </div>
+                            </div>
+                          </div>
+
+                          <span
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: "var(--color-primary)",
+                              fontFamily: "var(--font-body)",
+                              background: "rgba(26,92,56,0.1)",
+                              borderRadius: 999,
+                              padding: "4px 10px",
+                            }}
+                          >
+                            +{guide.hargaLabel}
+                          </span>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: 10,
+                            fontSize: 12,
+                            color: "var(--color-text-muted)",
+                            fontFamily: "var(--font-body)",
+                          }}
+                        >
+                          <span>Pengalaman: {guide.experience}</span>
+                          <span>Keahlian: {guide.specialty}</span>
+                          <span
+                            style={{
+                              gridColumn: "1 / -1",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            Negara/Bahasa:{" "}
+                            {guide.languages.length > 0
+                              ? guide.languages.join(", ")
+                              : "-"}
+                          </span>
+                          <span
+                            style={{
+                              gridColumn: "1 / -1",
+                              fontWeight: 700,
+                              color: isFull ? "#B91C1C" : "var(--color-primary)",
+                            }}
+                          >
+                            Kapasitas pemandu tanggal ini: {bookedCount}/
+                            {GUIDE_DAILY_CAPACITY}
+                            {isFull ? " (Penuh)" : ""}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Terms */}
@@ -2238,6 +2608,7 @@ function BookingForm({
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
+            <FieldError msg={submitError} />
           </div>
 
           {/* Sidebar */}
@@ -2319,6 +2690,12 @@ function BookingForm({
                   { l: "Dewasa", v: `${form.adults} orang` },
                   { l: "Anak", v: `${form.children} orang` },
                   { l: "Harga / pax", v: fmt(pricePerPax) },
+                  ...(selectedGuide
+                    ? [
+                        { l: "Add-on", v: `Pemandu: ${selectedGuide.name}` },
+                        { l: "Biaya Add-on", v: fmt(guidePrice) },
+                      ]
+                    : []),
                 ].map((r) => (
                   <div
                     key={r.l}
@@ -2399,7 +2776,15 @@ function BookingForm({
           startDate={effectiveStartDate}
           endDate={effectiveEndDate}
           pricePerPax={pricePerPax}
-          onCancel={() => setShowConfirm(false)}
+          totalPrice={totalPrice}
+          addOnGuideName={selectedGuide?.name}
+          addOnGuidePrice={guidePrice}
+          submitError={submitError}
+          submitting={submitting}
+          onCancel={() => {
+            setShowConfirm(false);
+            setSubmitError("");
+          }}
           onConfirm={handleConfirm}
         />
       )}

@@ -54,6 +54,13 @@ function getRefundUrl(bookingCode: string): string {
   return `${base}/${encodeURIComponent(bookingCode)}`;
 }
 
+function parseGuidePrice(value: string | null | undefined): number {
+  const digits = (value ?? "").replace(/\D/g, "");
+  if (!digits) return 0;
+  const parsed = Number(digits);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 async function sendBookingPaidEmailByPayment(
   bookingPaymentId: number,
   force = false,
@@ -80,6 +87,21 @@ async function sendBookingPaidEmailByPayment(
           tour: { select: { title: true } },
           destination: { select: { name: true } },
           wahana: { select: { name: true } },
+          bookingTestimoniAddOn: {
+            select: {
+              id: true,
+              teamMember: {
+                select: {
+                  name: true,
+                  teamHargaPemandu: {
+                    orderBy: { id: "desc" },
+                    take: 1,
+                    select: { harga: true },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -134,6 +156,15 @@ async function sendBookingPaidEmailByPayment(
   const amount = Number(payment.grossAmount ?? payment.booking.totalPrice ?? 0);
   const paidAt = payment.settlementTime;
   const refundUrl = getRefundUrl(payment.bookingCode);
+  const addOnGuides = payment.booking.bookingTestimoniAddOn.map((addon) => {
+    const rawPrice = addon.teamMember.teamHargaPemandu?.[0]?.harga ?? null;
+    return {
+      name: addon.teamMember.name,
+      price: parseGuidePrice(rawPrice),
+    };
+  });
+  const addOnGuideName = addOnGuides.map((item) => item.name).join(", ").trim();
+  const addOnGuidePrice = addOnGuides.reduce((sum, item) => sum + item.price, 0);
 
   const { subject, html } = buildBookingPaidEmailTemplate({
     customerName,
@@ -143,6 +174,8 @@ async function sendBookingPaidEmailByPayment(
     totalAmount: amount,
     paidAt,
     refundUrl,
+    addOnGuideName: addOnGuideName || null,
+    addOnGuidePrice: addOnGuidePrice > 0 ? addOnGuidePrice : null,
   });
 
   const pdfBuffer = await renderBookingPaidReceiptPdf({
@@ -154,6 +187,8 @@ async function sendBookingPaidEmailByPayment(
     totalAmount: amount,
     paidAt,
     refundUrl,
+    addOnGuideName: addOnGuideName || null,
+    addOnGuidePrice: addOnGuidePrice > 0 ? addOnGuidePrice : null,
   });
 
   const config = getTransportConfig();

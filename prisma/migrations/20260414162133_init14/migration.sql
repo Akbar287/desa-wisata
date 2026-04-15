@@ -1,0 +1,3 @@
+-- This migration is intentionally left as no-op.
+-- The effective SQL for this step is recorded in:
+-- prisma/migrations/20260414162133_init13/migration.sql

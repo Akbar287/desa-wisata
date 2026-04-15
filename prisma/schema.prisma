@@ -534,21 +534,41 @@ model TeamCategory {
   @@map("team_categories")
 }
 
+enum StatusTeamMember {
+  AKTIF
+  TIDAK_AKTIF @map("TIDAK AKTIF")
+  CUTI
+}
+
 model TeamMember {
   id             Int      @id @default(autoincrement())
   teamCategoryId Int
   name           String
   role           String
+  bio            String   @default("-")
   avatar         String?
   experience     String
   specialty      String
   order          Int      @default(0)
+  activeAdmin    Boolean  @default(false)
+  status         StatusTeamMember @default(TIDAK_AKTIF)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   teamCategory TeamCategory @relation(fields: [teamCategoryId], references: [id], onDelete: Cascade)
+  anggotaTimNegara anggotaTimNegara[]
+  teamHargaPemandu TeamHargaPemandu[]
+  bookingTestimoniAddOn BookingTestimoniAddOn[]
 
   @@map("team_members")
+}
+
+model TeamHargaPemandu {
+    id             Int      @id @default(autoincrement())
+    teamMemberId   Int
+    harga          String
+
+    teamMember   TeamMember   @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
 }
 
 model JobListing {
@@ -647,6 +667,7 @@ model Booking {
   destination  Destination?  @relation(fields: [destinationId], references: [id], onDelete: Cascade)
   wahana       Wahana?       @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
   bookingPayments     BookingPayment[]
+  bookingTestimoniAddOn BookingTestimoniAddOn[]
   refunds      Refund[]
   testimonials Testimonial[]
 
@@ -933,4 +954,50 @@ model Refund {
   @@index([bookingCode])
   @@index([status])
   @@map("refunds")
+}
+
+model Negara {
+  id Int    @id @default(autoincrement())
+  nama     String
+
+  anggotaTimNegara anggotaTimNegara[]
+
+  @@map("negara")
+}
+
+model anggotaTimNegara {
+  teamMemberId Int
+  negaraId     Int
+
+  teamMember TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  negara     Negara     @relation(fields: [negaraId], references: [id], onDelete: Cascade)
+
+  @@id([teamMemberId, negaraId])
+  @@map("anggota_tim_negara")
+}
+
+model BookingTestimoniAddOn {
+  id                      Int @id @default(autoincrement())
+  bookingId               Int
+  teamMemberId            Int
+
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  teamMember   TeamMember   @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  testimoniTim testimoniTim[]
+
+  @@index([bookingId])
+  @@index([teamMemberId])
+  @@map("booking_testimoni_add_on")
+}
+
+model testimoniTim {
+  testimoniTimId          Int     @id @default(autoincrement())
+  bookingTestimoniAddOnId Int
+  rating                  Float
+  testimonial             String
+
+  bookingTestimoniAddOn BookingTestimoniAddOn @relation(fields: [bookingTestimoniAddOnId], references: [id], onDelete: Cascade)
+
+  @@index([bookingTestimoniAddOnId])
+  @@map("testimoni_tim")
 }

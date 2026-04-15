@@ -291,6 +291,16 @@ type BookingInfo = {
     price: number;
     imageBanner: string;
   } | null;
+  bookingTestimoniAddOn?: {
+    id: number;
+    teamMember: {
+      id: number;
+      name: string;
+      role: string;
+      harga?: string | null;
+      hargaValue?: number | null;
+    };
+  }[];
 };
 
 const typeLabels: Record<string, string> = {
@@ -316,6 +326,26 @@ export default function PaymentReceiptPDF({
     booking.destination?.name ??
     booking.wahana?.name ??
     "Paket";
+  const guideAddOns = booking.bookingTestimoniAddOn ?? [];
+  const guideNames = guideAddOns
+    .map((addon) => addon.teamMember?.name ?? "")
+    .filter(Boolean);
+  const hasGuideAddOn = guideNames.length > 0;
+  const guideAddOnPriceTotal = guideAddOns.reduce((sum, addon) => {
+    const numericPrice = addon.teamMember?.hargaValue;
+    if (
+      typeof numericPrice === "number" &&
+      Number.isFinite(numericPrice) &&
+      numericPrice > 0
+    ) {
+      return sum + numericPrice;
+    }
+    const rawText = addon.teamMember?.harga ?? "";
+    const digits = rawText.replace(/\D/g, "");
+    if (!digits) return sum;
+    const parsed = Number(digits);
+    return Number.isFinite(parsed) ? sum + parsed : sum;
+  }, 0);
 
   return (
     <Document>
@@ -391,6 +421,13 @@ export default function PaymentReceiptPDF({
                   l: "Peserta",
                   v: `${booking.adults} dewasa, ${booking.children} anak`,
                 },
+                hasGuideAddOn ? { l: "Add-On", v: "Pemandu Wisata" } : null,
+                hasGuideAddOn
+                  ? { l: "Pemandu", v: guideNames.join(", ") }
+                  : null,
+                hasGuideAddOn && guideAddOnPriceTotal > 0
+                  ? { l: "Biaya Add-On", v: fmt(guideAddOnPriceTotal) }
+                  : null,
               ].filter(Boolean) as { l: string; v: string }[]
             ).map((r, i, arr) => (
               <View key={r.l} style={i === arr.length - 1 ? s.rowLast : s.row}>

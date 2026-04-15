@@ -4,6 +4,12 @@ import { notFound } from "next/navigation";
 
 const toIso = (value: Date | string | null | undefined) =>
   value ? new Date(value).toISOString() : null;
+const parseGuidePrice = (value: string | null | undefined) => {
+  const digits = (value ?? "").replace(/\D/g, "");
+  if (!digits) return 0;
+  const parsed = Number(digits);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 export default async function page({
   searchParams,
@@ -41,6 +47,23 @@ export default async function page({
       },
       bookingPayments: {
         orderBy: { createdAt: "desc" },
+      },
+      bookingTestimoniAddOn: {
+        select: {
+          id: true,
+          teamMember: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+              teamHargaPemandu: {
+                orderBy: { id: "desc" },
+                take: 1,
+                select: { harga: true },
+              },
+            },
+          },
+        },
       },
     },
   });
@@ -119,6 +142,19 @@ export default async function page({
           imageBanner: booking.wahana.imageBanner,
         }
       : null,
+    bookingTestimoniAddOn: booking.bookingTestimoniAddOn.map((addon) => {
+      const harga = addon.teamMember.teamHargaPemandu?.[0]?.harga ?? null;
+      return {
+        id: addon.id,
+        teamMember: {
+          id: addon.teamMember.id,
+          name: addon.teamMember.name,
+          role: addon.teamMember.role,
+          harga,
+          hargaValue: parseGuidePrice(harga),
+        },
+      };
+    }),
     payments: booking.bookingPayments.map((payment) => ({
       id: payment.id,
       amount: Number(payment.grossAmount ?? 0),

@@ -6,6 +6,8 @@ type BookingPaidEmailTemplateInput = {
   totalAmount: number;
   paidAt: Date | string | null;
   refundUrl: string;
+  addOnGuideName?: string | null;
+  addOnGuidePrice?: number | null;
 };
 
 function escapeHtml(value: string): string {
@@ -43,12 +45,23 @@ export function buildBookingPaidEmailTemplate({
   totalAmount,
   paidAt,
   refundUrl,
+  addOnGuideName,
+  addOnGuidePrice,
 }: BookingPaidEmailTemplateInput): { subject: string; html: string } {
   const safeCustomerName = escapeHtml(customerName);
   const safeBookingCode = escapeHtml(bookingCode);
   const safeOrderId = escapeHtml(orderId);
   const safeItemName = escapeHtml(itemName);
   const safeRefundUrl = escapeHtml(refundUrl);
+  const safeAddOnGuideName = addOnGuideName ? escapeHtml(addOnGuideName) : "";
+  const addOnGuidePriceValue =
+    typeof addOnGuidePrice === "number" && Number.isFinite(addOnGuidePrice)
+      ? addOnGuidePrice
+      : 0;
+  const addOnGuidePriceText =
+    addOnGuidePriceValue > 0
+      ? escapeHtml(fmtCurrency(addOnGuidePriceValue))
+      : "";
   const amountText = fmtCurrency(totalAmount);
   const paidAtText = fmtDate(paidAt);
 
@@ -91,6 +104,24 @@ export function buildBookingPaidEmailTemplate({
                     <td style="padding:12px 14px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;">Paket</td>
                     <td style="padding:12px 14px;font-size:12px;font-weight:700;text-align:right;border-top:1px solid #e5e7eb;">${safeItemName}</td>
                   </tr>
+                  ${
+                    safeAddOnGuideName
+                      ? `
+                  <tr>
+                    <td style="padding:12px 14px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;">Add-On</td>
+                    <td style="padding:12px 14px;font-size:12px;font-weight:700;text-align:right;border-top:1px solid #e5e7eb;">Pemandu Wisata (${safeAddOnGuideName})</td>
+                  </tr>`
+                      : ""
+                  }
+                  ${
+                    safeAddOnGuideName && addOnGuidePriceText
+                      ? `
+                  <tr>
+                    <td style="padding:12px 14px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;">Biaya Add-On</td>
+                    <td style="padding:12px 14px;font-size:12px;font-weight:700;text-align:right;border-top:1px solid #e5e7eb;">${addOnGuidePriceText}</td>
+                  </tr>`
+                      : ""
+                  }
                   <tr>
                     <td style="padding:12px 14px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;">Waktu Pembayaran</td>
                     <td style="padding:12px 14px;font-size:12px;font-weight:700;text-align:right;border-top:1px solid #e5e7eb;">${paidAtText}</td>

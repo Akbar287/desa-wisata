@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { sendBookingPaidEmailByPaymentId } from "@/lib/email/BookingPaidEmailService";
 
 type MidtransStatusPayload = {
@@ -47,9 +48,27 @@ const MIDTRANS_ENABLED_PAYMENTS = (process.env.MIDTRANS_ENABLED_PAYMENTS ?? "")
   .split(",")
   .map((v) => v.trim())
   .filter(Boolean);
+const GUIDE_DAILY_CAPACITY = 20;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const parseP2002Targets = (err: Prisma.PrismaClientKnownRequestError) => {
+  const target = err.meta?.target;
+  if (Array.isArray(target)) return target.map((v) => String(v));
+  if (typeof target === "string") return [target];
+  return [];
+};
+
+const syncUsersIdSequence = async () => {
+  await prisma.$executeRawUnsafe(`
+    SELECT setval(
+      pg_get_serial_sequence('"users"', 'id'),
+      GREATEST((SELECT COALESCE(MAX(id), 0) + 1 FROM "users"), 1),
+      false
+    )
+  `);
+};
 
 const toMidtransBasicAuth = () =>
   `Basic ${Buffer.from(`${MIDTRANS_SERVER_KEY}:`).toString("base64")}`;
@@ -757,6 +776,7 @@ app.post("/", async (c) => {
       findUs,
       comments,
       totalPrice,
+      guideTeamMemberId,
       type,
     } = body;
 
@@ -858,6 +878,9 @@ app.post("/", async (c) => {
       totalPrice: Number(totalPrice ?? 0),
     };
 
+    const parsedGuideTeamMemberId = Number(guideTeamMemberId ?? 0);
+    let resolvedGuideTeamMemberId: number | null = null;
+
     if (type === "tour") {
       const tour = await prisma.tour.findFirst({
         where: { id: Number(tourId) },
@@ -892,34 +915,145 @@ app.post("/", async (c) => {
       return c.json({ status: "error", message: "Type tidak valid" }, 400);
     }
 
-    const booking = await prisma.booking.create({
-      data: bookingData,
-    });
+    if (Number.isFinite(parsedGuideTeamMemberId) && parsedGuideTeamMemberId > 0) {
+      const guideMember = await prisma.teamMember.findFirst({
+        where: {
+          id: parsedGuideTeamMemberId,
+          activeAdmin: true,
+          status: "AKTIF",
+          teamCategory: {
+            title: {
+              equals: "Tim Pemandu Wisata",
+              mode: "insensitive",
+            },
+          },
+        },
+        select: { id: true },
+      });
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (!existingUser) {
-      const user = await prisma.user.create({
-        data: {
-          email,
-          name: `${firstName} ${lastName}`,
-          phoneCode,
-          phoneNumber,
-          age: new Date().getFullYear() - birthDate.getFullYear(),
-          gender: genderMap[gender] as "MALE" | "FEMALE",
-          nationality,
-          address: email,
-          avatar: "/api/img?id=default.png",
+      if (!guideMember) {
+        return c.json(
+          { status: "error", message: "Pemandu wisata tidak valid." },
+          400,
+        );
+      }
+
+      resolvedGuideTeamMemberId = guideMember.id;
+
+      const dayStart = new Date(bookingData.startDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      const bookedGuideCount = await prisma.bookingTestimoniAddOn.count({
+        where: {
+          teamMemberId: resolvedGuideTeamMemberId,
+          booking: {
+            startDate: { gte: dayStart, lt: dayEnd },
+            status: { not: "CANCELLED" },
+          },
         },
       });
 
-      const role = await prisma.role.findUnique({
-        where: { name: "Pengguna" },
-      });
-      if (role && user) {
-        await prisma.userRole.create({
-          data: { userId: user.id, roleId: role.id },
-        });
+      if (bookedGuideCount >= GUIDE_DAILY_CAPACITY) {
+        return c.json(
+          {
+            status: "error",
+            message:
+              "Pemandu wisata ini sudah penuh (20/20) pada tanggal yang dipilih.",
+          },
+          400,
+        );
       }
+    }
+
+    const booking = await prisma.booking.create({
+      data: {
+        ...bookingData,
+        ...(resolvedGuideTeamMemberId
+          ? {
+              bookingTestimoniAddOn: {
+                create: {
+                  teamMemberId: resolvedGuideTeamMemberId,
+                },
+              },
+            }
+          : {}),
+      },
+    });
+
+    try {
+      let user = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+
+      const userPayload = {
+        email,
+        name: `${firstName} ${lastName}`,
+        phoneCode,
+        phoneNumber,
+        age: new Date().getFullYear() - birthDate.getFullYear(),
+        gender: genderMap[gender] as "MALE" | "FEMALE",
+        nationality,
+        address: email,
+        avatar: "/api/img?id=default.png",
+      };
+
+      if (!user) {
+        try {
+          user = await prisma.user.create({
+            data: userPayload,
+            select: { id: true },
+          });
+        } catch (userCreateErr) {
+          if (
+            userCreateErr instanceof Prisma.PrismaClientKnownRequestError &&
+            userCreateErr.code === "P2002"
+          ) {
+            const targets = parseP2002Targets(userCreateErr);
+            if (targets.some((target) => target.includes("id"))) {
+              await syncUsersIdSequence();
+              user = await prisma.user.create({
+                data: userPayload,
+                select: { id: true },
+              });
+            } else if (targets.some((target) => target.includes("email"))) {
+              user = await prisma.user.findUnique({
+                where: { email },
+                select: { id: true },
+              });
+            } else {
+              throw userCreateErr;
+            }
+          } else {
+            throw userCreateErr;
+          }
+        }
+      }
+
+      if (user) {
+        const role = await prisma.role.findUnique({
+          where: { name: "Pengguna" },
+          select: { id: true },
+        });
+
+        if (role) {
+          const existingRole = await prisma.userRole.findFirst({
+            where: { userId: user.id, roleId: role.id },
+            select: { id: true },
+          });
+
+          if (!existingRole) {
+            await prisma.userRole.create({
+              data: { userId: user.id, roleId: role.id },
+            });
+          }
+        }
+      }
+    } catch (userSyncErr) {
+      // Booking tetap dianggap berhasil walau sinkronisasi user gagal.
+      console.error("Booking user sync warning:", userSyncErr);
     }
 
     return c.json({

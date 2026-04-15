@@ -60,6 +60,16 @@ type BookingInfo = {
     price: number;
     imageBanner: string;
   } | null;
+  bookingTestimoniAddOn?: {
+    id: number;
+    teamMember: {
+      id: number;
+      name: string;
+      role: string;
+      harga?: string | null;
+      hargaValue?: number | null;
+    };
+  }[];
   payments: PaymentInfo[];
 };
 

@@ -367,6 +367,19 @@ const STEPS = [
   },
 ];
 
+const parseGuidePrice = (value: string | null | undefined): number => {
+  const digits = (value ?? "").replace(/[^\d]/g, "");
+  if (!digits) return 0;
+  const parsed = Number(digits);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatGuidePrice = (value: number, raw: string | null | undefined) => {
+  if (value > 0) return `Rp ${value.toLocaleString("id-ID")}`;
+  const text = (raw ?? "").trim();
+  return text || "Rp 0";
+};
+
 export default async function BookingPage({
   searchParams,
 }: {
@@ -513,12 +526,102 @@ export default async function BookingPage({
     }
   }
 
+  const guideRows = await prisma.teamMember.findMany({
+    where: {
+      activeAdmin: true,
+      status: "AKTIF",
+      teamCategory: {
+        title: {
+          equals: "Tim Pemandu Wisata",
+          mode: "insensitive",
+        },
+      },
+    },
+    orderBy: [{ order: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      avatar: true,
+      experience: true,
+      specialty: true,
+      bio: true,
+      anggotaTimNegara: {
+        select: {
+          negara: {
+            select: {
+              nama: true,
+            },
+          },
+        },
+      },
+      teamHargaPemandu: {
+        orderBy: { id: "desc" },
+        take: 1,
+        select: { harga: true },
+      },
+    },
+  });
+
+  const guideAddons = guideRows.map((guide) => {
+    const hargaRaw = guide.teamHargaPemandu?.[0]?.harga ?? "";
+    const hargaValue = parseGuidePrice(hargaRaw);
+    return {
+      id: guide.id,
+      name: guide.name,
+      role: guide.role,
+      avatar: guide.avatar,
+      experience: guide.experience,
+      specialty: guide.specialty,
+      bio: guide.bio,
+      languages: guide.anggotaTimNegara
+        .map((row) => row.negara?.nama ?? "")
+        .filter(Boolean),
+      hargaLabel: formatGuidePrice(hargaValue, hargaRaw),
+      hargaValue,
+    };
+  });
+
+  const guideBookingCountsByDate: Record<string, Record<string, number>> = {};
+  const guideIds = guideRows.map((guide) => guide.id);
+
+  if (guideIds.length > 0) {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const guideBookings = await prisma.bookingTestimoniAddOn.findMany({
+      where: {
+        teamMemberId: { in: guideIds },
+        booking: {
+          startDate: { gte: now },
+          status: { not: "CANCELLED" },
+        },
+      },
+      select: {
+        teamMemberId: true,
+        booking: { select: { startDate: true } },
+      },
+    });
+
+    for (const row of guideBookings) {
+      const dateKey = row.booking.startDate.toISOString().split("T")[0];
+      if (!guideBookingCountsByDate[dateKey]) {
+        guideBookingCountsByDate[dateKey] = {};
+      }
+      const memberKey = String(row.teamMemberId);
+      guideBookingCountsByDate[dateKey][memberKey] =
+        (guideBookingCountsByDate[dateKey][memberKey] || 0) + 1;
+    }
+  }
+
   return (
     <BookingComponents
       nationalities={NATIONALITIES}
       findUsOptions={FIND_US_OPTIONS}
       phoneCodes={PHONE_CODES}
       tourLookup={tourLookup}
+      guideAddons={guideAddons}
+      guideBookingCountsByDate={guideBookingCountsByDate}
       steps={STEPS}
       bookingType={bookingType}
       dailyQuota={dailyQuota}

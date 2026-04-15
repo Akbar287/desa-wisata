@@ -4,6 +4,8 @@ export interface TeamMember {
     avatar: string;
     experience: string;
     specialty: string;
+    bio?: string;
+    countries?: string[];
 }
 
 export interface TeamCategory {

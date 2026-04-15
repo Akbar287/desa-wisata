@@ -17,6 +17,8 @@ type BookingPaidReceiptPdfInput = {
   totalAmount: number;
   paidAt: Date | string | null;
   refundUrl?: string;
+  addOnGuideName?: string | null;
+  addOnGuidePrice?: number | null;
 };
 
 const styles = StyleSheet.create({
@@ -134,7 +136,15 @@ function BookingPaidReceiptPdfDocument({
   totalAmount,
   paidAt,
   refundUrl,
+  addOnGuideName,
+  addOnGuidePrice,
 }: BookingPaidReceiptPdfInput) {
+  const hasAddOnGuide = Boolean(addOnGuideName && addOnGuideName.trim());
+  const addOnGuidePriceValue =
+    typeof addOnGuidePrice === "number" && Number.isFinite(addOnGuidePrice)
+      ? addOnGuidePrice
+      : 0;
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -164,6 +174,20 @@ function BookingPaidReceiptPdfDocument({
             <Text style={styles.label}>Paket</Text>
             <Text style={styles.value}>{itemName}</Text>
           </View>
+          {hasAddOnGuide && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Add-On</Text>
+              <Text style={styles.value}>Pemandu Wisata ({addOnGuideName})</Text>
+            </View>
+          )}
+          {hasAddOnGuide && addOnGuidePriceValue > 0 && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Biaya Add-On</Text>
+              <Text style={styles.value}>
+                {fmtCurrency(addOnGuidePriceValue)}
+              </Text>
+            </View>
+          )}
           <View style={styles.rowLast}>
             <Text style={styles.label}>Waktu Pembayaran</Text>
             <Text style={styles.value}>{fmtDate(paidAt)}</Text>

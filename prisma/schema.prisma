@@ -1001,3 +1001,53 @@ model testimoniTim {
   @@index([bookingTestimoniAddOnId])
   @@map("testimoni_tim")
 }
+
+model VillageProfile {
+  id        Int      @id @default(1)
+  history   String   @db.Text
+  videoUrl  String?
+
+  address   String?
+  phone     String?
+  email     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  visions   Vision[]
+  missions  Mission[]
+  galleries ProfileGallery[]
+}
+
+model Vision {
+  id        Int    @id @default(autoincrement())
+  text      String
+  order     Int    @default(0)
+  profileId Int
+
+  profile VillageProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model Mission {
+  id        Int    @id @default(autoincrement())
+  text      String
+  order     Int    @default(0)
+  profileId Int
+
+  profile VillageProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model ProfileGallery {
+  id        Int    @id @default(autoincrement())
+  image     Bytes
+  mimeType  String
+  fileName  String
+  profileId Int
+
+  profile VillageProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("profile_galleries")
+}

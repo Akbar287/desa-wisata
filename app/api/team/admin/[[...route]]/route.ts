@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 
 const app = new Hono().basePath("/api/team/admin");
 
@@ -63,6 +64,48 @@ function buildPagination(page: number, limit: number, total: number) {
 
 function isGuideCategoryTitle(value: string): boolean {
   return toTrimmed(value).toLowerCase() === GUIDE_CATEGORY_NAME;
+}
+
+function parseP2002Targets(err: Prisma.PrismaClientKnownRequestError): string[] {
+  const target = err.meta?.target;
+  if (Array.isArray(target)) return target.map((value) => String(value));
+  if (typeof target === "string") return [target];
+  return [];
+}
+
+async function createGuidePriceWithRetry(
+  tx: Prisma.TransactionClient,
+  teamMemberId: number,
+  harga: string,
+) {
+  const payload = {
+    teamMemberId,
+    harga,
+  };
+
+  try {
+    await tx.teamHargaPemandu.create({ data: payload });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      const targets = parseP2002Targets(error);
+      if (targets.some((target) => target.includes("id"))) {
+        await tx.$executeRawUnsafe(`
+          SELECT setval(
+            pg_get_serial_sequence('"TeamHargaPemandu"', 'id'),
+            GREATEST((SELECT COALESCE(MAX(id), 0) + 1 FROM "TeamHargaPemandu"), 1),
+            false
+          )
+        `);
+        await tx.teamHargaPemandu.create({ data: payload });
+        return;
+      }
+    }
+
+    throw error;
+  }
 }
 
 function parseTeamMemberStatus(value: unknown): TeamMemberStatus {
@@ -290,12 +333,7 @@ app.post("/", async (c) => {
       }
 
       if (isGuideCategory) {
-        await tx.teamHargaPemandu.create({
-          data: {
-            teamMemberId: created.id,
-            harga,
-          },
-        });
+        await createGuidePriceWithRetry(tx, created.id, harga);
       }
 
       return tx.teamMember.findUnique({
@@ -420,12 +458,7 @@ app.put("/", async (c) => {
 
       await tx.teamHargaPemandu.deleteMany({ where: { teamMemberId: id } });
       if (isGuideCategory) {
-        await tx.teamHargaPemandu.create({
-          data: {
-            teamMemberId: id,
-            harga,
-          },
-        });
+        await createGuidePriceWithRetry(tx, id, harga);
       }
 
       return tx.teamMember.findUnique({

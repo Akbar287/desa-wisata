@@ -191,7 +191,6 @@ export default function ProfileComponent({
                         ))}
                     </motion.div>
                 </div>
-                <section className=""></section>
                 <div className="max-w-[900px] mx-auto py-5">
                     <motion.div
                         initial="hidden"
@@ -573,17 +572,18 @@ export default function ProfileComponent({
                         ))}
                     </motion.div>
 
+                    <div className="py-5"></div>
 
                     {embedUrl && (
                         <motion.div
                             variants={fadeInUp}
-                            className="relative w-full overflow-hidden rounded-xl"
+                            className="relative w-full overflow-hidden rounded-xl py-5"
                             style={{ paddingTop: "56.25%" }} // 16:9 ratio
                         >
                             <iframe
                                 src={embedUrl}
                                 title="YouTube video"
-                                className="absolute top-0 left-0 w-full h-full"
+                                className="absolute top-0 left-0 w-full h-full "
                                 allowFullScreen
                             />
                         </motion.div>

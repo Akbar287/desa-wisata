@@ -9,7 +9,22 @@ const fadeUp = {
 };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.12 } } };
 
-export default function ProfilDesaSection() {
+type ProfileProps = {
+    history: string | null
+    videoUrl: string | null
+    address: string | null
+    phone: string | null
+    email: string | null
+    visions: { text: string }[]
+    missions: { text: string }[]
+    galleries: { id: number }[]
+} | null
+
+export default function ProfilDesaSection({
+    profile,
+}: {
+    profile: ProfileProps
+}) {
     return (
         <section className="section-earthy-warm py-24 overflow-hidden relative">
             <WaveDividerTop fill="#FFF3E0" />
@@ -70,10 +85,7 @@ export default function ProfilDesaSection() {
                             className="font-sans text-[15px] leading-relaxed mb-5"
                             style={{ color: "var(--color-text-light)", lineHeight: 1.85 }}
                         >
-                            Desa Manud Jaya telah berdiri sejak ratusan tahun lalu, dibangun oleh para pendahulu
-                            yang mencintai alam dan kearifan lokal. Kini, desa ini berkembang menjadi destinasi
-                            wisata unggulan yang memadukan keindahan alam, budaya Sunda, dan petualangan
-                            modern.
+                            {profile?.history || "Desa Manud Jaya telah berdiri sejak ratusan tahun lalu, dibangun oleh para pendahulu yang mencintai alam dan kearifan lokal. Kini, desa ini berkembang menjadi destinasi wisata unggulan yang memadukan keindahan alam, budaya Sunda, dan petualangan modern."}
                         </p>
                         <p
                             className="font-sans text-[15px] leading-relaxed"
@@ -110,10 +122,22 @@ export default function ProfilDesaSection() {
                                     Visi
                                 </h4>
                             </div>
-                            <p className="font-sans text-sm leading-relaxed m-0" style={{ color: "var(--color-text-light)", lineHeight: 1.75 }}>
-                                Menjadi desa wisata terdepan yang berkelanjutan, melestarikan alam dan
-                                budaya untuk generasi mendatang.
-                            </p>
+                            {/* ✅ LIST VISIONS */}
+                            <ul
+                                className="font-sans text-sm leading-relaxed m-0 space-y-2"
+                                style={{ color: "var(--color-text-light)", lineHeight: 1.75 }}
+                            >
+                                {profile?.visions?.length ? (
+                                    profile.visions.map((v, i) => (
+                                        <li key={i} className="flex gap-2">
+                                            {/* <span>•</span> */}
+                                            <span>{v.text}</span>
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li>Belum ada data</li>
+                                )}
+                            </ul>
                         </div>
 
                         {/* Misi Card */}
@@ -139,10 +163,22 @@ export default function ProfilDesaSection() {
                                     Misi
                                 </h4>
                             </div>
-                            <p className="font-sans text-sm leading-relaxed m-0" style={{ color: "var(--color-text-light)", lineHeight: 1.75 }}>
-                                Mengembangkan potensi wisata berbasis komunitas, meningkatkan
-                                kesejahteraan masyarakat, dan menjaga kelestarian lingkungan.
-                            </p>
+                            {/* ✅ LIST MISSIONS */}
+                            <ul
+                                className="font-sans text-sm leading-relaxed m-0 space-y-2"
+                                style={{ color: "var(--color-text-light)", lineHeight: 1.75 }}
+                            >
+                                {profile?.missions?.length ? (
+                                    profile.missions.map((m, i) => (
+                                        <li key={i} className="flex gap-2">
+                                            {/* <span>•</span> */}
+                                            <span>{m.text}</span>
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li>Belum ada data</li>
+                                )}
+                            </ul>
                         </div>
                     </motion.div>
                 </motion.div>
@@ -174,7 +210,7 @@ export default function ProfilDesaSection() {
                         className="font-sans text-sm mb-5"
                         style={{ color: "var(--color-text-muted)" }}
                     >
-                        Jl. Desa Wisata Manud Jaya, Kecamatan Pangalengan, Kabupaten Bandung, Jawa Barat 40378
+                        {profile?.address || "Jl. Desa Wisata Manud Jaya, Kecamatan Pangalengan, Kabupaten Bandung, Jawa Barat 40378"}
                     </motion.p>
 
                     <motion.div

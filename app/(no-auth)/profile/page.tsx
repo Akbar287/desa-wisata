@@ -1,5 +1,5 @@
-import ProfileComponent from "@/components/ProfileComponent";
 import { prisma } from "@/lib/prisma";
+import ProfileComponent from "@/components/ProfileComponent";
 
 export default async function ProfilePage() {
     const profile = await prisma.villageProfile.findFirst({

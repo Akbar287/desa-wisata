@@ -110,8 +110,8 @@ async function getDashboardData() {
   const bookingGrowth =
     lastMonthBookingsCount > 0
       ? ((thisMonthBookingsCount - lastMonthBookingsCount) /
-          lastMonthBookingsCount) *
-        100
+        lastMonthBookingsCount) *
+      100
       : thisMonthBookingsCount > 0
         ? 100
         : 0;
@@ -154,21 +154,21 @@ async function getDashboardData() {
   const [tours, destinations, wahanas] = await Promise.all([
     tourIds.length > 0
       ? prisma.tour.findMany({
-          where: { id: { in: tourIds } },
-          select: { id: true, title: true },
-        })
+        where: { id: { in: tourIds } },
+        select: { id: true, title: true },
+      })
       : Promise.resolve([]),
     destinationIds.length > 0
       ? prisma.destination.findMany({
-          where: { id: { in: destinationIds } },
-          select: { id: true, name: true },
-        })
+        where: { id: { in: destinationIds } },
+        select: { id: true, name: true },
+      })
       : Promise.resolve([]),
     wahanaIds.length > 0
       ? prisma.wahana.findMany({
-          where: { id: { in: wahanaIds } },
-          select: { id: true, name: true },
-        })
+        where: { id: { in: wahanaIds } },
+        select: { id: true, name: true },
+      })
       : Promise.resolve([]),
   ]);
 
@@ -189,7 +189,7 @@ async function getDashboardData() {
       name:
         (destinationMap.get(b.destinationId!) ?? "Destinasi").length > 25
           ? (destinationMap.get(b.destinationId!) ?? "Destinasi").slice(0, 22) +
-            "..."
+          "..."
           : (destinationMap.get(b.destinationId!) ?? "Destinasi"),
       bookings: b._count.id,
       totalPax: Number(b._sum.adults ?? 0) + Number(b._sum.children ?? 0),
@@ -291,6 +291,7 @@ export default async function Home() {
     destinationCount,
     landingPageStatistics,
     landingPageWithUs,
+    profile,
   ] = await Promise.all([
     prisma.tour.findMany({
       take: 4,
@@ -360,6 +361,23 @@ export default async function Home() {
         order: true,
       },
     }),
+    prisma.villageProfile.findFirst({
+      include: {
+        visions: {
+          select: { text: true, order: true },
+          orderBy: { order: "asc" },
+        },
+        missions: {
+          select: { text: true, order: true },
+          orderBy: { order: "asc" },
+        },
+        galleries: {
+          select: { id: true },
+          orderBy: { createdAt: "desc" },
+        },
+      },
+
+    })
   ]);
 
   const stats = {
@@ -526,11 +544,16 @@ export default async function Home() {
       label: item.label,
     }));
 
+  const galleryImages = profile?.galleries.map(
+    (g) => `/api/profile/images/${g.id}`
+  ) || [];
+
   return (
     <>
       <HeroSection />
       <NatureOverlay>
-        <ProfilDesaSection />
+        <ProfilDesaSection
+          profile={profile} />
         <StatsSection
           stats={stats}
           landingPageStatistics={landingPageStatistics}

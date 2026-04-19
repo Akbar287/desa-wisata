@@ -20,6 +20,48 @@ export default function AdminProfileComponents() {
     const [galleries, setGalleries] = useState<{ id: number }[]>([])
     const [newImages, setNewImages] = useState<File[]>([])
     const fileInputRef = useRef<HTMLInputElement | null>(null)
+    const [videoError, setVideoError] = useState<string | null>(null)
+    const [phoneError, setPhoneError] = useState<string | null>(null)
+    const [emailError, setEmailError] = useState<string | null>(null)
+
+    const isValidUrl = (value: string) => {
+        try {
+            new URL(value)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    const isValidYoutubeUrl = (value: string) => {
+        try {
+            const url = new URL(value)
+            return (
+                url.hostname.includes("youtube.com") ||
+                url.hostname.includes("youtu.be")
+            )
+        } catch {
+            return false
+        }
+    }
+    const isValidPhone = (value: string) => {
+        const cleaned = value.replace(/\s+/g, '') // remove spaces
+
+        // allow + at start, then digits only
+        const regex = /^\+?[0-9]+$/
+
+        if (!regex.test(cleaned)) return false
+
+        // basic length rule (Indonesia usually 10–15 digits)
+        if (cleaned.length < 10 || cleaned.length > 15) return false
+
+        return true
+    }
+
+    const isValidEmail = (value: string) => {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        return regex.test(value)
+    }
 
     useEffect(() => {
         fetch('/api/profile')
@@ -57,44 +99,6 @@ export default function AdminProfileComponents() {
                         rows={5}
                         value={history}
                         onChange={(e) => setHistory(e.target.value)}
-                    />
-                </div>
-
-                {/* Video */}
-                <div>
-                    <label className="font-semibold">Video URL (YouTube)</label>
-                    <input
-                        className="w-full border p-2 rounded"
-                        value={videoUrl}
-                        onChange={(e) => setVideoUrl(e.target.value)}
-                    />
-                </div>
-
-                {/* Kontak */}
-                <div>
-                    <label className="font-semibold">Alamat</label>
-                    <input
-                        className="w-full border p-2 rounded"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                    />
-                </div>
-
-                <div>
-                    <label className="font-semibold">Telepon</label>
-                    <input
-                        className="w-full border p-2 rounded"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                    />
-                </div>
-
-                <div>
-                    <label className="font-semibold">Email</label>
-                    <input
-                        className="w-full border p-2 rounded"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
                     />
                 </div>
 
@@ -194,6 +198,116 @@ export default function AdminProfileComponents() {
                             +
                         </button>
                     </div>
+                </div>
+
+                {/* Video */}
+                <div>
+                    <label className="font-semibold">Video URL (YouTube)</label>
+                    <input
+                        className={`w-full border p-2 rounded ${videoError ? 'border-red-500' : ''
+                            }`}
+                        value={videoUrl}
+                        onChange={(e) => {
+                            const value = e.target.value
+                            setVideoUrl(value)
+
+                            if (!value) {
+                                setVideoError(null)
+                                return
+                            }
+
+                            if (!isValidYoutubeUrl(value)) {
+                                setVideoError('Harus berupa link YouTube yang valid')
+                            } else {
+                                setVideoError(null)
+                            }
+                        }}
+                    />
+                    {videoError && (
+                        <p className="text-red-500 text-sm mt-1">
+                            {videoError}
+                        </p>
+                    )}
+                </div>
+
+                {/* Kontak */}
+                <div>
+                    <label className="font-semibold">Alamat</label>
+                    <input
+                        className="w-full border p-2 rounded"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                    />
+                </div>
+
+                <div>
+                    <label className="font-semibold">Telepon</label>
+                    <input
+                        className={`w-full border p-2 rounded ${phoneError ? 'border-red-500' : ''
+                            }`}
+                        value={phone}
+                        inputMode="numeric"
+                        placeholder="+6280989999"
+                        onChange={(e) => {
+                            let value = e.target.value
+
+                            // allow only + and numbers
+                            value = value.replace(/[^0-9+]/g, '')
+
+                            setPhone(value)
+
+                            if (!value) {
+                                setPhoneError(null)
+                                return
+                            }
+
+                            if (!isValidPhone(value)) {
+                                setPhoneError('Nomor telepon tidak valid')
+                            } else {
+                                setPhoneError(null)
+                            }
+                        }}
+
+                    />{phoneError && (
+                        <p className="text-red-500 text-sm mt-1">
+                            {phoneError}
+                        </p>
+                    )}
+                </div>
+
+                <div>
+                    <label className="font-semibold">Email</label>
+                    <input
+                        className={`w-full border p-2 rounded ${emailError ? 'border-red-500' : ''
+                            }`}
+                        value={email}
+                        type="email"
+                        placeholder="contoh@email.com"
+                        onChange={(e) => {
+                            let value = e.target.value.trim()
+
+                            // remove spaces inside email
+                            value = value.replace(/\s/g, '')
+
+                            setEmail(value)
+
+                            if (!value) {
+                                setEmailError(null)
+                                return
+                            }
+
+                            if (!isValidEmail(value)) {
+                                setEmailError('Email tidak valid')
+                            } else {
+                                setEmailError(null)
+                            }
+                        }}
+                    />
+                    {emailError && (
+                        <p className="text-red-500 text-sm mt-1">
+                            {emailError}
+                        </p>
+                    )}
                 </div>
 
                 {/* GALLERY */}
@@ -297,7 +411,7 @@ export default function AdminProfileComponents() {
 
                 {/* SAVE BUTTON */}
                 <button
-                    disabled={saving}
+                    disabled={saving || !!videoError || !!phoneError || !!emailError}
                     className={`px-4 py-2 rounded text-white ${saving ? 'bg-gray-400' : 'bg-green-600'
                         }`}
                     onClick={async () => {

@@ -4,7 +4,17 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
 
-export default function ContactComponents() {
+type Props = {
+  address: string | null
+  phone: string | null
+  email: string | null
+}
+
+export default function ContactComponents({
+  address,
+  phone,
+  email,
+}: Props) {
   const router = useRouter();
   const fadeUp = {
     hidden: { opacity: 0, y: 24 },
@@ -32,7 +42,7 @@ export default function ContactComponents() {
     {
       emoji: "📞",
       title: "Telepon",
-      value: "+62 818-1234-567890",
+      value: phone || "+62 818-1234-567890",
       href: "tel:+62181234567890",
       desc: "Senin – Sabtu, 08.00 – 17.00 WIB",
       gradient: "linear-gradient(190deg, #128C7E, #25D366)",
@@ -40,7 +50,7 @@ export default function ContactComponents() {
     {
       emoji: "💬",
       title: "WhatsApp",
-      value: "+62 818-1234-567890",
+      value: phone || "+62 818-1234-567890",
       href: "https://wa.me/62181234567890?text=Halo%20Desa%20Wisata%20Manud%20Jaya%2C%20saya%20ingin%20bertanya",
       desc: "Respon cepat, biasanya < 1 jam",
       gradient: "linear-gradient(135deg, #128C7E, #25D366)",
@@ -48,7 +58,7 @@ export default function ContactComponents() {
     {
       emoji: "📧",
       title: "Email",
-      value: "info@desawisatamanudjaya.id",
+      value: email || "info@desawisatamanudjaya.id",
       href: "mailto:info@desawisatamanudjaya.id",
       desc: "Untuk pertanyaan umum & kerjasama",
       gradient: "linear-gradient(135deg, #D93025, #EA4335)",
@@ -314,7 +324,7 @@ export default function ContactComponents() {
                         icon: "📍",
                         label: "Alamat Lengkap",
                         value:
-                          "Jl. Desa Manud Jaya No. 01, RT 03/RW 05, Kec. Cikalong Wetan, Kab. Bandung Barat, Jawa Barat 40556",
+                          address || "Jl. Desa Manud Jaya No. 01, RT 03/RW 05, Kec. Cikalong Wetan, Kab. Bandung Barat, Jawa Barat 40556",
                       },
                       {
                         icon: "🕐",
@@ -325,12 +335,12 @@ export default function ContactComponents() {
                       {
                         icon: "📞",
                         label: "Telepon Kantor",
-                        value: "+62 818-1234-567890",
+                        value: phone || "+62 818-1234-567890",
                       },
                       {
                         icon: "📧",
                         label: "Email",
-                        value: "info@desawisatamanudjaya.id",
+                        value: email || "info@desawisatamanudjaya.id",
                       },
                     ].map((item) => (
                       <div key={item.label} className="flex items-start gap-3">

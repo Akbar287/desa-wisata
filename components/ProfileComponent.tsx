@@ -5,15 +5,58 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 
+type Props = {
+    history: string
+    videoUrl: string | null
+    address: string | null
+    phone: string | null
+    email: string | null
+    visions: { text: string }[]
+    missions: { text: string }[]
+    galleryImages: string[]
+    potensiAlam: any[]
+    potensiAgro: any[]
+}
+
 export default function ProfileComponent({
+    history,
+    videoUrl,
+    address,
+    phone,
+    email,
+    visions,
+    missions,
+    galleryImages,
     potensiAlam,
     potensiAgro,
-    galleryImages,
-}: {
-    potensiAlam: { title: string; desc: string; icon: string }[];
-    potensiAgro: { title: string; desc: string; image: string }[];
-    galleryImages: string[];
-}) {
+}: Props) {
+    const getYoutubeEmbedUrl = (url?: string) => {
+        if (!url) return null
+
+        try {
+            const parsed = new URL(url)
+
+            // youtube.com/watch?v=xxxx
+            if (parsed.hostname.includes("youtube.com")) {
+                const videoId = parsed.searchParams.get("v")
+                if (!videoId) return null
+                return `https://www.youtube.com/embed/${videoId}`
+            }
+
+            // youtu.be/xxxx
+            if (parsed.hostname.includes("youtu.be")) {
+                const videoId = parsed.pathname.split("/")[1]
+                if (!videoId) return null
+                return `https://www.youtube.com/embed/${videoId}`
+            }
+
+            return null
+        } catch {
+            return null
+        }
+    }
+
+    const embedUrl = getYoutubeEmbedUrl(videoUrl || '')
 
     const fadeInUp = {
         hidden: { opacity: 0, y: 30 },
@@ -101,10 +144,11 @@ export default function ProfileComponent({
                             className="font-sans leading-relaxed mx-auto"
                             style={{ fontSize: "clamp(15px, 1.3vw, 18px)", color: "var(--color-text-light)" }}
                         >
-                            Desa Manud Jaya terletak di kawasan dataran tinggi kaki pegunungan dengan ketinggian ±700–900 mdpl,
+                            {/* Desa Manud Jaya terletak di kawasan dataran tinggi kaki pegunungan dengan ketinggian ±700–900 mdpl,
                             dengan lanskap perbukitan, area perkebunan teh, aliran sungai yang masih alami, serta didukung oleh
                             iklim yang sejuk. Kondisi tersebut menjadikan Desa Manud Jaya sangat potensial untuk dikembangkan
-                            menjadi desa wisata yang berdaya saing dan berkelanjutan.
+                            menjadi desa wisata yang berdaya saing dan berkelanjutan. */}
+                            {history || "Belum ada data"}
                         </motion.p>
                     </motion.div>
 
@@ -145,6 +189,81 @@ export default function ProfileComponent({
                                 </span>
                             </motion.div>
                         ))}
+                    </motion.div>
+                </div>
+                <section className=""></section>
+                <div className="max-w-[900px] mx-auto py-5">
+                    <motion.div
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
+                        variants={stagger}
+                        className="text-center"
+                    >
+
+                        <motion.h2
+                            variants={fadeInUp}
+                            className="font-serif font-bold mb-4"
+                            style={{ fontSize: "clamp(26px, 3.5vw, 42px)", color: "var(--color-text)" }}
+                        >
+                            Visi
+                        </motion.h2>
+
+                        {/* BULLET LIST */}
+                        <motion.ul
+                            variants={fadeInUp}
+                            className="font-sans text-base text-center max-w-[650px] mx-auto mb-14"
+                            style={{ color: "var(--color-text-muted)" }}
+                        >
+                            {visions?.length > 0 ? (
+                                visions.map((v, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                        <span style={{ color: "var(--color-primary)" }}>•</span>
+                                        <span>{v.text}</span>
+                                    </li>
+                                ))
+                            ) : (
+                                <li className="text-center text-gray-400">
+                                    Belum ada visi
+                                </li>
+                            )}
+                        </motion.ul>
+                    </motion.div>
+                </div><div className="max-w-[900px] mx-auto">
+                    <motion.div
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
+                        variants={stagger}
+                        className="text-center"
+                    >
+                        <motion.h2
+                            variants={fadeInUp}
+                            className="font-serif font-bold mb-4"
+                            style={{ fontSize: "clamp(26px, 3.5vw, 42px)", color: "var(--color-text)" }}
+                        >
+                            Misi
+                        </motion.h2>
+
+                        {/* BULLET LIST */}
+                        <motion.ul
+                            variants={fadeInUp}
+                            className="font-sans text-base text-center max-w-[650px] mx-auto mb-14"
+                            style={{ color: "var(--color-text-muted)" }}
+                        >
+                            {missions?.length > 0 ? (
+                                missions.map((v, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                        <span style={{ color: "var(--color-primary)" }}>•</span>
+                                        <span>{v.text}</span>
+                                    </li>
+                                ))
+                            ) : (
+                                <li className="text-center text-gray-400">
+                                    Belum ada misi
+                                </li>
+                            )}
+                        </motion.ul>
                     </motion.div>
                 </div>
             </section>
@@ -242,6 +361,7 @@ export default function ProfileComponent({
                 </div>
             </section>
 
+            {/* <section className="py-20 px-6" style={{ background: "var(--color-cream)" }}> */}
             <section className="py-20 px-6" style={{ background: "var(--color-bg)" }}>
                 <div className="max-w-[1100px] mx-auto">
                     <motion.div
@@ -427,13 +547,6 @@ export default function ProfileComponent({
                         >
                             Galeri
                         </motion.span>
-                        <motion.h2
-                            variants={fadeInUp}
-                            className="font-serif font-bold"
-                            style={{ fontSize: "clamp(26px, 3.5vw, 42px)", color: "var(--color-text)" }}
-                        >
-                            Momen di Desa Manud Jaya
-                        </motion.h2>
                     </motion.div>
 
                     <motion.div
@@ -459,6 +572,22 @@ export default function ProfileComponent({
                             </motion.div>
                         ))}
                     </motion.div>
+
+
+                    {embedUrl && (
+                        <motion.div
+                            variants={fadeInUp}
+                            className="relative w-full overflow-hidden rounded-xl"
+                            style={{ paddingTop: "56.25%" }} // 16:9 ratio
+                        >
+                            <iframe
+                                src={embedUrl}
+                                title="YouTube video"
+                                className="absolute top-0 left-0 w-full h-full"
+                                allowFullScreen
+                            />
+                        </motion.div>
+                    )}
                 </div>
             </section>
 

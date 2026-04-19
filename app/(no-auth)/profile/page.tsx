@@ -1,6 +1,15 @@
 import ProfileComponent from "@/components/ProfileComponent";
+import { prisma } from "@/lib/prisma";
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+    const profile = await prisma.villageProfile.findFirst({
+        include: {
+            visions: true,
+            missions: true,
+            galleries: true,
+        },
+    });
+    
     const potensiAlam = [
         {
             title: "Healing & Eco-Tourism",
@@ -37,24 +46,45 @@ export default function ProfilePage() {
         },
     ];
 
-    const galleryImages = [
-        "/assets/withus01.png",
-        "/assets/withus02.png",
-        "/assets/withus03.png",
-        "/assets/withus05.png",
-        "/assets/withus06.png",
-        "/assets/withus07.png",
-        "/assets/withus08.png",
-        "/assets/e50bd774-982a-4206-b5b9-3ace3c9c8f27-gobi_gallery1.jpg",
-        "/assets/withus07.png",
-        "/assets/withus08.png",
-    ];
+    // const galleryImages = [
+    //     "/assets/withus01.png",
+    //     "/assets/withus02.png",
+    //     "/assets/withus03.png",
+    //     "/assets/withus05.png",
+    //     "/assets/withus06.png",
+    //     "/assets/withus07.png",
+    //     "/assets/withus08.png",
+    //     "/assets/e50bd774-982a-4206-b5b9-3ace3c9c8f27-gobi_gallery1.jpg",
+    //     "/assets/withus07.png",
+    //     "/assets/withus08.png",
+    // ];
 
+    const data = profile || {
+        history: "",
+        videoUrl: "",
+        address: "",
+        phone: "",
+        email: "",
+        visions: [],
+        missions: [],
+        galleries: [],
+    };
+
+        const galleryImages = data.galleries.map(
+        (g) => `/api/profile/images/${g.id}`
+    );
 
     return <ProfileComponent
-        potensiAlam={potensiAlam}
-        potensiAgro={potensiAgro}
-        galleryImages={galleryImages}
-    />
+            history={data.history}
+            videoUrl={data.videoUrl}
+            address={data.address}
+            phone={data.phone}
+            email={data.email}
+            visions={data.visions}
+            missions={data.missions}
+            galleryImages={galleryImages}
+            potensiAlam={potensiAlam}
+            potensiAgro={potensiAgro}
+        />
 
 }

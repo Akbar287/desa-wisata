@@ -5,6 +5,8 @@ import { renderBookingPaidReceiptPdf } from "@/lib/email/templates/BookingPaidRe
 import type { SendBookingPaidEmailResult } from "@/types/EmailTypes";
 
 const DEFAULT_REFUND_BASE_URL = "http://desa-wisata-ui.vercel.app/refund";
+const DEFAULT_TESTIMONIAL_BASE_URL =
+  "https://desa-wisata-ui.vercel.app/testimonials";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -50,6 +52,15 @@ function getRefundUrl(bookingCode: string): string {
     process.env.REFUND_BASE_URL ??
     process.env.NEXT_PUBLIC_REFUND_BASE_URL ??
     DEFAULT_REFUND_BASE_URL
+  ).replace(/\/+$/, "");
+  return `${base}/${encodeURIComponent(bookingCode)}`;
+}
+
+function getTestimonialUrl(bookingCode: string): string {
+  const base = (
+    process.env.TESTIMONIAL_BASE_URL ??
+    process.env.NEXT_PUBLIC_TESTIMONIAL_BASE_URL ??
+    DEFAULT_TESTIMONIAL_BASE_URL
   ).replace(/\/+$/, "");
   return `${base}/${encodeURIComponent(bookingCode)}`;
 }
@@ -156,6 +167,7 @@ async function sendBookingPaidEmailByPayment(
   const amount = Number(payment.grossAmount ?? payment.booking.totalPrice ?? 0);
   const paidAt = payment.settlementTime;
   const refundUrl = getRefundUrl(payment.bookingCode);
+  const testimonialUrl = getTestimonialUrl(payment.bookingCode);
   const addOnGuides = payment.booking.bookingTestimoniAddOn.map((addon) => {
     const rawPrice = addon.teamMember.teamHargaPemandu?.[0]?.harga ?? null;
     return {
@@ -174,6 +186,7 @@ async function sendBookingPaidEmailByPayment(
     totalAmount: amount,
     paidAt,
     refundUrl,
+    testimonialUrl,
     addOnGuideName: addOnGuideName || null,
     addOnGuidePrice: addOnGuidePrice > 0 ? addOnGuidePrice : null,
   });
@@ -187,6 +200,7 @@ async function sendBookingPaidEmailByPayment(
     totalAmount: amount,
     paidAt,
     refundUrl,
+    testimonialUrl,
     addOnGuideName: addOnGuideName || null,
     addOnGuidePrice: addOnGuidePrice > 0 ? addOnGuidePrice : null,
   });

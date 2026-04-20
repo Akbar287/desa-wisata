@@ -313,10 +313,12 @@ export default function PaymentReceiptPDF({
   booking,
   payment,
   refundUrl,
+  testimonialUrl,
 }: {
   booking: BookingInfo;
   payment?: PaymentInfo;
   refundUrl?: string;
+  testimonialUrl?: string;
 }) {
   const now = new Date();
   const invoiceNo = `INV-${booking.id}-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
@@ -532,6 +534,20 @@ export default function PaymentReceiptPDF({
             <View style={s.refundWrap}>
               <Text style={s.refundLabel}>Link Refund:</Text>
               <Text style={s.refundUrl}>{refundUrl}</Text>
+              {!!testimonialUrl && (
+                <>
+                  <Text style={{ ...s.refundLabel, marginTop: 4 }}>
+                    Link Testimoni:
+                  </Text>
+                  <Text style={s.refundUrl}>{testimonialUrl}</Text>
+                </>
+              )}
+            </View>
+          )}
+          {!refundUrl && !!testimonialUrl && (
+            <View style={s.refundWrap}>
+              <Text style={s.refundLabel}>Link Testimoni:</Text>
+              <Text style={s.refundUrl}>{testimonialUrl}</Text>
             </View>
           )}
         </View>

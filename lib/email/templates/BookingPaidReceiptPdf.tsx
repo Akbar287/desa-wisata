@@ -17,6 +17,7 @@ type BookingPaidReceiptPdfInput = {
   totalAmount: number;
   paidAt: Date | string | null;
   refundUrl?: string;
+  testimonialUrl?: string;
   addOnGuideName?: string | null;
   addOnGuidePrice?: number | null;
 };
@@ -136,6 +137,7 @@ function BookingPaidReceiptPdfDocument({
   totalAmount,
   paidAt,
   refundUrl,
+  testimonialUrl,
   addOnGuideName,
   addOnGuidePrice,
 }: BookingPaidReceiptPdfInput) {
@@ -208,6 +210,20 @@ function BookingPaidReceiptPdfDocument({
           <View style={styles.refundWrap}>
             <Text style={styles.refundLabel}>Link Refund:</Text>
             <Text style={styles.refundUrl}>{refundUrl}</Text>
+            {!!testimonialUrl && (
+              <>
+                <Text style={{ ...styles.refundLabel, marginTop: 7 }}>
+                  Link Testimoni:
+                </Text>
+                <Text style={styles.refundUrl}>{testimonialUrl}</Text>
+              </>
+            )}
+          </View>
+        )}
+        {!refundUrl && !!testimonialUrl && (
+          <View style={styles.refundWrap}>
+            <Text style={styles.refundLabel}>Link Testimoni:</Text>
+            <Text style={styles.refundUrl}>{testimonialUrl}</Text>
           </View>
         )}
       </Page>

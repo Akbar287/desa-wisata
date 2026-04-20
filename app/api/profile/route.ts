@@ -27,6 +27,7 @@ export async function PUT(req: Request) {
         email,
         visions,
         missions,
+        galleries = [],
     } = body
 
     // ⚠️ singleton → kita pakai id = 1
@@ -73,6 +74,33 @@ export async function PUT(req: Request) {
             profileId,
         })),
     })
+
+    // replace missions
+    await prisma.mission.deleteMany({ where: { profileId } })
+
+    await prisma.mission.createMany({
+        data: missions.map((m: any, i: number) => ({
+            text: m.text,
+            order: i,
+            profileId,
+        })),
+    })
+    // get current images in DB
+    const existingImages = await prisma.profileGallery.findMany({
+        where: { profileId },
+        select: { id: true },
+    })
+
+    const existingIds = existingImages.map(img => img.id)
+    const incomingIds = galleries.map((g: any) => g.id)
+    const toDelete = existingIds.filter(id => !incomingIds.includes(id))
+    if (toDelete.length > 0) {
+        await prisma.profileGallery.deleteMany({
+            where: {
+                id: { in: toDelete },
+            },
+        })
+    }
 
 
     return Response.json({ success: true })

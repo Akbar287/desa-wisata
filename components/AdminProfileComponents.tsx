@@ -164,6 +164,7 @@ export default function AdminProfileComponents() {
 
                                 <button
                                     onClick={() => {
+                                        console.log(process.env.DATABASE_URL)
                                         const updated = [...missions]
                                         updated.splice(index, 1)
                                         setMissions(updated)

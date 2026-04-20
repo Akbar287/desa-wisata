@@ -92,6 +92,13 @@ export default function PDFDownloadSection({
   const refundUrl = refundCode
     ? `${refundBase}/${encodeURIComponent(refundCode)}`
     : "";
+  const testimonialBase = (
+    process.env.NEXT_PUBLIC_TESTIMONIAL_BASE_URL ??
+    "https://desa-wisata-ui.vercel.app/testimonials"
+  ).replace(/\/+$/, "");
+  const testimonialUrl = refundCode
+    ? `${testimonialBase}/${encodeURIComponent(refundCode)}`
+    : "";
 
   return (
     <PDFDownloadLink
@@ -100,6 +107,7 @@ export default function PDFDownloadSection({
           booking={booking}
           payment={payment}
           refundUrl={refundUrl}
+          testimonialUrl={testimonialUrl}
         />
       }
       fileName={`bukti-pembayaran-${refCode}.pdf`}

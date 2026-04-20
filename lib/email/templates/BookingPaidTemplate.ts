@@ -6,6 +6,7 @@ type BookingPaidEmailTemplateInput = {
   totalAmount: number;
   paidAt: Date | string | null;
   refundUrl: string;
+  testimonialUrl: string;
   addOnGuideName?: string | null;
   addOnGuidePrice?: number | null;
 };
@@ -45,6 +46,7 @@ export function buildBookingPaidEmailTemplate({
   totalAmount,
   paidAt,
   refundUrl,
+  testimonialUrl,
   addOnGuideName,
   addOnGuidePrice,
 }: BookingPaidEmailTemplateInput): { subject: string; html: string } {
@@ -53,6 +55,7 @@ export function buildBookingPaidEmailTemplate({
   const safeOrderId = escapeHtml(orderId);
   const safeItemName = escapeHtml(itemName);
   const safeRefundUrl = escapeHtml(refundUrl);
+  const safeTestimonialUrl = escapeHtml(testimonialUrl);
   const safeAddOnGuideName = addOnGuideName ? escapeHtml(addOnGuideName) : "";
   const addOnGuidePriceValue =
     typeof addOnGuidePrice === "number" && Number.isFinite(addOnGuidePrice)
@@ -137,6 +140,11 @@ export function buildBookingPaidEmailTemplate({
                     Jika Anda perlu pembatalan/refund, gunakan tautan berikut:
                     <br />
                     <a href="${safeRefundUrl}" style="color:#1d4ed8;text-decoration:underline;word-break:break-all;">${safeRefundUrl}</a>
+                  </p>
+                  <p style="margin:10px 0 0;font-size:12px;line-height:1.7;color:#713f12;">
+                    Setelah perjalanan selesai, bantu kami dengan mengisi testimoni:
+                    <br />
+                    <a href="${safeTestimonialUrl}" style="color:#1d4ed8;text-decoration:underline;word-break:break-all;">${safeTestimonialUrl}</a>
                   </p>
                 </div>
               </td>
